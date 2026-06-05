@@ -12,6 +12,28 @@ import { createCustomNameComponent } from '@/utils/createCustomNameComponent';
 
 // 匹配views里面所有的.vue文件
 const modules = import.meta.glob('./../../views/**/*.vue');
+const enterpriseOwnedRouteTokens = [
+  'activitydata',
+  'customfieldmeta',
+  'datacommit',
+  'datasubmission',
+  'datavalidation',
+  'emissionsource',
+  'factorconfirm',
+  'greenelectricity',
+  'intensity',
+  'intensitydenominator',
+  'licensestate',
+  'licenseimport',
+  'license/import',
+  'license/runtime',
+  'license/state',
+  'submissiontracking',
+  'submissionreminder',
+  'powerbi',
+  'power-bi'
+];
+
 export const usePermissionStore = defineStore('permission', () => {
   const routes = ref<RouteRecordRaw[]>([]);
   const addRoutes = ref<RouteRecordRaw[]>([]);
@@ -48,9 +70,10 @@ export const usePermissionStore = defineStore('permission', () => {
   const generateRoutes = async (): Promise<RouteRecordRaw[]> => {
     const res = await getRouters();
     const { data } = res;
-    const sdata = JSON.parse(JSON.stringify(data));
-    const rdata = JSON.parse(JSON.stringify(data));
-    const defaultData = JSON.parse(JSON.stringify(data));
+    const vendorMenuData = filterVendorMenuRoutes(data);
+    const sdata = JSON.parse(JSON.stringify(vendorMenuData));
+    const rdata = JSON.parse(JSON.stringify(vendorMenuData));
+    const defaultData = JSON.parse(JSON.stringify(vendorMenuData));
     const sidebarRoutes = filterAsyncRouter(sdata);
     const rewriteRoutes = filterAsyncRouter(rdata, undefined, true);
     const defaultRoutes = filterAsyncRouter(defaultData);
@@ -65,6 +88,44 @@ export const usePermissionStore = defineStore('permission', () => {
     // 路由name重复检查
     duplicateRouteChecker(asyncRoutes, sidebarRoutes);
     return new Promise<RouteRecordRaw[]>((resolve) => resolve(rewriteRoutes));
+  };
+
+  const filterVendorMenuRoutes = (routes: RouteRecordRaw[]): RouteRecordRaw[] => {
+    return routes
+      .map((route) => {
+        if (isEnterpriseOwnedRoute(route)) {
+          return undefined;
+        }
+        const children = route.children ? filterVendorMenuRoutes(route.children) : undefined;
+        if (route.children && !children?.length && isMenuContainer(route)) {
+          return undefined;
+        }
+        return {
+          ...route,
+          ...(children ? { children } : {})
+        };
+      })
+      .filter((route): route is RouteRecordRaw => Boolean(route));
+  };
+
+  const isMenuContainer = (route: RouteRecordRaw): boolean => {
+    const component = String(route.component ?? '').toLowerCase();
+    return component === 'layout' || component === 'parentview';
+  };
+
+  const isEnterpriseOwnedRoute = (route: RouteRecordRaw): boolean => {
+    const searchableRouteText = [
+      route.path,
+      String(route.name ?? ''),
+      String(route.component ?? ''),
+      route.redirect,
+      route.meta?.title,
+      route.permissions?.join(':')
+    ]
+      .filter(Boolean)
+      .join('|')
+      .toLowerCase();
+    return enterpriseOwnedRouteTokens.some((token) => searchableRouteText.includes(token));
   };
 
   /**
