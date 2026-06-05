@@ -37,13 +37,15 @@ export const getLicenseIssue = (id: string | number): AxiosPromise<LicenseIssueV
 export const issueLicense = (data: LicenseIssueCommand): AxiosPromise<LicenseIssueResult> => {
   const payload = {
     customerId: data.customerId,
+    keyId: data.keyId,
     installId: data.installId,
     validFrom: data.validity?.validFrom,
     validTo: data.validity?.validTo,
     edition: data.edition,
     features: data.features,
-    featureCodes: data.featureCodes,
-    issueType: data.issueType
+    issueType: data.issueType,
+    issuedBy: data.issuedBy,
+    templateEntitlements: data.templateEntitlements
   };
 
   return request({

@@ -18,6 +18,11 @@ export interface LicenseIssueQuery extends PageQuery {
   customerId?: string | number;
 
   /**
+   * Signing key identifier.
+   */
+  keyId?: string;
+
+  /**
    * Signing algorithm.
    */
   algorithm?: string;
@@ -79,12 +84,14 @@ export interface LicenseIssueValidity {
  */
 export interface LicenseIssueCommand {
   customerId: string | number;
+  keyId: string;
   installId: string;
   validity: LicenseIssueValidity;
   edition?: string;
-  features?: string[];
-  featureCodes?: string[];
+  features: string[];
   issueType?: string;
+  issuedBy: string;
+  templateEntitlements: string[];
 }
 
 /**
@@ -104,6 +111,7 @@ export interface LicenseIssueResult {
   id?: string | number;
   licenseId?: string;
   customerId?: string | number;
+  keyId?: string;
   installId?: string;
   validFrom?: string;
   validTo?: string;
@@ -145,4 +153,9 @@ export interface LicenseIssueVO extends BaseEntity, LicenseIssueResult {
    * Signature text for audit display only.
    */
   signatureText?: string;
+
+  /**
+   * Keep the list/detail contract explicit so sensitive backend-only fields are
+   * not accidentally rendered by callers.
+   */
 }

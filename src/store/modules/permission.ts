@@ -12,7 +12,7 @@ import { createCustomNameComponent } from '@/utils/createCustomNameComponent';
 
 // 匹配views里面所有的.vue文件
 const modules = import.meta.glob('./../../views/**/*.vue');
-const enterpriseOwnedRouteTokens = [
+const enterpriseOwnedRouteKeys = new Set([
   'activitydata',
   'customfieldmeta',
   'datacommit',
@@ -25,14 +25,13 @@ const enterpriseOwnedRouteTokens = [
   'intensitydenominator',
   'licensestate',
   'licenseimport',
-  'license/import',
-  'license/runtime',
-  'license/state',
   'submissiontracking',
   'submissionreminder',
   'powerbi',
   'power-bi'
-];
+]);
+
+const enterpriseOwnedRoutePaths = new Set(['license/import', 'license/runtime', 'license/state']);
 
 export const usePermissionStore = defineStore('permission', () => {
   const routes = ref<RouteRecordRaw[]>([]);
@@ -93,10 +92,10 @@ export const usePermissionStore = defineStore('permission', () => {
   const filterVendorMenuRoutes = (routes: RouteRecordRaw[]): RouteRecordRaw[] => {
     return routes
       .map((route) => {
-        if (isEnterpriseOwnedRoute(route)) {
+        const children = route.children ? filterVendorMenuRoutes(route.children) : undefined;
+        if (isEnterpriseOwnedRoute(route) && (!isMenuContainer(route) || !children?.length)) {
           return undefined;
         }
-        const children = route.children ? filterVendorMenuRoutes(route.children) : undefined;
         if (route.children && !children?.length && isMenuContainer(route)) {
           return undefined;
         }
@@ -114,18 +113,40 @@ export const usePermissionStore = defineStore('permission', () => {
   };
 
   const isEnterpriseOwnedRoute = (route: RouteRecordRaw): boolean => {
-    const searchableRouteText = [
-      route.path,
-      String(route.name ?? ''),
-      String(route.component ?? ''),
-      route.redirect,
-      route.meta?.title,
-      route.permissions?.join(':')
-    ]
-      .filter(Boolean)
-      .join('|')
-      .toLowerCase();
-    return enterpriseOwnedRouteTokens.some((token) => searchableRouteText.includes(token));
+    return hasEnterpriseOwnedPath(route.path) || hasEnterpriseOwnedName(route.name) || hasEnterpriseOwnedPermission(route.permissions);
+  };
+
+  const hasEnterpriseOwnedPath = (path: string): boolean => {
+    const normalizedPath = normalizeRouteKey(path);
+    const pathSegments = normalizedPath.split('/').filter(Boolean);
+    return enterpriseOwnedRoutePaths.has(normalizedPath) || pathSegments.some((segment) => enterpriseOwnedRouteKeys.has(segment));
+  };
+
+  const hasEnterpriseOwnedName = (name?: string | symbol | null): boolean => {
+    if (!name) {
+      return false;
+    }
+    return enterpriseOwnedRouteKeys.has(normalizeRouteKey(String(name)));
+  };
+
+  const hasEnterpriseOwnedPermission = (permissions?: string[]): boolean => {
+    return Boolean(
+      permissions?.some((permission) =>
+        permission
+          .toLowerCase()
+          .split(':')
+          .some((part) => enterpriseOwnedRouteKeys.has(normalizeRouteKey(part)))
+      )
+    );
+  };
+
+  const normalizeRouteKey = (value: string): string => {
+    return value
+      .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
+      .replace(/^\/+|\/+$/g, '')
+      .replace(/_/g, '-')
+      .toLowerCase()
+      .replace(/-/g, '');
   };
 
   /**
