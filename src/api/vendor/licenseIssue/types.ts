@@ -1,169 +1,148 @@
 /**
- * 供应商授权签发查询对象
+ * Vendor license issue query object.
  */
 export interface LicenseIssueQuery extends PageQuery {
   /**
-   * 主键
+   * Primary key.
    */
   id?: string | number;
 
   /**
-   * 授权编号
+   * License number.
    */
   licenseId?: string;
 
   /**
-   * 客户主键
+   * Vendor customer primary key.
    */
   customerId?: string | number;
 
   /**
-   * 密钥编号
-   */
-  keyId?: string;
-
-  /**
-   * 签名算法
+   * Signing algorithm.
    */
   algorithm?: string;
 
   /**
-   * 协议版本
+   * License schema version.
    */
   schemaVersion?: string;
 
   /**
-   * 版本类型
+   * Edition code.
    */
   edition?: string;
 
   /**
-   * 功能编码集合
+   * Feature code set.
    */
   featureCodes?: string;
 
   /**
-   * 安装标识
+   * Installation identifier.
    */
   installId?: string;
 
   /**
-   * 签发状态
+   * Issue status.
    */
   issueStatus?: string;
 
   /**
-   * 签发类型
+   * Issue type.
    */
   issueType?: string;
 
   /**
-   * 签发人
+   * Issuer user.
    */
   issuedBy?: string;
 
   /**
-   * 扩展查询参数
+   * Extended query params.
    */
   params?: Record<string, any>;
 }
 
 /**
- * 供应商授权签发返回对象
+ * Allowed validity window for issuing a vendor license.
  */
-export interface LicenseIssueVO extends BaseEntity {
+export interface LicenseIssueValidity {
+  validFrom: string;
+  validTo: string;
+}
+
+/**
+ * Allowed input for vendor license issue.
+ *
+ * Customer code/name and other trusted customer facts are intentionally absent:
+ * the backend must resolve them from customerId.
+ */
+export interface LicenseIssueCommand {
+  customerId: string | number;
+  installId: string;
+  validity: LicenseIssueValidity;
+  edition?: string;
+  features?: string[];
+  featureCodes?: string[];
+  issueType?: string;
+}
+
+/**
+ * Download metadata for the generated .lic file.
+ */
+export interface LicenseIssueDownloadMetadata {
+  fileName?: string;
+  contentType?: string;
+  downloadUrl?: string;
+  expiresAt?: string;
+}
+
+/**
+ * Safe response fields needed by the issue drawer and .lic download flow.
+ */
+export interface LicenseIssueResult {
+  id?: string | number;
+  licenseId?: string;
+  customerId?: string | number;
+  installId?: string;
+  validFrom?: string;
+  validTo?: string;
+  edition?: string;
+  featureCodes?: string[] | string;
+  issueStatus?: string;
+  issueType?: string;
+  issuedBy?: string;
+  issuedTime?: string;
+  licensePayload?: string;
+  download?: LicenseIssueDownloadMetadata;
+}
+
+/**
+ * Vendor license issue response object.
+ */
+export interface LicenseIssueVO extends BaseEntity, LicenseIssueResult {
   /**
-   * 主键
+   * Primary key.
    */
   id: string | number;
 
   /**
-   * 授权编号
-   */
-  licenseId?: string;
-
-  /**
-   * 客户主键
-   */
-  customerId?: string | number;
-
-  /**
-   * 密钥编号
-   */
-  keyId?: string;
-
-  /**
-   * 签名算法
+   * Signing algorithm.
    */
   algorithm?: string;
 
   /**
-   * 协议版本
+   * License schema version.
    */
   schemaVersion?: string;
 
   /**
-   * 版本类型
-   */
-  edition?: string;
-
-  /**
-   * 功能编码集合
-   */
-  featureCodes?: string;
-
-  /**
-   * 安装标识
-   */
-  installId?: string;
-
-  /**
-   * 生效时间
-   */
-  validFrom?: string;
-
-  /**
-   * 失效时间
-   */
-  validTo?: string;
-
-  /**
-   * 签发状态
-   */
-  issueStatus?: string;
-
-  /**
-   * 签发类型
-   */
-  issueType?: string;
-
-  /**
-   * 签发人
-   */
-  issuedBy?: string;
-
-  /**
-   * 签发时间
-   */
-  issuedTime?: string;
-
-  /**
-   * 吊销时间
+   * Revoke time.
    */
   revokedTime?: string;
 
   /**
-   * 授权载荷
-   */
-  licensePayload?: string;
-
-  /**
-   * 签名内容
+   * Signature text for audit display only.
    */
   signatureText?: string;
-
-  /**
-   * 允许兼容后端后续扩展字段
-   */
-  [key: string]: any;
 }

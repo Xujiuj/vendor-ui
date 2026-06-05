@@ -1,6 +1,8 @@
 import request from '@/utils/request';
 import { AxiosPromise } from 'axios';
-import { LicenseIssueQuery, LicenseIssueVO } from './types';
+import { LicenseIssueCommand, LicenseIssueQuery, LicenseIssueResult, LicenseIssueVO } from './types';
+
+const LICENSE_ISSUE_BASE_URL = '/vendor/license-issue';
 
 /**
  * 查询供应商授权签发列表
@@ -8,7 +10,7 @@ import { LicenseIssueQuery, LicenseIssueVO } from './types';
  */
 export const listLicenseIssue = (query?: LicenseIssueQuery): AxiosPromise<LicenseIssueVO[]> => {
   return request({
-    url: '/vendor/license-issue/list',
+    url: `${LICENSE_ISSUE_BASE_URL}/list`,
     method: 'get',
     params: query
   });
@@ -20,7 +22,33 @@ export const listLicenseIssue = (query?: LicenseIssueQuery): AxiosPromise<Licens
  */
 export const getLicenseIssue = (id: string | number): AxiosPromise<LicenseIssueVO> => {
   return request({
-    url: '/vendor/license-issue/' + id,
+    url: `${LICENSE_ISSUE_BASE_URL}/${id}`,
     method: 'get'
+  });
+};
+
+/**
+ * Issue a vendor license.
+ *
+ * The backend resolves trusted customer facts from customerId. Keep the request
+ * payload whitelisted so caller-owned customer facts cannot be forwarded
+ * accidentally.
+ */
+export const issueLicense = (data: LicenseIssueCommand): AxiosPromise<LicenseIssueResult> => {
+  const payload = {
+    customerId: data.customerId,
+    installId: data.installId,
+    validFrom: data.validity?.validFrom,
+    validTo: data.validity?.validTo,
+    edition: data.edition,
+    features: data.features,
+    featureCodes: data.featureCodes,
+    issueType: data.issueType
+  };
+
+  return request({
+    url: `${LICENSE_ISSUE_BASE_URL}/issue`,
+    method: 'post',
+    data: payload
   });
 };
