@@ -14,8 +14,12 @@ import { createCustomNameComponent } from '@/utils/createCustomNameComponent';
 const modules = import.meta.glob('./../../views/**/*.vue');
 const enterpriseOwnedRouteKeys = new Set([
   'activitydata',
+  'carbonaccounting',
+  'carbondata',
+  'carbonworkflow',
   'customfieldmeta',
   'datacommit',
+  'dataentry',
   'datasubmission',
   'datavalidation',
   'emissionsource',
@@ -25,13 +29,51 @@ const enterpriseOwnedRouteKeys = new Set([
   'intensitydenominator',
   'licensestate',
   'licenseimport',
+  'licenseruntime',
   'submissiontracking',
   'submissionreminder',
   'powerbi',
   'power-bi'
 ]);
 
-const enterpriseOwnedRoutePaths = new Set(['license/import', 'license/runtime', 'license/state']);
+const enterpriseOwnedRoutePaths = new Set([
+  'activity/data',
+  'carbon/data',
+  'custom/field/meta',
+  'data/commit',
+  'data/entry',
+  'data/submission',
+  'data/validation',
+  'emission/source',
+  'factor/confirm',
+  'green/electricity',
+  'intensity/denominator',
+  'license/import',
+  'license/runtime',
+  'license/state',
+  'powerbi/connection',
+  'powerbi/localconnection',
+  'power-bi/connection',
+  'power-bi/local-connection',
+  'submission/reminder',
+  'submission/tracking'
+]);
+
+const enterpriseOwnedTitlePatterns = [
+  /^0?[1-5][\s.、_-]/,
+  /license\s*(导入|运行|状态|runtime|import)/i,
+  /(导入|运行|状态|runtime|import)\s*license/i,
+  /活动数据/,
+  /排放源识别/,
+  /排放因子确认/,
+  /绿电绿证/,
+  /强度管理/,
+  /强度分母/,
+  /自定义字段/,
+  /数据(校验|验证|提交|催办)/,
+  /(提交|催办).*(跟踪|记录|提醒|状态)/,
+  /power\s*bi.*(连接|本地|runtime|connection)/i
+];
 
 export const usePermissionStore = defineStore('permission', () => {
   const routes = ref<RouteRecordRaw[]>([]);
@@ -113,20 +155,27 @@ export const usePermissionStore = defineStore('permission', () => {
   };
 
   const isEnterpriseOwnedRoute = (route: RouteRecordRaw): boolean => {
-    return hasEnterpriseOwnedPath(route.path) || hasEnterpriseOwnedName(route.name) || hasEnterpriseOwnedPermission(route.permissions);
+    const routePermissions = (route as { permissions?: string[] }).permissions || ((route.meta || {}) as { permissions?: string[] }).permissions;
+    return (
+      hasEnterpriseOwnedRouteValue(route.path) ||
+      hasEnterpriseOwnedRouteValue(route.name) ||
+      hasEnterpriseOwnedRouteValue(route.component) ||
+      hasEnterpriseOwnedPermission(routePermissions) ||
+      hasEnterpriseOwnedTitle(route.meta?.title)
+    );
   };
 
-  const hasEnterpriseOwnedPath = (path: string): boolean => {
-    const normalizedPath = normalizeRouteKey(path);
-    const pathSegments = normalizedPath.split('/').filter(Boolean);
-    return enterpriseOwnedRoutePaths.has(normalizedPath) || pathSegments.some((segment) => enterpriseOwnedRouteKeys.has(segment));
-  };
-
-  const hasEnterpriseOwnedName = (name?: string | symbol | null): boolean => {
-    if (!name) {
+  const hasEnterpriseOwnedRouteValue = (value?: unknown): boolean => {
+    if (!value) {
       return false;
     }
-    return enterpriseOwnedRouteKeys.has(normalizeRouteKey(String(name)));
+    const normalizedValue = normalizeRouteKey(String(value));
+    const pathSegments = normalizedValue.split('/').filter(Boolean);
+    return (
+      enterpriseOwnedRoutePaths.has(normalizedValue) ||
+      enterpriseOwnedRouteKeys.has(normalizedValue) ||
+      pathSegments.some((segment) => enterpriseOwnedRouteKeys.has(segment))
+    );
   };
 
   const hasEnterpriseOwnedPermission = (permissions?: string[]): boolean => {
@@ -138,6 +187,10 @@ export const usePermissionStore = defineStore('permission', () => {
           .some((part) => enterpriseOwnedRouteKeys.has(normalizeRouteKey(part)))
       )
     );
+  };
+
+  const hasEnterpriseOwnedTitle = (title?: unknown): boolean => {
+    return typeof title === 'string' && enterpriseOwnedTitlePatterns.some((pattern) => pattern.test(title));
   };
 
   const normalizeRouteKey = (value: string): string => {
