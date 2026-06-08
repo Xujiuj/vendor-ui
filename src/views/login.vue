@@ -1,15 +1,20 @@
 <template>
   <div class="login-page auth-page">
-    <div class="login-copy">
-      <div>
-        <div class="login-brand"><span class="logo-mark"></span>碳数据运营后台</div>
-        <span class="tag info">厂商端</span>
+    <div class="login-shell">
+      <div class="login-brand">
+        <span class="logo-mark"></span>
+        <div>
+          <strong>厂商碳运营管理平台</strong>
+          <small>Vendor Operations Portal</small>
+        </div>
       </div>
-    </div>
 
-    <div class="login-box">
       <el-form ref="loginRef" :model="loginForm" :rules="loginRules" class="login-card">
-        <h2>厂商运营管理平台</h2>
+        <div class="login-card-head">
+          <span class="portal-tag">厂商端运营</span>
+          <h2>厂商碳运营管理平台</h2>
+          <p>客户授权、License 签发、因子版本、模板分发和续费运营统一入口</p>
+        </div>
 
         <el-form-item prop="username" label="账号" class="field">
           <el-input v-model="loginForm.username" autocomplete="username" placeholder="请输入账号" />
@@ -40,6 +45,11 @@
           <span v-if="!loading">登录</span>
           <span v-else>校验中...</span>
         </el-button>
+
+        <div class="login-support">
+          <a href="https://example.com" target="_blank" rel="noreferrer">官网</a>
+          <span>技术支持：400-000-0000</span>
+        </div>
       </el-form>
     </div>
   </div>
@@ -58,8 +68,8 @@ const { t } = useI18n();
 
 const loginForm = ref<LoginData>({
   tenantId: '000000',
-  username: 'chenym',
-  password: '123456',
+  username: 'admin',
+  password: 'admin123',
   rememberMe: false,
   code: '',
   uuid: ''
@@ -130,105 +140,109 @@ onMounted(() => {
   position: relative;
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 48px;
+  padding: 48px 24px;
   background:
-    linear-gradient(90deg, rgba(6, 21, 38, 0.56), rgba(6, 21, 38, 0.16) 48%, rgba(255, 255, 255, 0.08)),
-    url('../assets/images/login-carbon-bg.png') center / cover no-repeat;
+    linear-gradient(135deg, rgba(16, 40, 32, 0.96), rgba(24, 52, 47, 0.94)),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.045) 0 1px, transparent 1px 96px),
+    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 96px);
 }
 
-.login-copy {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-}
-
-.login-copy > div {
-  position: relative;
-  width: 100%;
-  height: 100%;
+.login-shell {
+  width: min(420px, 100%);
 }
 
 .login-brand {
-  position: absolute;
-  top: 48px;
-  left: 48px;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 18px;
   color: #fff;
-  font-size: 15px;
+}
+
+.login-brand strong,
+.login-brand small {
+  display: block;
+}
+
+.login-brand strong {
+  font-size: 16px;
   font-weight: 700;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-  pointer-events: auto;
+}
+
+.login-brand small {
+  margin-top: 2px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 12px;
+  letter-spacing: 0;
 }
 
 .logo-mark {
-  width: 28px;
-  height: 28px;
+  width: 34px;
+  height: 34px;
   border-radius: 6px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 44%), linear-gradient(135deg, #22c55e, #1677ff);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
-
-.tag {
-  position: absolute;
-  top: 48px;
-  right: 48px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 6px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #fff;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  backdrop-filter: blur(12px);
-  pointer-events: auto;
-}
-
-.tag::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
-.login-box {
-  position: relative;
-  z-index: 1;
-  width: min(430px, calc(100vw - 48px));
+  background: linear-gradient(135deg, #1f8f6a, #1677ff);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.22),
+    0 8px 18px rgba(0, 0, 0, 0.16);
 }
 
 .login-card {
   width: 100%;
-  padding: 36px 32px;
-  border: 1px solid rgba(255, 255, 255, 0.48);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 28px 70px rgba(8, 24, 42, 0.28);
-  backdrop-filter: blur(16px);
+  padding: 34px 32px 26px;
+  border: 1px solid rgba(255, 255, 255, 0.52);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.24);
 }
 
-.login-card h2 {
-  margin: 0 0 20px;
-  color: #1f2937;
-  font-family: KaiTi, '楷体', serif;
-  font-size: 20px;
-  font-weight: 700;
+.login-card-head {
+  margin-bottom: 22px;
   text-align: center;
 }
 
+.portal-tag {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid #cdeadd;
+  border-radius: 6px;
+  background: #eaf8f1;
+  color: #157656;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.portal-tag::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: #1f8f6a;
+}
+
+.login-card h2 {
+  margin: 12px 0 0;
+  color: #1f2937;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.login-card p {
+  margin: 8px 0 0;
+  color: #8a94a6;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
 .field {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
 .login-card :deep(.el-form-item__label) {
@@ -251,10 +265,10 @@ onMounted(() => {
   box-shadow: 0 0 0 1px #d6dce5 inset;
 }
 
-.login-card :deep(.el-input__wrapper.is-focus) {
+.login-card :deep(.el-input.is-focus .el-input__wrapper) {
   box-shadow:
-    0 0 0 1px #1677ff inset,
-    0 0 0 3px rgba(22, 119, 255, 0.12);
+    0 0 0 1px #1f8f6a inset,
+    0 0 0 3px rgba(31, 143, 106, 0.14);
 }
 
 .captcha-field {
@@ -287,24 +301,38 @@ onMounted(() => {
 .login-submit {
   width: 100%;
   height: 40px;
-  margin-top: 16px;
+  margin-top: 14px;
   border-radius: 6px;
   font-weight: 700;
 }
 
+.login-support {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+  color: #8a94a6;
+  font-size: 12px;
+}
+
+.login-support a {
+  color: #1677ff;
+  font-weight: 600;
+}
+
 @media (max-width: 720px) {
   .auth-page {
-    padding: 80px 24px 32px;
+    padding: 32px 18px;
   }
 
-  .login-brand {
-    left: 24px;
-    top: 24px;
+  .login-card {
+    padding: 28px 22px 22px;
   }
 
-  .tag {
-    right: 24px;
-    top: 24px;
+  .login-support {
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
   }
 }
 </style>

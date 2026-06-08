@@ -3,12 +3,11 @@
     <div class="page-head factor-version-head">
       <div>
         <h1>因子版本</h1>
-        <p>管理供应商侧排放因子版本，查看发布、冻结与开放范围前的版本元数据。</p>
+        <p>管理厂商云端排放因子版本元数据，查看发布、冻结和开放范围前置状态。</p>
       </div>
       <div class="head-notes">
-        <div><strong>用途</strong><span>维护因子目录版本状态，支撑后续发布、冻结和授权范围管理。</span></div>
-        <div><strong>是否需填报</strong><span>无需企业填报，由供应商运营维护。</span></div>
-        <div><strong>如何填</strong><span>当前页只查询供应商版本元数据，生命周期动作待后端接口开放后接入。</span></div>
+        <div><strong>归属</strong><span>厂商云端维护，不承载企业本地填报、导入或报表入口。</span></div>
+        <div><strong>数据来源</strong><span>仅调用 /vendor/factor-version。</span></div>
       </div>
     </div>
 
@@ -28,28 +27,26 @@
             <el-option label="草稿" value="DRAFT" />
             <el-option label="已发布" value="PUBLISHED" />
             <el-option label="已冻结" value="FROZEN" />
+            <el-option label="已停用" value="DISABLED" />
           </el-select>
         </div>
         <div class="search-item">
           <label>冻结标记</label>
           <el-select v-model="queryParams.frozenFlag" placeholder="请选择冻结标记" clearable>
-            <el-option label="未冻结" :value="0" />
-            <el-option label="已冻结" :value="1" />
+            <el-option label="未冻结" :value="false" />
+            <el-option label="已冻结" :value="true" />
           </el-select>
         </div>
         <div class="search-actions">
           <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-          <el-button link type="primary" @click="showSearch = false">
-            <el-icon><ArrowUp /></el-icon>
-          </el-button>
         </div>
       </div>
 
-      <div v-show="!showSearch" class="toolbar">
+      <div class="toolbar">
         <div class="btns">
-          <el-button type="primary" icon="Search" @click="showSearch = true">展开搜索</el-button>
-          <el-button icon="Refresh" @click="getList">刷新</el-button>
+          <el-button type="primary" icon="Search" @click="showSearch = !showSearch">{{ showSearch ? '收起搜索' : '展开搜索' }}</el-button>
+          <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
       </div>
 
@@ -69,7 +66,7 @@
         <el-table-column label="发布人" align="center" prop="publishedBy" width="140" :show-overflow-tooltip="true" />
         <el-table-column label="发布时间" align="center" prop="publishedTime" width="170">
           <template #default="{ row }">
-            {{ formatDate(row.publishedTime) }}
+            {{ formatDateTime(row.publishedTime) }}
           </template>
         </el-table-column>
         <el-table-column label="备注" align="center" prop="remark" min-width="180" :show-overflow-tooltip="true" />
@@ -80,18 +77,19 @@
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
+      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="refreshList" />
     </div>
 
     <el-drawer v-model="detailDrawer.visible" title="因子版本详情" size="560px" append-to-body>
       <el-descriptions v-if="detailRecord" :column="1" border>
-        <el-descriptions-item label="版本编码">{{ detailRecord.versionCode || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="版本名称">{{ detailRecord.versionName || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="版本编码">{{ formatText(detailRecord.versionCode) }}</el-descriptions-item>
+        <el-descriptions-item label="版本名称">{{ formatText(detailRecord.versionName) }}</el-descriptions-item>
         <el-descriptions-item label="发布状态">{{ formatPublishStatus(detailRecord.publishStatus) }}</el-descriptions-item>
         <el-descriptions-item label="冻结标记">{{ isFrozen(detailRecord.frozenFlag) ? '已冻结' : '未冻结' }}</el-descriptions-item>
-        <el-descriptions-item label="发布人">{{ detailRecord.publishedBy || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="发布时间">{{ formatDate(detailRecord.publishedTime) }}</el-descriptions-item>
-        <el-descriptions-item label="备注">{{ detailRecord.remark || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="发布人">{{ formatText(detailRecord.publishedBy) }}</el-descriptions-item>
+        <el-descriptions-item label="发布时间">{{ formatDateTime(detailRecord.publishedTime) }}</el-descriptions-item>
+        <el-descriptions-item label="创建时间">{{ formatDateTime(detailRecord.createTime) }}</el-descriptions-item>
+        <el-descriptions-item label="备注">{{ formatText(detailRecord.remark) }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
   </div>
@@ -100,13 +98,7 @@
 <script setup name="VendorFactorVersion" lang="ts">
 import { listFactorVersion } from '@/api/vendor/factorVersion';
 import type { FactorVersionQuery, FactorVersionVO } from '@/api/vendor/factorVersion/types';
-import { parseTime } from '@/utils/ruoyi';
-
-type FactorVersionListResponse = {
-  rows?: FactorVersionVO[];
-  total?: number;
-  data?: FactorVersionVO[] | FactorVersionVO;
-};
+import { formatDateTime, formatPublishStatus, formatText, publishStatusTagType, readRows, readTotal } from '../shared';
 
 const loading = ref(false);
 const showSearch = ref(true);
@@ -130,28 +122,35 @@ const queryParams = reactive<FactorVersionQuery>({
 const getList = async () => {
   loading.value = true;
   try {
-    const res = (await listFactorVersion(queryParams)) as unknown as FactorVersionListResponse;
-    const dataRows = Array.isArray(res.data) ? res.data : [];
-    factorVersionList.value = res.rows || dataRows;
-    total.value = Number(res.total || factorVersionList.value.length || 0);
+    const res = await listFactorVersion(queryParams);
+    factorVersionList.value = readRows<FactorVersionVO>(res);
+    total.value = readTotal(res, factorVersionList.value);
   } finally {
     loading.value = false;
   }
 };
 
-const handleQuery = () => {
-  queryParams.pageNum = 1;
-  getList();
+const refreshList = async () => {
+  try {
+    await getList();
+  } catch {
+    // Global request interceptor already shows the error.
+  }
 };
 
-const resetQuery = () => {
+const handleQuery = async () => {
+  queryParams.pageNum = 1;
+  await refreshList();
+};
+
+const resetQuery = async () => {
   queryParams.pageNum = 1;
   queryParams.pageSize = 10;
   queryParams.versionCode = undefined;
   queryParams.versionName = undefined;
   queryParams.publishStatus = undefined;
   queryParams.frozenFlag = undefined;
-  getList();
+  await refreshList();
 };
 
 const openDetail = (row: FactorVersionVO) => {
@@ -161,37 +160,8 @@ const openDetail = (row: FactorVersionVO) => {
 
 const isFrozen = (value?: number | boolean) => value === true || value === 1;
 
-const formatPublishStatus = (status?: string) => {
-  const statusMap: Record<string, string> = {
-    DRAFT: '草稿',
-    PUBLISHED: '已发布',
-    RELEASED: '已发布',
-    FROZEN: '已冻结',
-    DISABLED: '已停用'
-  };
-  return status ? statusMap[status] || status : '-';
-};
-
-const publishStatusTagType = (status?: string) => {
-  const statusMap: Record<string, 'success' | 'warning' | 'info' | 'danger'> = {
-    DRAFT: 'info',
-    PUBLISHED: 'success',
-    RELEASED: 'success',
-    FROZEN: 'danger',
-    DISABLED: 'warning'
-  };
-  return status ? statusMap[status] || 'info' : 'info';
-};
-
-const formatDate = (value?: string) => {
-  if (!value) {
-    return '-';
-  }
-  return parseTime(value, '{y}-{m}-{d} {h}:{i}:{s}') || value;
-};
-
 onMounted(() => {
-  getList();
+  void refreshList();
 });
 </script>
 
@@ -211,7 +181,7 @@ onMounted(() => {
 
   div {
     display: grid;
-    grid-template-columns: 92px 1fr;
+    grid-template-columns: 72px 1fr;
     gap: 8px;
   }
 
@@ -219,6 +189,12 @@ onMounted(() => {
     color: #1f2937;
     font-weight: 600;
   }
+}
+
+.toolbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 12px;
 }
 
 @media (max-width: 960px) {

@@ -295,3 +295,73 @@
     border-radius: var(--app-radius-sm);
   }
 }
+
+// RuoYi prototype sidebar alignment
+#app {
+  .sidebar-container {
+    background: var(--carbon-side) !important;
+    box-shadow: 2px 0 10px rgba(16, 40, 32, 0.18);
+
+    .el-menu {
+      background-color: var(--carbon-side) !important;
+    }
+
+    .el-menu-item,
+    .el-sub-menu__title,
+    .sub-menu-title-noDropdown {
+      height: 44px;
+      margin: 2px 8px;
+      border-radius: 6px;
+      color: rgba(255, 255, 255, 0.78);
+      line-height: 44px;
+    }
+
+    .menu-title {
+      max-width: 140px;
+      color: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0;
+    }
+
+    .svg-icon {
+      color: rgba(255, 255, 255, 0.72);
+      fill: currentColor;
+    }
+
+    .el-menu-item:hover,
+    .el-sub-menu__title:hover,
+    .sub-menu-title-noDropdown:hover {
+      background: rgba(255, 255, 255, 0.08) !important;
+      color: #fff !important;
+    }
+
+    .el-menu-item.is-active,
+    .sub-menu-title-noDropdown.is-active,
+    .el-sub-menu.is-active > .el-sub-menu__title {
+      background: var(--carbon-brand) !important;
+      color: #fff !important;
+      box-shadow: 0 4px 10px rgba(31, 143, 106, 0.26);
+    }
+
+    .el-menu-item.is-active .svg-icon,
+    .sub-menu-title-noDropdown.is-active .svg-icon,
+    .el-sub-menu.is-active > .el-sub-menu__title .svg-icon {
+      color: #fff;
+      fill: currentColor;
+    }
+
+    .theme-dark .nest-menu .el-sub-menu > .el-sub-menu__title,
+    .theme-dark .el-sub-menu .el-menu-item {
+      background-color: var(--carbon-side-deep) !important;
+    }
+  }
+
+  .hideSidebar {
+    .sidebar-container {
+      .menu-title {
+        max-width: 0;
+      }
+    }
+  }
+}

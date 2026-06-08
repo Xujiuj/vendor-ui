@@ -3,9 +3,9 @@
     <template v-if="hasOneShowingChild(item, item.children) && (!onlyOneChild.children || onlyOneChild.noShowingChildren) && !item.alwaysShow">
       <app-link v-if="onlyOneChild.meta" :to="resolvePath(onlyOneChild.path, onlyOneChild.query)">
         <el-menu-item :index="resolvePath(onlyOneChild.path)" :class="{ 'submenu-title-noDropdown': !isNest }">
-          <svg-icon :icon-class="onlyOneChild.meta.icon || (item.meta && item.meta.icon)" />
+          <svg-icon class="sidebar-menu-icon" :icon-class="resolveIcon(onlyOneChild, item)" />
           <template #title>
-            <span class="menu-title" :title="hasTitle(onlyOneChild.meta.title)">{{ onlyOneChild.meta.title }}</span>
+            <span class="menu-title sidebar-menu-title" :title="hasTitle(onlyOneChild.meta.title)">{{ onlyOneChild.meta.title }}</span>
           </template>
         </el-menu-item>
       </app-link>
@@ -13,8 +13,8 @@
 
     <el-sub-menu v-else ref="subMenu" :index="resolvePath(item.path)" teleported>
       <template v-if="item.meta" #title>
-        <svg-icon :icon-class="item.meta ? item.meta.icon : ''" />
-        <span class="menu-title" :title="hasTitle(item.meta?.title)">{{ item.meta?.title }}</span>
+        <svg-icon class="sidebar-menu-icon" :icon-class="resolveIcon(item)" />
+        <span class="menu-title sidebar-menu-title" :title="hasTitle(item.meta?.title)">{{ item.meta?.title }}</span>
       </template>
 
       <sidebar-item
@@ -97,5 +97,10 @@ const hasTitle = (title: string | undefined): string => {
     return '';
   }
   return title;
+};
+
+const resolveIcon = (route?: RouteRecordRaw, fallbackRoute?: RouteRecordRaw): string => {
+  const icon = route?.meta?.icon || fallbackRoute?.meta?.icon;
+  return typeof icon === 'string' && icon.trim() ? icon : 'tree';
 };
 </script>

@@ -91,10 +91,8 @@ export const constantRoutes: RouteRecordRaw[] = [
   }
 ];
 
-// 动态路由，基于用户权限动态去加载
-export const dynamicRoutes: RouteRecordRaw[] = [
-
-];
+// 动态路由只保留非业务路由扩展点；业务菜单由 /system/menu/getRouters 返回。
+export const dynamicRoutes: RouteRecordRaw[] = [];
 
 /**
  * 创建路由

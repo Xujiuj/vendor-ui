@@ -21,6 +21,9 @@
   --carbon-bg: #f3f7f5;
   --carbon-panel: #fff;
   --carbon-side: #18342f;
+  --carbon-side-deep: #102820;
+  --carbon-side-active: #0e211d;
+  --carbon-brand: #1f8f6a;
   --carbon-green: #1f8f6a;
   --carbon-green-soft: #e7f6ef;
   --carbon-shadow: 0 10px 26px rgba(31, 45, 61, .08);
@@ -28,6 +31,15 @@
   --carbon-radius-sm: 6px;
   --carbon-radius: 10px;
   --carbon-radius-lg: 12px;
+  --menuBg: var(--carbon-side);
+  --menuColor: rgba(255, 255, 255, .78);
+  --menuActiveText: #fff;
+  --menuHover: rgba(255, 255, 255, .08);
+  --subMenuBg: var(--carbon-side-deep);
+  --subMenuHover: rgba(255, 255, 255, .1);
+  --subMenuTitleHover: rgba(255, 255, 255, .08);
+  --el-menu-active-color: var(--carbon-brand);
+  --el-bg-color-page: var(--carbon-bg);
 }
 
 /* ============================================================

@@ -1,6 +1,6 @@
 import request from '@/utils/request';
-import { AxiosPromise } from 'axios';
 import { LicenseIssueCommand, LicenseIssueQuery, LicenseIssueResult, LicenseIssueVO } from './types';
+import type { ApiResponse, ListResponse } from '../shared';
 
 const LICENSE_ISSUE_BASE_URL = '/vendor/license-issue';
 
@@ -8,7 +8,7 @@ const LICENSE_ISSUE_BASE_URL = '/vendor/license-issue';
  * 查询供应商授权签发列表
  * @param query
  */
-export const listLicenseIssue = (query?: LicenseIssueQuery): AxiosPromise<LicenseIssueVO[]> => {
+export const listLicenseIssue = (query?: LicenseIssueQuery): Promise<ListResponse<LicenseIssueVO>> => {
   return request({
     url: `${LICENSE_ISSUE_BASE_URL}/list`,
     method: 'get',
@@ -20,7 +20,7 @@ export const listLicenseIssue = (query?: LicenseIssueQuery): AxiosPromise<Licens
  * 查询供应商授权签发详情
  * @param id
  */
-export const getLicenseIssue = (id: string | number): AxiosPromise<LicenseIssueVO> => {
+export const getLicenseIssue = (id: string | number): Promise<ApiResponse<LicenseIssueVO>> => {
   return request({
     url: `${LICENSE_ISSUE_BASE_URL}/${id}`,
     method: 'get'
@@ -34,7 +34,7 @@ export const getLicenseIssue = (id: string | number): AxiosPromise<LicenseIssueV
  * payload whitelisted so caller-owned customer facts cannot be forwarded
  * accidentally.
  */
-export const issueLicense = (data: LicenseIssueCommand): AxiosPromise<LicenseIssueResult> => {
+export const issueLicense = (data: LicenseIssueCommand): Promise<ApiResponse<LicenseIssueResult>> => {
   const payload = {
     customerId: data.customerId,
     keyId: data.keyId,

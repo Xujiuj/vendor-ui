@@ -1,165 +1,386 @@
 <template>
-  <div class="app-container home">
-    <el-row :gutter="20">
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-        <h2>RuoYi-Vue-Plus多租户管理系统</h2>
-        <p>
-          RuoYi-Vue-Plus 是基于 RuoYi-Vue 针对 分布式集群 场景升级(不兼容原框架)
-          <br />
-          * 前端开发框架 Vue3、TS、Element Plus<br />
-          * 后端开发框架 Spring Boot<br />
-          * 容器框架 Undertow 基于 Netty 的高性能容器<br />
-          * 权限认证框架 Sa-Token 支持多终端认证系统<br />
-          * 关系数据库 MySQL 适配 8.X 最低 5.7<br />
-          * 缓存数据库 Redis 适配 6.X 最低 4.X<br />
-          * 数据库框架 Mybatis-Plus 快速 CRUD 增加开发效率<br />
-          * 数据库框架 p6spy 更强劲的 SQL 分析<br />
-          * 多数据源框架 dynamic-datasource 支持主从与多种类数据库异构<br />
-          * 序列化框架 Jackson 统一使用 jackson 高效可靠<br />
-          * Redis客户端 Redisson 性能强劲、API丰富<br />
-          * 分布式限流 Redisson 全局、请求IP、集群ID 多种限流<br />
-          * 分布式锁 Lock4j 注解锁、工具锁 多种多样<br />
-          * 分布式幂等 Lock4j 基于分布式锁实现<br />
-          * 分布式链路追踪 SkyWalking 支持链路追踪、网格分析、度量聚合、可视化<br />
-          * 分布式任务调度 SnailJob 高性能 高可靠 易扩展<br />
-          * 文件存储 Minio 本地存储<br />
-          * 文件存储 七牛、阿里、腾讯 云存储<br />
-          * 监控框架 SpringBoot-Admin 全方位服务监控<br />
-          * 校验框架 Validation 增强接口安全性 严谨性<br />
-          * Excel框架 FastExcel(原Alibaba EasyExcel) 性能优异 扩展性强<br />
-          * 文档框架 SpringDoc、javadoc 无注解零入侵基于java注释<br />
-          * 工具类框架 Hutool、Lombok 减少代码冗余 增加安全性<br />
-          * 代码生成器 适配MP、SpringDoc规范化代码 一键生成前后端代码<br />
-          * 部署方式 Docker 容器编排 一键部署业务集群<br />
-          * 国际化 SpringMessage Spring标准国际化方案<br />
-        </p>
-        <p><b>当前版本:</b> <span>v5.6.1</span></p>
-        <p>
-          <el-tag type="danger">&yen;免费开源</el-tag>
-        </p>
-        <p>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://gitee.com/dromara/RuoYi-Vue-Plus')">访问码云</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://github.com/dromara/RuoYi-Vue-Plus')">访问GitHub</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://plus-doc.dromara.org/#/ruoyi-vue-plus/changlog')"
-            >更新日志</el-button
-          >
-        </p>
-      </el-col>
+  <div class="app-container vendor-home page-panel">
+    <div class="page-head">
+      <div>
+        <h1>厂商运营工作台</h1>
+        <p>客户档案、License 授权/签发、因子版本、开放范围、模板分发和续费订单统一从厂商业务域进入。</p>
+      </div>
+      <span class="portal-chip">后端菜单驱动</span>
+    </div>
 
-      <el-col :sm="24" :lg="12" style="padding-left: 20px">
-        <h2>RuoYi-Cloud-Plus多租户微服务管理系统</h2>
-        <p>
-          RuoYi-Cloud-Plus 微服务通用权限管理系统 重写 RuoYi-Cloud 全方位升级(不兼容原框架)
-          <br />
-          * 前端开发框架 Vue3、TS、Element UI<br />
-          * 后端开发框架 Spring Boot<br />
-          * 微服务开发框架 Spring Cloud、Spring Cloud Alibaba<br />
-          * 容器框架 Undertow 基于 XNIO 的高性能容器<br />
-          * 权限认证框架 Sa-Token、Jwt 支持多终端认证系统<br />
-          * 关系数据库 MySQL 适配 8.X 最低 5.7<br />
-          * 关系数据库 Oracle 适配 11g 12c<br />
-          * 关系数据库 PostgreSQL 适配 13 14<br />
-          * 关系数据库 SQLServer 适配 2017 2019<br />
-          * 缓存数据库 Redis 适配 6.X 最低 5.X<br />
-          * 分布式注册中心 Alibaba Nacos 采用2.X 基于GRPC通信高性能<br />
-          * 分布式配置中心 Alibaba Nacos 采用2.X 基于GRPC通信高性能<br />
-          * 服务网关 Spring Cloud Gateway 响应式高性能网关<br />
-          * 负载均衡 Spring Cloud Loadbalancer 负载均衡处理<br />
-          * RPC远程调用 Apache Dubbo 原生态使用体验、高性能<br />
-          * 分布式限流熔断 Alibaba Sentinel 无侵入、高扩展<br />
-          * 分布式事务 Alibaba Seata 无侵入、高扩展 支持 四种模式<br />
-          * 分布式消息队列 Apache Kafka 高性能高速度<br />
-          * 分布式消息队列 Apache RocketMQ 高可用功能多样<br />
-          * 分布式消息队列 RabbitMQ 支持各种扩展插件功能多样性<br />
-          * 分布式搜索引擎 ElasticSearch 业界知名<br />
-          * 分布式链路追踪 Apache SkyWalking 链路追踪、网格分析、度量聚合、可视化<br />
-          * 分布式日志中心 ELK 业界成熟解决方案<br />
-          * 分布式监控 Prometheus、Grafana 全方位性能监控<br />
-          * 其余与 Vue 版本一致<br />
-        </p>
-        <p><b>当前版本:</b> <span>v2.6.1</span></p>
-        <p>
-          <el-tag type="danger">&yen;免费开源</el-tag>
-        </p>
-        <p>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://gitee.com/dromara/RuoYi-Cloud-Plus')">访问码云</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://github.com/dromara/RuoYi-Cloud-Plus')">访问GitHub</el-button>
-          <el-button type="primary" icon="Cloudy" plain @click="goTarget('https://plus-doc.dromara.org/#/ruoyi-cloud-plus/changlog')"
-            >更新日志</el-button
-          >
-        </p>
-      </el-col>
-    </el-row>
-    <el-divider />
+    <section class="metric-grid" aria-label="厂商业务入口">
+      <button v-for="item in operations" :key="item.title" type="button" class="metric-card" @click="goTarget(item.path)">
+        <span class="metric-icon">
+          <svg-icon :icon-class="item.icon" />
+        </span>
+        <span>
+          <b>{{ item.title }}</b>
+          <small>{{ item.summary }}</small>
+        </span>
+      </button>
+    </section>
+
+    <section class="panel status-panel" aria-label="运营状态摘要">
+      <div class="toolbar">
+        <b>运营状态摘要</b>
+        <span class="hint">只聚合厂商侧客户、授权、因子、模板和续费状态，不展示企业本地 01-05 业务。</span>
+      </div>
+      <div class="status-grid">
+        <div v-for="item in statusSummary" :key="item.label" class="status-card">
+          <span class="status-value">{{ item.value }}</span>
+          <span class="status-label">{{ item.label }}</span>
+          <small>{{ item.note }}</small>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel action-panel">
+      <div class="toolbar">
+        <b>今日运营关注</b>
+        <span class="hint">以下处理项复用已有厂商页面/API，由后端 getRouters 返回实际菜单。</span>
+      </div>
+      <div class="task-list">
+        <div v-for="task in tasks" :key="task.title" class="task-row">
+          <span class="task-state" :class="task.stateClass">{{ task.state }}</span>
+          <div>
+            <strong>{{ task.title }}</strong>
+            <p>{{ task.description }}</p>
+          </div>
+          <el-button text type="primary" @click="goTarget(task.path)">查看</el-button>
+        </div>
+      </div>
+    </section>
   </div>
 </template>
 
 <script setup name="Index" lang="ts">
-const goTarget = (url: string) => {
-  window.open(url, '__blank');
+const router = useRouter();
+
+const operations = [
+  {
+    title: '客户档案',
+    summary: '客户主数据与授权对象',
+    icon: 'peoples',
+    path: '/vendor/customer'
+  },
+  {
+    title: 'License 授权/签发',
+    summary: '签发、下载和授权审计',
+    icon: 'lock',
+    path: '/vendor/license'
+  },
+  {
+    title: '因子版本',
+    summary: '发布、冻结和版本治理',
+    icon: 'tree',
+    path: '/vendor/factor-version'
+  },
+  {
+    title: '因子开放范围',
+    summary: '按客户和 License 控制因子可见性',
+    icon: 'eye-open',
+    path: '/vendor/factor-scope'
+  },
+  {
+    title: '模板库',
+    summary: '报表模板维护与发布',
+    icon: 'documentation',
+    path: '/vendor/report-template'
+  },
+  {
+    title: '模板分发',
+    summary: '模板面向客户的开放范围',
+    icon: 'guide',
+    path: '/vendor/template-scope'
+  },
+  {
+    title: '续费订单',
+    summary: '续费跟踪和运营处理',
+    icon: 'money',
+    path: '/vendor/renewal-order'
+  },
+  {
+    title: '运营状态摘要',
+    summary: '授权、模板和续费风险聚合',
+    icon: 'dashboard',
+    path: '/vendor/renewal-order'
+  }
+];
+
+const statusSummary = [
+  {
+    value: '客户',
+    label: '签发前置',
+    note: '停用客户不可签发 License'
+  },
+  {
+    value: 'License',
+    label: '授权闭环',
+    note: '签发结果支持 .lic 下载'
+  },
+  {
+    value: '因子',
+    label: '开放控制',
+    note: '版本和客户范围分别治理'
+  },
+  {
+    value: '模板',
+    label: '分发范围',
+    note: '模板库发布后再授权客户'
+  }
+];
+
+const tasks = [
+  {
+    title: '核对客户档案状态',
+    description: '停用客户不可签发 License，签发前以厂商客户主数据为准。',
+    state: '客户',
+    stateClass: 'state-info',
+    path: '/vendor/customer'
+  },
+  {
+    title: '处理 License 签发请求',
+    description: '授权签发页面复用已有页面，并调用 vendor/licenseIssue 接口。',
+    state: '授权',
+    stateClass: 'state-ok',
+    path: '/vendor/license'
+  },
+  {
+    title: '确认因子开放范围',
+    description: '因子版本发布后，按客户和 License 管理开放范围。',
+    state: '因子',
+    stateClass: 'state-info',
+    path: '/vendor/factor-scope'
+  },
+  {
+    title: '确认模板分发范围',
+    description: '模板库和分发范围由厂商侧维护，企业端只消费下载能力。',
+    state: '模板',
+    stateClass: 'state-warn',
+    path: '/vendor/template-scope'
+  }
+];
+
+const goTarget = (path: string) => {
+  router.push(path);
 };
 </script>
 
 <style lang="scss" scoped>
-.home {
-  blockquote {
-    padding: 10px 20px;
-    margin: 0 0 20px;
-    font-size: 17.5px;
-    border-left: 5px solid #eee;
-  }
-  hr {
-    margin-top: 20px;
-    margin-bottom: 20px;
-    border: 0;
-    border-top: 1px solid #eee;
-  }
-  .col-item {
-    margin-bottom: 20px;
-  }
+.vendor-home {
+  min-height: calc(100vh - 84px);
+}
 
-  ul {
-    padding: 0;
-    margin: 0;
-  }
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid #cdeadd;
+  border-radius: 6px;
+  background: #eaf8f1;
+  color: #157656;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 
-  font-family: 'open sans', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+.metric-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.metric-card {
+  min-height: 112px;
+  padding: 16px;
+  border: 1px solid #eef0f3;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(31, 45, 61, 0.025), 0 6px 18px -10px rgba(31, 45, 61, 0.06);
+  color: var(--carbon-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease,
+    transform 0.18s ease;
+}
+
+.metric-card:hover {
+  border-color: #cdeadd;
+  box-shadow: 0 10px 26px rgba(31, 45, 61, 0.08);
+  transform: translateY(-2px);
+}
+
+.metric-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  background: #eaf8f1;
+  color: var(--carbon-brand);
+}
+
+.metric-icon :deep(.svg-icon) {
+  width: 18px;
+  height: 18px;
+}
+
+.metric-card b,
+.metric-card small {
+  display: block;
+}
+
+.metric-card b {
+  color: var(--carbon-ink);
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.metric-card small {
+  margin-top: 6px;
+  color: var(--carbon-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.status-panel {
+  margin-bottom: 14px;
+  padding: 0;
+}
+
+.status-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  border-top: 1px solid #f1f3f6;
+}
+
+.status-card {
+  min-height: 96px;
+  padding: 16px 18px;
+  border-right: 1px solid #f1f3f6;
+}
+
+.status-card:last-child {
+  border-right: 0;
+}
+
+.status-value,
+.status-label,
+.status-card small {
+  display: block;
+}
+
+.status-value {
+  color: var(--carbon-brand);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.status-label {
+  margin-top: 6px;
+  color: var(--carbon-ink);
   font-size: 13px;
-  color: #676a6c;
-  overflow-x: hidden;
+  font-weight: 700;
+}
 
-  ul {
-    list-style-type: none;
+.status-card small {
+  margin-top: 6px;
+  color: var(--carbon-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.action-panel {
+  padding: 0;
+}
+
+.task-list {
+  display: grid;
+}
+
+.task-row {
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f1f3f6;
+}
+
+.task-row:last-child {
+  border-bottom: 0;
+}
+
+.task-state {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.state-info {
+  color: #2563eb;
+  background: #eff6ff;
+}
+
+.state-ok {
+  color: #0f8a55;
+  background: #eaf8f1;
+}
+
+.state-warn {
+  color: #b7791f;
+  background: #fff7e6;
+}
+
+.task-row strong {
+  display: block;
+  color: var(--carbon-ink);
+  font-size: 14px;
+}
+
+.task-row p {
+  margin: 4px 0 0;
+  color: var(--carbon-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+@media (max-width: 1200px) {
+  .metric-grid,
+  .status-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .metric-grid,
+  .status-grid,
+  .task-row {
+    grid-template-columns: 1fr;
   }
 
-  h4 {
-    margin-top: 0px;
+  .status-card {
+    border-right: 0;
+    border-bottom: 1px solid #f1f3f6;
   }
 
-  h2 {
-    margin-top: 10px;
-    font-size: 26px;
-    font-weight: 100;
+  .status-card:last-child {
+    border-bottom: 0;
   }
 
-  p {
-    margin-top: 10px;
-
-    b {
-      font-weight: 700;
-    }
-  }
-
-  .update-log {
-    ol {
-      display: block;
-      list-style-type: decimal;
-      margin-block-start: 1em;
-      margin-block-end: 1em;
-      margin-inline-start: 0;
-      margin-inline-end: 0;
-      padding-inline-start: 40px;
-    }
+  .task-row {
+    align-items: start;
   }
 }
 </style>

@@ -9,71 +9,12 @@ import ParentView from '@/components/ParentView/index.vue';
 import InnerLink from '@/layout/components/InnerLink/index.vue';
 import { ref } from 'vue';
 import { createCustomNameComponent } from '@/utils/createCustomNameComponent';
+import { filterVendorPortalRoutes } from '@/portal/vendorPortalContract';
+
+export { filterVendorPortalRoutes };
 
 // 匹配views里面所有的.vue文件
 const modules = import.meta.glob('./../../views/**/*.vue');
-const enterpriseOwnedRouteKeys = new Set([
-  'activitydata',
-  'carbonaccounting',
-  'carbondata',
-  'carbonworkflow',
-  'customfieldmeta',
-  'datacommit',
-  'dataentry',
-  'datasubmission',
-  'datavalidation',
-  'emissionsource',
-  'factorconfirm',
-  'greenelectricity',
-  'intensity',
-  'intensitydenominator',
-  'licensestate',
-  'licenseimport',
-  'licenseruntime',
-  'submissiontracking',
-  'submissionreminder',
-  'powerbi',
-  'power-bi'
-]);
-
-const enterpriseOwnedRoutePaths = new Set([
-  'activity/data',
-  'carbon/data',
-  'custom/field/meta',
-  'data/commit',
-  'data/entry',
-  'data/submission',
-  'data/validation',
-  'emission/source',
-  'factor/confirm',
-  'green/electricity',
-  'intensity/denominator',
-  'license/import',
-  'license/runtime',
-  'license/state',
-  'powerbi/connection',
-  'powerbi/localconnection',
-  'power-bi/connection',
-  'power-bi/local-connection',
-  'submission/reminder',
-  'submission/tracking'
-]);
-
-const enterpriseOwnedTitlePatterns = [
-  /^0?[1-5][\s.、_-]/,
-  /license\s*(导入|运行|状态|runtime|import)/i,
-  /(导入|运行|状态|runtime|import)\s*license/i,
-  /活动数据/,
-  /排放源识别/,
-  /排放因子确认/,
-  /绿电绿证/,
-  /强度管理/,
-  /强度分母/,
-  /自定义字段/,
-  /数据(校验|验证|提交|催办)/,
-  /(提交|催办).*(跟踪|记录|提醒|状态)/,
-  /power\s*bi.*(连接|本地|runtime|connection)/i
-];
 
 export const usePermissionStore = defineStore('permission', () => {
   const routes = ref<RouteRecordRaw[]>([]);
@@ -111,7 +52,7 @@ export const usePermissionStore = defineStore('permission', () => {
   const generateRoutes = async (): Promise<RouteRecordRaw[]> => {
     const res = await getRouters();
     const { data } = res;
-    const vendorMenuData = filterVendorMenuRoutes(data);
+    const vendorMenuData = filterVendorPortalRoutes(data);
     const sdata = JSON.parse(JSON.stringify(vendorMenuData));
     const rdata = JSON.parse(JSON.stringify(vendorMenuData));
     const defaultData = JSON.parse(JSON.stringify(vendorMenuData));
@@ -122,84 +63,13 @@ export const usePermissionStore = defineStore('permission', () => {
     asyncRoutes.forEach((route) => {
       router.addRoute(route);
     });
-    setRoutes(rewriteRoutes);
-    setSidebarRouters(constantRoutes.concat(sidebarRoutes));
-    setDefaultRoutes(sidebarRoutes);
-    setTopbarRoutes(defaultRoutes);
+    setRoutes(rewriteRoutes.concat(asyncRoutes));
+    setSidebarRouters(constantRoutes.concat(sidebarRoutes, asyncRoutes));
+    setDefaultRoutes(sidebarRoutes.concat(asyncRoutes));
+    setTopbarRoutes(defaultRoutes.concat(asyncRoutes));
     // 路由name重复检查
     duplicateRouteChecker(asyncRoutes, sidebarRoutes);
     return new Promise<RouteRecordRaw[]>((resolve) => resolve(rewriteRoutes));
-  };
-
-  const filterVendorMenuRoutes = (routes: RouteRecordRaw[]): RouteRecordRaw[] => {
-    return routes
-      .map((route) => {
-        const children = route.children ? filterVendorMenuRoutes(route.children) : undefined;
-        if (isEnterpriseOwnedRoute(route) && (!isMenuContainer(route) || !children?.length)) {
-          return undefined;
-        }
-        if (route.children && !children?.length && isMenuContainer(route)) {
-          return undefined;
-        }
-        return {
-          ...route,
-          ...(children ? { children } : {})
-        };
-      })
-      .filter((route): route is RouteRecordRaw => Boolean(route));
-  };
-
-  const isMenuContainer = (route: RouteRecordRaw): boolean => {
-    const component = String(route.component ?? '').toLowerCase();
-    return component === 'layout' || component === 'parentview';
-  };
-
-  const isEnterpriseOwnedRoute = (route: RouteRecordRaw): boolean => {
-    const routePermissions = (route as { permissions?: string[] }).permissions || ((route.meta || {}) as { permissions?: string[] }).permissions;
-    return (
-      hasEnterpriseOwnedRouteValue(route.path) ||
-      hasEnterpriseOwnedRouteValue(route.name) ||
-      hasEnterpriseOwnedRouteValue(route.component) ||
-      hasEnterpriseOwnedPermission(routePermissions) ||
-      hasEnterpriseOwnedTitle(route.meta?.title)
-    );
-  };
-
-  const hasEnterpriseOwnedRouteValue = (value?: unknown): boolean => {
-    if (!value) {
-      return false;
-    }
-    const normalizedValue = normalizeRouteKey(String(value));
-    const pathSegments = normalizedValue.split('/').filter(Boolean);
-    return (
-      enterpriseOwnedRoutePaths.has(normalizedValue) ||
-      enterpriseOwnedRouteKeys.has(normalizedValue) ||
-      pathSegments.some((segment) => enterpriseOwnedRouteKeys.has(segment))
-    );
-  };
-
-  const hasEnterpriseOwnedPermission = (permissions?: string[]): boolean => {
-    return Boolean(
-      permissions?.some((permission) =>
-        permission
-          .toLowerCase()
-          .split(':')
-          .some((part) => enterpriseOwnedRouteKeys.has(normalizeRouteKey(part)))
-      )
-    );
-  };
-
-  const hasEnterpriseOwnedTitle = (title?: unknown): boolean => {
-    return typeof title === 'string' && enterpriseOwnedTitlePatterns.some((pattern) => pattern.test(title));
-  };
-
-  const normalizeRouteKey = (value: string): string => {
-    return value
-      .replace(/([a-z0-9])([A-Z])/g, '$1-$2')
-      .replace(/^\/+|\/+$/g, '')
-      .replace(/_/g, '-')
-      .toLowerCase()
-      .replace(/-/g, '');
   };
 
   /**
@@ -265,17 +135,26 @@ export const usePermissionStore = defineStore('permission', () => {
 export const filterDynamicRoutes = (routes: RouteRecordRaw[]) => {
   const res: RouteRecordRaw[] = [];
   routes.forEach((route) => {
-    if (route.permissions) {
-      if (auth.hasPermiOr(route.permissions)) {
-        res.push(route);
-      }
-    } else if (route.roles) {
-      if (auth.hasRoleOr(route.roles)) {
-        res.push(route);
-      }
+    const children = route.children ? filterDynamicRoutes(route.children) : undefined;
+    const hasChildren = Boolean(children?.length);
+    if (hasRouteAccess(route) || hasChildren) {
+      res.push({
+        ...route,
+        ...(hasChildren ? { children } : route.children ? { children: undefined } : {})
+      });
     }
   });
   return res;
+};
+
+const hasRouteAccess = (route: RouteRecordRaw): boolean => {
+  if (route.permissions) {
+    return auth.hasPermiOr(route.permissions);
+  }
+  if (route.roles) {
+    return auth.hasRoleOr(route.roles);
+  }
+  return !route.permissions && !route.roles;
 };
 
 export const loadView = (view: any, name: string) => {
