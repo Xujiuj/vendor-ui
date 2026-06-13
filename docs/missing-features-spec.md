@@ -114,6 +114,16 @@ Requirements:
 - Future payment callback status must be auditable.
 - Enterprise portal may link out to vendor-owned renewal, but vendor UI remains the owner.
 
+### VU-6: Vendor System Management Surface
+
+Requirements:
+
+- Keep the RuoYi-native system management directory visible in vendor-ui.
+- The vendor portal must expose menu management, role management, package management, user management, department management, post management, dictionary management, parameter settings, and announcement settings when the backend returns those routes.
+- These pages reuse the existing `src/views/system/*` pages and real `/system/*` backend APIs.
+- Do not create duplicate vendor-specific system management pages unless RuoYi cannot cover the workflow.
+- Continue filtering enterprise-local workflow menus and tenant/customer compatibility menus that are not vendor administration functions.
+
 ## Code Style
 
 Use Vue SFC and existing project conventions:
@@ -172,6 +182,7 @@ Conventions:
 - License issue drawer can create and download `.lic`.
 - Factor lifecycle pages can drive backend release/freeze/scope APIs once available.
 - Report template management/distribution is vendor-owned and does not preview enterprise data.
+- Vendor system management includes menu, role, and package management through backend-returned routes.
 - `npm run build:prod` passes.
 
 ## Open Questions

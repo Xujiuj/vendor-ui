@@ -98,9 +98,19 @@ describe('vendor dynamic router guard', () => {
         meta: { title: '系统管理', icon: 'system' },
         children: [
           { path: 'user', component: 'system/user/index', permissions: ['system:user:list'], meta: { title: '用户管理' } },
-          { path: 'notice', component: 'system/notice/index', permissions: ['system:notice:list'], meta: { title: '公告配置' } },
           { path: 'role', component: 'system/role/index', permissions: ['system:role:list'], meta: { title: '角色管理' } },
-          { path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'], meta: { title: '菜单管理' } }
+          { path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'], meta: { title: '菜单管理' } },
+          {
+            path: 'tenantPackage',
+            component: 'system/tenantPackage/index',
+            permissions: ['system:tenantPackage:list'],
+            meta: { title: '套餐管理' }
+          },
+          { path: 'dept', component: 'system/dept/index', permissions: ['system:dept:list'], meta: { title: '部门管理' } },
+          { path: 'post', component: 'system/post/index', permissions: ['system:post:list'], meta: { title: '岗位管理' } },
+          { path: 'dict', component: 'system/dict/index', permissions: ['system:dict:list'], meta: { title: '字典管理' } },
+          { path: 'config', component: 'system/config/index', permissions: ['system:config:list'], meta: { title: '参数设置' } },
+          { path: 'notice', component: 'system/notice/index', permissions: ['system:notice:list'], meta: { title: '公告配置' } }
         ]
       },
       {
@@ -139,22 +149,20 @@ describe('vendor dynamic router guard', () => {
     const systemMenu = filtered.find((route) => route.path === '/system') as any;
 
     expect(titlesOf(filtered)).toEqual(['厂商运营', '数据管理', '系统管理']);
-    expect(titlesOf(vendorMenu.children)).toEqual([
-      '客户档案',
-      'License 授权管理',
-      '续费订单'
-    ]);
+    expect(titlesOf(vendorMenu.children)).toEqual(['客户档案', 'License 授权管理', '续费订单']);
     const dataMenu = filtered.find((route) => route.path === '/data-management') as any;
-    expect(titlesOf(dataMenu.children)).toEqual([
-      '因子版本',
-      '因子明细',
-      '因子开放范围',
-      '模板库',
-      '模板分发',
-      '维表管理',
-      '公告管理'
+    expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子明细', '因子开放范围', '模板库', '模板分发', '维表管理', '公告管理']);
+    expect(titlesOf(systemMenu.children)).toEqual([
+      '用户管理',
+      '角色管理',
+      '菜单管理',
+      '套餐管理',
+      '部门管理',
+      '岗位管理',
+      '字典管理',
+      '参数设置',
+      '公告配置'
     ]);
-    expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '公告配置']);
     expect(JSON.stringify(filtered)).not.toContain('PLUS官网');
     expect(JSON.stringify(filtered)).not.toContain('测试菜单');
     expect(JSON.stringify(filtered)).not.toContain('租户管理');
@@ -167,8 +175,25 @@ describe('vendor dynamic router guard', () => {
     expect(isVendorAllowedRoute({ path: '/vendor', component: 'Layout', meta: { title: '???' } } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: '/data-management', component: 'Layout', meta: { title: '数据管理' } } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'role', component: 'system/role/index', permissions: ['system:role:list'] } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: '/tenant', component: 'Layout', meta: { title: '租户管理' } } as any)).toBe(false);
     expect(isVendorAllowedRoute({ path: '/workflow', component: 'Layout', meta: { title: '???' } } as any)).toBe(false);
+  });
+
+  it('rejects unrelated routes that reuse system child path names outside RuoYi system pages', () => {
+    const filtered = filterVendorPortalRoutes([
+      {
+        path: '/workflow',
+        component: 'Layout',
+        meta: { title: '???' },
+        children: [
+          { path: 'role', component: 'workflow/role/index', permissions: ['workflow:role:list'], meta: { title: '角色' } },
+          { path: 'menu', component: 'workflow/menu/index', permissions: ['workflow:menu:list'], meta: { title: '菜单' } }
+        ]
+      }
+    ] as any);
+
+    expect(filtered).toEqual([]);
   });
 
   it('recognizes enterprise-only and non-vendor titles', () => {
@@ -193,7 +218,12 @@ describe('vendor dynamic router guard', () => {
 
     permissionStore.setSidebarRouters([
       { path: '/vendor', component: 'Layout', meta: { title: '???' }, children: [{ path: 'customer', permissions: ['vendor:customer:list'] }] },
-      { path: '/data-management', component: 'Layout', meta: { title: '数据管理' }, children: [{ path: 'dimension', permissions: ['vendor:dimension:list'] }] },
+      {
+        path: '/data-management',
+        component: 'Layout',
+        meta: { title: '数据管理' },
+        children: [{ path: 'dimension', permissions: ['vendor:dimension:list'] }]
+      },
       { path: 'https://gitee.com/dromara/RuoYi-Vue-Plus', component: 'Layout', meta: { title: 'PLUS官网' } },
       { path: '/demo', component: 'Layout', meta: { title: '测试菜单' } },
       { path: '/workflow', component: 'Layout', meta: { title: '???' }, children: [{ path: 'category', meta: { title: '????' } }] },

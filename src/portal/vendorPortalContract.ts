@@ -44,7 +44,24 @@ const vendorMenuTitleRules = [
   { title: '续费订单', keys: ['vendor:renewalOrder', 'renewal-order', 'renewalOrder', 'vendor/renewalOrder/index'] },
   { title: '系统管理', keys: ['system'] },
   { title: '用户管理', keys: ['system:user', 'system/user/index'] },
-  { title: '公告配置', keys: ['system:notice', 'system/notice/index', 'notice'] }
+  { title: '公告配置', keys: ['system:notice', 'system/notice/index'] }
+] as const;
+
+const vendorSystemManagementRouteKeys = [
+  'system:role',
+  'system/role/index',
+  'system:menu',
+  'system/menu/index',
+  'system:tenantPackage',
+  'system/tenantPackage/index',
+  'system:dept',
+  'system/dept/index',
+  'system:post',
+  'system/post/index',
+  'system:dict',
+  'system/dict/index',
+  'system:config',
+  'system/config/index'
 ] as const;
 
 export const vendorForbiddenMenuTitlePatterns = [
@@ -60,7 +77,9 @@ export const vendorForbiddenMenuTitlePatterns = [
   /^\?+$/
 ];
 
-const vendorAllowedRouteKeys = new Set(vendorMenuTitleRules.flatMap((rule) => rule.keys).map(normalizeRouteKey));
+const vendorAllowedRouteKeys = new Set(
+  [...vendorMenuTitleRules.flatMap((rule) => rule.keys), ...vendorSystemManagementRouteKeys].map(normalizeRouteKey)
+);
 
 const vendorForbiddenRouteKeys = new Set(
   [
