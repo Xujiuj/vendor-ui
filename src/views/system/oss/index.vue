@@ -28,7 +28,6 @@
               <el-input v-model="queryParams.service" placeholder="请输入服务商" clearable @keyup.enter="handleQuery" />
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
@@ -136,6 +135,7 @@ import { listOss, delOss } from '@/api/system/oss';
 import ImagePreview from '@/components/ImagePreview/index.vue';
 import { OssForm, OssQuery, OssVO } from '@/api/system/oss/types';
 
+import { useAutoQuery } from '@/hooks/useAutoQuery';
 const router = useRouter();
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -330,4 +330,6 @@ const handleDelete = async (row?: OssVO) => {
 onMounted(() => {
   getList();
 });
+
+useAutoQuery(queryParams, () => handleQuery(), [dateRangeCreateTime]);
 </script>

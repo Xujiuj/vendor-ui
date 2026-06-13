@@ -18,3 +18,10 @@ export const getTemplateScope = (id: string | number): Promise<ApiResponse<Templ
     method: 'get'
   });
 };
+
+export const deleteTemplateScope = (ids: string | number | Array<string | number>): Promise<ApiResponse> => {
+  return request({
+    url: `${TEMPLATE_SCOPE_BASE_URL}/${ids}`,
+    method: 'delete'
+  });
+};

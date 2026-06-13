@@ -1,6 +1,6 @@
 <template>
   <div :class="classObj" class="app-wrapper" :style="{ '--current-color': theme }">
-    <div v-if="device === 'mobile' && sidebar.opened" class="drawer-bg" @click="handleClickOutside" />
+    <div v-if="shouldShowSidebarMask" class="drawer-bg" @click="handleClickOutside" />
     <side-bar v-if="!sidebar.hide" class="sidebar-container" />
     <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" class="main-container">
       <!-- <el-scrollbar>
@@ -50,6 +50,10 @@ const classObj = computed(() => ({
   withoutAnimation: sidebar.value.withoutAnimation,
   mobile: device.value === 'mobile'
 }));
+
+const shouldShowSidebarMask = computed(() => {
+  return device.value === 'mobile' && sidebar.value.opened && !sidebar.value.hide && showSidebar.value;
+});
 
 const { width } = useWindowSize();
 const WIDTH = 992; // refer to Bootstrap's responsive design
@@ -110,13 +114,18 @@ const setLayout = () => {
 }
 
 .drawer-bg {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  z-index: 998;
+}
+
+.mobile .drawer-bg {
   background: #000;
   opacity: 0.3;
-  width: 100%;
-  top: 0;
-  height: 100%;
-  position: absolute;
-  z-index: 999;
 }
 
 .fixed-header {

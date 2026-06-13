@@ -3,7 +3,7 @@
 This project is the vendor-side frontend for the carbon data management platform.
 
 - Delivery boundary: independent Vue/Vite frontend under `vendor-ui`.
-- Backend target: vendor backend, development proxy `http://localhost:8081`.
+- Backend target: vendor backend, development proxy `http://localhost:18000`.
 - Current slice: frontend base split only. Existing generated pages are retained as reference material and will be aligned to real vendor requirements in later slices.
 
 ## 平台简介

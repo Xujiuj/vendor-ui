@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { ReportTemplateForm, ReportTemplateQuery, ReportTemplateVO } from './types';
+import { ReportTemplateForm, ReportTemplateQuery, ReportTemplateUploadVO, ReportTemplateVO } from './types';
 import type { ApiResponse, ListResponse } from '../shared';
 
 const REPORT_TEMPLATE_BASE_URL = '/vendor/report-template';
@@ -32,6 +32,24 @@ export const updateReportTemplate = (data: ReportTemplateForm): Promise<ApiRespo
     url: REPORT_TEMPLATE_BASE_URL,
     method: 'put',
     data
+  });
+};
+
+export const deleteReportTemplate = (ids: string | number | Array<string | number>): Promise<ApiResponse> => {
+  return request({
+    url: `${REPORT_TEMPLATE_BASE_URL}/${ids}`,
+    method: 'delete'
+  });
+};
+
+export const uploadReportTemplateFile = (data: FormData): Promise<ApiResponse<ReportTemplateUploadVO>> => {
+  return request({
+    url: `${REPORT_TEMPLATE_BASE_URL}/upload`,
+    method: 'post',
+    data,
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
   });
 };
 

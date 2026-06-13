@@ -32,3 +32,9 @@ export interface ReportTemplateVO extends BaseEntity {
   remark?: string;
   [key: string]: any;
 }
+
+export interface ReportTemplateUploadVO {
+  fileName: string;
+  fileUri: string;
+  size: number;
+}

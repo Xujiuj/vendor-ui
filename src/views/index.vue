@@ -2,168 +2,174 @@
   <div class="app-container vendor-home page-panel">
     <div class="page-head">
       <div>
-        <h1>厂商运营工作台</h1>
-        <p>客户档案、License 授权/签发、因子版本、开放范围、模板分发和续费订单统一从厂商业务域进入。</p>
+        <h1>运营总览</h1>
+        <p>客户、授权与模板运营概况（不含客户行为监控）。</p>
       </div>
-      <span class="portal-chip">后端菜单驱动</span>
+      <div class="btns">
+        <button type="button" class="btn primary" @click="goTarget('/vendor/license')">新增授权</button>
+      </div>
     </div>
 
-    <section class="metric-grid" aria-label="厂商业务入口">
-      <button v-for="item in operations" :key="item.title" type="button" class="metric-card" @click="goTarget(item.path)">
-        <span class="metric-icon">
-          <svg-icon :icon-class="item.icon" />
-        </span>
-        <span>
-          <b>{{ item.title }}</b>
-          <small>{{ item.summary }}</small>
-        </span>
-      </button>
+    <el-alert v-if="loadError" class="overview-alert" type="error" :closable="false" :title="loadError" />
+
+    <section v-loading="loading" class="dash-stats" aria-label="运营指标">
+      <article v-for="item in stats" :key="item.label" class="dash-stat">
+        <div class="label">{{ item.label }}</div>
+        <div class="value">{{ item.value || '--' }}</div>
+        <div class="sub">{{ item.note || '--' }}</div>
+      </article>
+      <el-empty v-if="!loading && !stats.length" class="overview-empty" description="暂无运营指标数据" />
     </section>
 
-    <section class="panel status-panel" aria-label="运营状态摘要">
-      <div class="toolbar">
-        <b>运营状态摘要</b>
-        <span class="hint">只聚合厂商侧客户、授权、因子、模板和续费状态，不展示企业本地 01-05 业务。</span>
-      </div>
-      <div class="status-grid">
-        <div v-for="item in statusSummary" :key="item.label" class="status-card">
-          <span class="status-value">{{ item.value }}</span>
-          <span class="status-label">{{ item.label }}</span>
-          <small>{{ item.note }}</small>
+    <section class="workbench-grid">
+      <div v-loading="loading" class="panel chart-panel workbench-main">
+        <div class="toolbar">
+          <b>每月各版本授权发放量</b>
+          <span class="hint">按产品版本统计 .lic 签发</span>
         </div>
-      </div>
-    </section>
-
-    <section class="panel action-panel">
-      <div class="toolbar">
-        <b>今日运营关注</b>
-        <span class="hint">以下处理项复用已有厂商页面/API，由后端 getRouters 返回实际菜单。</span>
-      </div>
-      <div class="task-list">
-        <div v-for="task in tasks" :key="task.title" class="task-row">
-          <span class="task-state" :class="task.stateClass">{{ task.state }}</span>
-          <div>
-            <strong>{{ task.title }}</strong>
-            <p>{{ task.description }}</p>
+        <div class="chart-body" aria-label="每月各版本授权发放量柱状图">
+          <div class="chart-legend">
+            <span v-for="item in productVersions" :key="item.name">
+              <i :style="{ background: item.color }"></i>
+              {{ item.name }}
+            </span>
           </div>
-          <el-button text type="primary" @click="goTarget(task.path)">查看</el-button>
+          <div class="bar-chart">
+            <div v-for="month in monthlyAuthorizations" :key="month.month" class="month-group">
+              <div class="bars">
+                <span
+                  v-for="item in month.values"
+                  :key="item.name"
+                  :title="`${month.month} ${item.name}: ${item.value}`"
+                  :style="{ height: `${item.value * 8}px`, background: item.color }"
+                ></span>
+              </div>
+              <small>{{ month.month }}</small>
+            </div>
+            <el-empty v-if="!monthlyAuthorizations.length" class="chart-empty" description="暂无授权发放数据" />
+          </div>
         </div>
       </div>
+
+      <aside v-loading="loading" class="panel reminder-panel notice-panel">
+        <div class="toolbar">
+          <b>运营提醒</b>
+        </div>
+        <div class="reminder-list">
+          <article v-for="item in reminders" :key="item.title" class="reminder-item">
+            <strong>{{ item.title }}</strong>
+            <p>{{ item.description }}</p>
+          </article>
+          <el-empty v-if="!reminders.length" description="暂无运营提醒" />
+        </div>
+      </aside>
+    </section>
+
+    <section v-loading="loading" class="panel todo-panel">
+      <div class="toolbar">
+        <b>待办</b>
+      </div>
+      <div v-if="todos.length" class="todo-table-wrap">
+        <table class="todo-table">
+          <thead>
+            <tr>
+              <th>类型</th>
+              <th>客户</th>
+              <th>说明</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in todos" :key="`${item.type}-${item.customer}`">
+              <td>
+                <span class="todo-type">{{ item.type }}</span>
+              </td>
+              <td>{{ item.customer }}</td>
+              <td>{{ item.description }}</td>
+              <td>
+                <button type="button" class="btn text" @click="goTarget(item.path)">{{ item.action }}</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <el-empty v-else description="暂无待办事项" />
     </section>
   </div>
 </template>
 
 <script setup name="Index" lang="ts">
+import { getVendorOverview } from '@/api/vendor/overview';
+import type {
+  VendorOverviewMetric,
+  VendorOverviewReminder,
+  VendorOverviewSeries,
+  VendorOverviewTodo,
+  VendorOverviewVO
+} from '@/api/vendor/overview/types';
+
 const router = useRouter();
 
-const operations = [
-  {
-    title: '客户档案',
-    summary: '客户主数据与授权对象',
-    icon: 'peoples',
-    path: '/vendor/customer'
-  },
-  {
-    title: 'License 授权/签发',
-    summary: '签发、下载和授权审计',
-    icon: 'lock',
-    path: '/vendor/license'
-  },
-  {
-    title: '因子版本',
-    summary: '发布、冻结和版本治理',
-    icon: 'tree',
-    path: '/vendor/factor-version'
-  },
-  {
-    title: '因子开放范围',
-    summary: '按客户和 License 控制因子可见性',
-    icon: 'eye-open',
-    path: '/vendor/factor-scope'
-  },
-  {
-    title: '模板库',
-    summary: '报表模板维护与发布',
-    icon: 'documentation',
-    path: '/vendor/report-template'
-  },
-  {
-    title: '模板分发',
-    summary: '模板面向客户的开放范围',
-    icon: 'guide',
-    path: '/vendor/template-scope'
-  },
-  {
-    title: '续费订单',
-    summary: '续费跟踪和运营处理',
-    icon: 'money',
-    path: '/vendor/renewal-order'
-  },
-  {
-    title: '运营状态摘要',
-    summary: '授权、模板和续费风险聚合',
-    icon: 'dashboard',
-    path: '/vendor/renewal-order'
-  }
-];
+interface ChartValue extends VendorOverviewSeries {
+  color: string;
+  value: number;
+}
 
-const statusSummary = [
-  {
-    value: '客户',
-    label: '签发前置',
-    note: '停用客户不可签发 License'
-  },
-  {
-    value: 'License',
-    label: '授权闭环',
-    note: '签发结果支持 .lic 下载'
-  },
-  {
-    value: '因子',
-    label: '开放控制',
-    note: '版本和客户范围分别治理'
-  },
-  {
-    value: '模板',
-    label: '分发范围',
-    note: '模板库发布后再授权客户'
-  }
-];
+interface MonthlyAuthorization {
+  month: string;
+  values: ChartValue[];
+}
 
-const tasks = [
-  {
-    title: '核对客户档案状态',
-    description: '停用客户不可签发 License，签发前以厂商客户主数据为准。',
-    state: '客户',
-    stateClass: 'state-info',
-    path: '/vendor/customer'
-  },
-  {
-    title: '处理 License 签发请求',
-    description: '授权签发页面复用已有页面，并调用 vendor/licenseIssue 接口。',
-    state: '授权',
-    stateClass: 'state-ok',
-    path: '/vendor/license'
-  },
-  {
-    title: '确认因子开放范围',
-    description: '因子版本发布后，按客户和 License 管理开放范围。',
-    state: '因子',
-    stateClass: 'state-info',
-    path: '/vendor/factor-scope'
-  },
-  {
-    title: '确认模板分发范围',
-    description: '模板库和分发范围由厂商侧维护，企业端只消费下载能力。',
-    state: '模板',
-    stateClass: 'state-warn',
-    path: '/vendor/template-scope'
+const loading = ref(false);
+const loadError = ref('');
+const stats = ref<VendorOverviewMetric[]>([]);
+const productVersions = ref<Array<{ name: string; color: string }>>([]);
+const monthlyAuthorizations = ref<MonthlyAuthorization[]>([]);
+const reminders = ref<VendorOverviewReminder[]>([]);
+const todos = ref<VendorOverviewTodo[]>([]);
+
+const seriesColors = ['#1f8f6a', '#1677ff', '#f59e0b', '#7c3aed', '#ef4444'];
+
+const loadOverview = async () => {
+  loading.value = true;
+  loadError.value = '';
+  try {
+    const { data } = await getVendorOverview();
+    applyOverview(data);
+  } catch (error) {
+    loadError.value = '运营总览数据加载失败，请稍后重试';
+  } finally {
+    loading.value = false;
   }
-];
+};
+
+const applyOverview = (overview?: VendorOverviewVO) => {
+  stats.value = overview?.metrics ?? [];
+  reminders.value = overview?.reminders ?? [];
+  todos.value = overview?.todos ?? [];
+
+  const series = overview?.authorizationChart?.series ?? [];
+  productVersions.value = series.map((item, index) => ({
+    name: item.name,
+    color: seriesColors[index % seriesColors.length]
+  }));
+  monthlyAuthorizations.value = (overview?.authorizationChart?.months ?? []).map((month, monthIndex) => ({
+    month,
+    values: series.map((item, seriesIndex) => ({
+      ...item,
+      value: item.values?.[monthIndex] ?? 0,
+      color: seriesColors[seriesIndex % seriesColors.length]
+    }))
+  }));
+};
 
 const goTarget = (path: string) => {
   router.push(path);
 };
+
+onMounted(() => {
+  loadOverview();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -171,216 +177,260 @@ const goTarget = (path: string) => {
   min-height: calc(100vh - 84px);
 }
 
-.portal-chip {
-  display: inline-flex;
-  align-items: center;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid #cdeadd;
-  border-radius: 6px;
-  background: #eaf8f1;
-  color: #157656;
-  font-size: 12px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.metric-grid {
+.dash-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 14px;
+  gap: 20px;
+  margin-bottom: 20px;
 }
 
-.metric-card {
-  min-height: 112px;
-  padding: 16px;
-  border: 1px solid #eef0f3;
+.overview-alert {
+  margin-bottom: 16px;
+}
+
+.overview-empty,
+.chart-empty {
+  grid-column: 1 / -1;
+}
+
+.dash-stat {
+  position: relative;
+  display: grid;
+  gap: 12px;
+  min-height: 126px;
+  padding: 22px 24px;
+  border: 1px solid var(--carbon-soft-line);
+  border-left: 4px solid var(--carbon-brand);
   border-radius: 8px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgba(31, 45, 61, 0.025), 0 6px 18px -10px rgba(31, 45, 61, 0.06);
-  color: var(--carbon-text);
-  text-align: left;
-  cursor: pointer;
+  background: var(--carbon-panel);
+  box-shadow: var(--carbon-shadow);
+}
+
+.dash-stat .label {
+  color: var(--carbon-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dash-stat .value {
+  color: var(--carbon-ink);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.dash-stat .sub {
+  min-height: 22px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  color: var(--carbon-muted);
+  font-size: 13px;
+}
+
+.workbench-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2.1fr) minmax(280px, 0.9fr);
+  gap: 20px;
+  margin: 20px 0;
+}
+
+.workbench-main,
+.notice-panel {
+  overflow: hidden;
+}
+
+.chart-body {
+  padding: 18px;
+}
+
+.chart-legend {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 18px;
+  color: var(--carbon-muted);
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+
+.chart-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.chart-legend i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.bar-chart {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(54px, 1fr));
+  align-items: end;
+  gap: 16px;
+  min-height: 180px;
+  padding-top: 12px;
+  border-bottom: 1px solid var(--carbon-soft-line);
+}
+
+.month-group {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.bars {
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  gap: 5px;
+  height: 104px;
+}
+
+.bars span {
+  width: 12px;
+  min-height: 12px;
+  border-radius: 5px 5px 2px 2px;
+  box-shadow: 0 8px 16px rgba(31, 45, 61, 0.12);
   transition:
-    border-color 0.18s ease,
-    box-shadow 0.18s ease,
+    filter 0.18s ease,
     transform 0.18s ease;
 }
 
-.metric-card:hover {
-  border-color: #cdeadd;
-  box-shadow: 0 10px 26px rgba(31, 45, 61, 0.08);
+.bars span:hover {
+  filter: brightness(1.06);
   transform: translateY(-2px);
 }
 
-.metric-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  background: #eaf8f1;
-  color: var(--carbon-brand);
-}
-
-.metric-icon :deep(.svg-icon) {
-  width: 18px;
-  height: 18px;
-}
-
-.metric-card b,
-.metric-card small {
-  display: block;
-}
-
-.metric-card b {
-  color: var(--carbon-ink);
-  font-size: 15px;
-  font-weight: 700;
-}
-
-.metric-card small {
-  margin-top: 6px;
+.month-group small {
   color: var(--carbon-muted);
   font-size: 12px;
-  line-height: 1.5;
 }
 
-.status-panel {
-  margin-bottom: 14px;
-  padding: 0;
-}
-
-.status-grid {
+.reminder-list {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
-  border-top: 1px solid #f1f3f6;
+  padding: 18px;
+  gap: 16px;
 }
 
-.status-card {
-  min-height: 96px;
-  padding: 16px 18px;
-  border-right: 1px solid #f1f3f6;
+.reminder-item {
+  position: relative;
+  padding-left: 18px;
 }
 
-.status-card:last-child {
-  border-right: 0;
+.reminder-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--carbon-primary);
+  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.14);
 }
 
-.status-value,
-.status-label,
-.status-card small {
+.reminder-item strong {
   display: block;
-}
-
-.status-value {
-  color: var(--carbon-brand);
-  font-size: 18px;
-  font-weight: 800;
-}
-
-.status-label {
-  margin-top: 6px;
   color: var(--carbon-ink);
   font-size: 13px;
-  font-weight: 700;
 }
 
-.status-card small {
-  margin-top: 6px;
+.reminder-item p {
+  margin: 8px 0 0;
   color: var(--carbon-muted);
   font-size: 12px;
   line-height: 1.5;
 }
 
-.action-panel {
-  padding: 0;
+.todo-panel {
+  margin-top: 20px;
 }
 
-.task-list {
-  display: grid;
+.todo-table-wrap {
+  overflow-x: auto;
 }
 
-.task-row {
-  display: grid;
-  grid-template-columns: 58px minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 18px;
-  border-bottom: 1px solid #f1f3f6;
+.todo-table {
+  min-width: 640px;
 }
 
-.task-row:last-child {
-  border-bottom: 0;
-}
-
-.task-state {
+.todo-type {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  height: 26px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(31, 143, 106, 0.24);
   border-radius: 6px;
+  background: var(--carbon-green-soft);
+  color: var(--carbon-brand);
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 650;
 }
 
-.state-info {
-  color: #2563eb;
-  background: #eff6ff;
-}
+:global(html.dark) {
+  .vendor-home {
+    color: var(--carbon-ink);
+  }
 
-.state-ok {
-  color: #0f8a55;
-  background: #eaf8f1;
-}
+  .dash-stat,
+  .chart-panel,
+  .reminder-panel,
+  .todo-panel {
+    background: var(--carbon-panel);
+    border-color: var(--carbon-soft-line);
+    box-shadow: var(--carbon-shadow-soft);
+  }
 
-.state-warn {
-  color: #b7791f;
-  background: #fff7e6;
-}
+  .bars span {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
+  }
 
-.task-row strong {
-  display: block;
-  color: var(--carbon-ink);
-  font-size: 14px;
-}
+  .reminder-item::before {
+    box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.18);
+  }
 
-.task-row p {
-  margin: 4px 0 0;
-  color: var(--carbon-muted);
-  font-size: 12px;
-  line-height: 1.5;
+  .todo-type {
+    border-color: rgba(69, 212, 131, 0.34);
+    background: rgba(69, 212, 131, 0.14);
+    color: #86efac;
+  }
 }
 
 @media (max-width: 1200px) {
-  .metric-grid,
-  .status-grid {
+  .dash-stats,
+  .workbench-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
 @media (max-width: 768px) {
-  .metric-grid,
-  .status-grid,
-  .task-row {
+  .dash-stats,
+  .workbench-grid,
+  .bar-chart {
     grid-template-columns: 1fr;
   }
 
-  .status-card {
-    border-right: 0;
-    border-bottom: 1px solid #f1f3f6;
-  }
-
-  .status-card:last-child {
+  .bar-chart {
+    align-items: stretch;
+    gap: 12px;
+    min-height: 0;
     border-bottom: 0;
   }
 
-  .task-row {
-    align-items: start;
+  .month-group {
+    grid-template-columns: 42px minmax(0, 1fr);
+    justify-items: stretch;
+    align-items: center;
+  }
+
+  .bars {
+    justify-content: flex-start;
+    height: 70px;
   }
 }
 </style>

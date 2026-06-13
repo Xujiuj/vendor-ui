@@ -7,6 +7,7 @@ type PortalRoute = RouteRecordRaw & {
   meta?: RouteRecordRaw['meta'] & {
     permissions?: string[];
     title?: unknown;
+    link?: unknown;
   };
 };
 
@@ -25,21 +26,41 @@ export const vendorPrototypeColorTokens = {
   brand: '#1f8f6a'
 } as const;
 
-export const vendorAllowedPermissionPrefixes = ['vendor:', 'system:', 'monitor:', 'tool:gen'];
+export const vendorAllowedPermissionPrefixes = ['vendor:', 'system:'];
+
+const vendorMenuTitleRules = [
+  { title: '首页', keys: ['index', '/index', 'Index'] },
+  { title: '厂商运营', keys: ['vendor'] },
+  { title: '数据管理', keys: ['data-management', 'dataManagement'] },
+  { title: '客户档案', keys: ['vendor:customer', 'vendor/customer', 'customer'] },
+  { title: 'License 授权管理', keys: ['vendor:licenseIssue', 'vendor/license', 'license', 'system/license/index'] },
+  { title: '因子版本', keys: ['vendor:factorVersion', 'factor-version', 'factorVersion', 'vendor/factorVersion/index'] },
+  { title: '因子明细', keys: ['vendor:factorRecord', 'factor-record', 'factorRecord', 'vendor/factorRecord/index'] },
+  { title: '因子开放范围', keys: ['vendor:factorScope', 'factor-scope', 'factorScope', 'vendor/factorScope/index'] },
+  { title: '模板库', keys: ['vendor:reportTemplate', 'report-template', 'reportTemplate', 'vendor/reportTemplate/index'] },
+  { title: '模板分发', keys: ['vendor:templateScope', 'template-scope', 'templateScope', 'vendor/templateScope/index'] },
+  { title: '维表管理', keys: ['vendor:dimension', 'dimension', 'vendor/dimension/index'] },
+  { title: '公告管理', keys: ['vendor:announcement', 'announcement', 'vendor/announcement/index'] },
+  { title: '续费订单', keys: ['vendor:renewalOrder', 'renewal-order', 'renewalOrder', 'vendor/renewalOrder/index'] },
+  { title: '系统管理', keys: ['system'] },
+  { title: '用户管理', keys: ['system:user', 'system/user/index'] },
+  { title: '公告配置', keys: ['system:notice', 'system/notice/index', 'notice'] }
+] as const;
 
 export const vendorForbiddenMenuTitlePatterns = [
   /^0?[1-5][\s.、_-]/,
-  /配置排放源|确认排放因子|活动数据|绿电绿证|强度管理|强度分母/,
-  /排放源识别|排放因子确认|企业本地|本地业务/,
-  /扩展字段|自定义字段/,
-  /数据(校验|验证|提交|催办)/,
+  /活动数据|绿电绿证|强度管理|强度分母|排放源|排放因子确认|企业本地|本地业务/,
+  /扩展字段|自定义字段|数据(校验|验证|提交|催办)/,
   /(提交|催办).*(跟踪|记录|提醒|状态)/,
   /License\s*(导入|运行状态|状态|验签|验证|runtime|import|verify)/i,
-  /(导入|验签|验证|运行状态|状态)\s*License/i,
-  /License.*(淇|杩|鐘|楠|瀵|琛)/i,
+  /(导入|验签|验证|运行状态)\s*License/i,
   /Power\s*BI.*(本地|连接|connection)/i,
-  /本地连接/i
+  /本地连接/i,
+  /PLUS官网|测试菜单|系统监控|系统工具|租户管理|工作流|流程|任务|RuoYi|若依/i,
+  /^\?+$/
 ];
+
+const vendorAllowedRouteKeys = new Set(vendorMenuTitleRules.flatMap((rule) => rule.keys).map(normalizeRouteKey));
 
 const vendorForbiddenRouteKeys = new Set(
   [
@@ -52,6 +73,7 @@ const vendorForbiddenRouteKeys = new Set(
     'dataEntry',
     'dataSubmission',
     'dataValidation',
+    'demo',
     'emissionSource',
     'factorConfirm',
     'greenElectricity',
@@ -62,11 +84,25 @@ const vendorForbiddenRouteKeys = new Set(
     'licenseState',
     'licenseVerify',
     'licenseVerification',
-    'submissionTracking',
-    'submissionReminder',
+    'localConnection',
+    'monitor',
+    'myDocument',
+    'online',
     'powerBiLocal',
     'powerBiLocalConnection',
-    'localConnection'
+    'processDefinition',
+    'processInstance',
+    'processMonitor',
+    'snailjob',
+    'submissionReminder',
+    'submissionTracking',
+    'task',
+    'taskCopyList',
+    'taskFinish',
+    'taskWaiting',
+    'tenant',
+    'tool',
+    'workflow'
   ].map(normalizeRouteKey)
 );
 
@@ -80,6 +116,7 @@ const vendorForbiddenRoutePaths = new Set(
     'data/submission',
     'data/validation',
     'emission/source',
+    'enterprise/licenseImport/index',
     'factor/confirm',
     'green/electricity',
     'intensity/denominator',
@@ -87,9 +124,9 @@ const vendorForbiddenRoutePaths = new Set(
     'license/runtime',
     'license/state',
     'license/verify',
-    'powerbi/localconnection',
     'power-bi/local-connection',
     'powerbi/local-connection',
+    'powerbi/localconnection',
     'submission/reminder',
     'submission/tracking',
     'system/activityData/index',
@@ -99,8 +136,7 @@ const vendorForbiddenRoutePaths = new Set(
     'system/greenElectricity/index',
     'system/intensity/index',
     'system/intensityDenominator/index',
-    'system/licenseState/index',
-    'enterprise/licenseImport/index'
+    'system/licenseState/index'
   ].map(normalizeRouteKey)
 );
 
@@ -113,21 +149,37 @@ export function filterVendorPortalRoutes(routes: PortalRoute[]): RouteRecordRaw[
       if (isVendorForbiddenRoute(route) && (!isMenuContainer(route) || !hasChildren)) {
         return undefined;
       }
+      if (!isVendorAllowedRoute(route) && !hasChildren) {
+        return undefined;
+      }
       if (route.children && !hasChildren && isMenuContainer(route)) {
         return undefined;
       }
 
-      return {
+      return normalizeVendorPortalRoute({
         ...route,
         ...(route.children ? (hasChildren ? { children } : { children: undefined }) : {})
-      } as RouteRecordRaw;
+      } as PortalRoute);
     })
     .filter((route): route is RouteRecordRaw => Boolean(route));
 }
 
+export function isVendorAllowedRoute(route: PortalRoute): boolean {
+  if (isExternalMenu(route)) {
+    return false;
+  }
+  return getRouteIdentityValues(route)
+    .map((value) => normalizeRouteKey(value))
+    .some((value) => vendorAllowedRouteKeys.has(value));
+}
+
 export function isVendorForbiddenRoute(route: PortalRoute): boolean {
+  if (isVendorAllowedRoute(route)) {
+    return false;
+  }
   const routePermissions = getRoutePermissions(route);
   return (
+    isExternalMenu(route) ||
     hasVendorForbiddenRouteValue(route.path) ||
     hasVendorForbiddenRouteValue(route.name) ||
     hasVendorForbiddenRouteValue(route.component) ||
@@ -145,7 +197,17 @@ export function isVendorForbiddenMenuTitle(title?: unknown): boolean {
 }
 
 export function normalizeMenuText(value: string): string {
-  return value.normalize('NFKC').replace(/\uFFFD/g, '').replace(/\s+/g, ' ').trim();
+  return value
+    .normalize('NFKC')
+    .replace(/\uFFFD/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+export function normalizeVendorMenuTitle(route: PortalRoute): string | undefined {
+  const values = getRouteIdentityValues(route).map((value) => normalizeRouteKey(value));
+  const matchedRule = vendorMenuTitleRules.find((rule) => rule.keys.some((key) => values.includes(normalizeRouteKey(key))));
+  return matchedRule?.title;
 }
 
 export function normalizeRouteKey(value: string): string {
@@ -156,6 +218,32 @@ export function normalizeRouteKey(value: string): string {
     .replace(/_/g, '-')
     .toLowerCase()
     .replace(/-/g, '');
+}
+
+function normalizeVendorPortalRoute(route: PortalRoute): RouteRecordRaw {
+  const title = normalizeVendorMenuTitle(route);
+  if (!title) {
+    return route as RouteRecordRaw;
+  }
+  return {
+    ...route,
+    meta: {
+      ...route.meta,
+      title
+    }
+  } as RouteRecordRaw;
+}
+
+function getRouteIdentityValues(route: PortalRoute): string[] {
+  return [
+    route.path,
+    route.name,
+    route.component,
+    route.meta?.title,
+    ...getRoutePermissions(route).flatMap((permission) => [permission, permission.split(':').slice(0, 2).join(':')])
+  ]
+    .filter((value): value is string | number | symbol => Boolean(value))
+    .map(String);
 }
 
 function hasVendorForbiddenRouteValue(value?: unknown): boolean {
@@ -189,13 +277,16 @@ function hasVendorAllowedPermissionPrefix(permission: string): boolean {
 }
 
 function getRoutePermissions(route: PortalRoute): string[] {
-  return [
-    ...(Array.isArray(route.permissions) ? route.permissions : []),
-    ...(Array.isArray(route.meta?.permissions) ? route.meta.permissions : [])
-  ];
+  return [...(Array.isArray(route.permissions) ? route.permissions : []), ...(Array.isArray(route.meta?.permissions) ? route.meta.permissions : [])];
 }
 
 function isMenuContainer(route: PortalRoute): boolean {
   const component = String(route.component ?? '').toLowerCase();
   return component === 'layout' || component === 'parentview';
+}
+
+function isExternalMenu(route: PortalRoute): boolean {
+  const path = String(route.path ?? '');
+  const link = String(route.meta?.link ?? '');
+  return /^https?:\/\//i.test(path) || /^https?:\/\//i.test(link);
 }

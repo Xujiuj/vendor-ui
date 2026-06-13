@@ -18,3 +18,10 @@ export const getFactorScope = (id: string | number): Promise<ApiResponse<FactorS
     method: 'get'
   });
 };
+
+export const deleteFactorScope = (ids: string | number | Array<string | number>): Promise<ApiResponse> => {
+  return request({
+    url: `${FACTOR_SCOPE_BASE_URL}/${ids}`,
+    method: 'delete'
+  });
+};

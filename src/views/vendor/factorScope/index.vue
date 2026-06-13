@@ -10,16 +10,8 @@
     <div class="panel">
       <div v-show="showSearch" class="search-bar wide">
         <div class="search-item">
-          <label>版本 ID</label>
-          <el-input v-model="queryParams.versionId" placeholder="请输入版本 ID" clearable @keyup.enter="handleQuery" />
-        </div>
-        <div class="search-item">
-          <label>客户 ID</label>
-          <el-input v-model="queryParams.customerId" placeholder="请输入客户 ID" clearable @keyup.enter="handleQuery" />
-        </div>
-        <div class="search-item">
           <label>License</label>
-          <el-input v-model="queryParams.licenseId" placeholder="请输入 License ID" clearable @keyup.enter="handleQuery" />
+          <el-input v-model="queryParams.licenseId" placeholder="请输入 License" clearable @keyup.enter="handleQuery" />
         </div>
         <div class="search-item">
           <label>状态</label>
@@ -31,20 +23,29 @@
           </el-select>
         </div>
         <div class="search-actions">
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
         </div>
       </div>
 
       <div class="toolbar">
-        <el-button type="primary" icon="Search" @click="showSearch = !showSearch">{{ showSearch ? '收起搜索' : '展开搜索' }}</el-button>
-        <el-button icon="Refresh" @click="refreshList">刷新</el-button>
+        <div class="btns">
+          <el-button
+            v-hasPermi="['vendor:factorCustomerScope:remove']"
+            type="danger"
+            plain
+            icon="Delete"
+            :disabled="multiple"
+            @click="handleDelete()"
+          >
+            删除
+          </el-button>
+          <el-button type="primary" icon="Search" @click="showSearch = !showSearch">{{ showSearch ? '收起搜索' : '展开搜索' }}</el-button>
+          <el-button icon="Refresh" @click="refreshList">刷新</el-button>
+        </div>
       </div>
 
-      <el-table v-loading="loading" :data="scopeList" border>
-        <el-table-column label="范围 ID" align="center" prop="id" width="110" />
-        <el-table-column label="版本 ID" align="center" prop="versionId" width="120" />
-        <el-table-column label="客户 ID" align="center" prop="customerId" width="120" />
+      <el-table v-loading="loading" :data="scopeList" border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="55" align="center" />
         <el-table-column label="版本权益" align="center" prop="edition" width="130" :show-overflow-tooltip="true" />
         <el-table-column label="License" align="center" prop="licenseId" min-width="180" :show-overflow-tooltip="true" />
         <el-table-column label="开放状态" align="center" prop="scopeStatus" width="120">
@@ -57,21 +58,25 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="90" fixed="right">
+        <el-table-column label="操作" align="center" width="150" fixed="right">
           <template #default="{ row }">
             <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
+            <el-button v-hasPermi="['vendor:factorCustomerScope:remove']" link type="danger" icon="Delete" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="refreshList" />
+      <pagination
+        v-show="total > 0"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        @pagination="refreshList"
+      />
     </div>
 
     <el-drawer v-model="detailDrawer.visible" title="因子开放范围详情" size="520px" append-to-body>
       <el-descriptions v-if="detailRecord" :column="1" border>
-        <el-descriptions-item label="范围 ID">{{ formatText(detailRecord.id) }}</el-descriptions-item>
-        <el-descriptions-item label="版本 ID">{{ formatText(detailRecord.versionId) }}</el-descriptions-item>
-        <el-descriptions-item label="客户 ID">{{ formatText(detailRecord.customerId) }}</el-descriptions-item>
         <el-descriptions-item label="版本权益">{{ formatText(detailRecord.edition) }}</el-descriptions-item>
         <el-descriptions-item label="License">{{ formatText(detailRecord.licenseId) }}</el-descriptions-item>
         <el-descriptions-item label="开放状态">{{ formatScopeStatus(detailRecord.scopeStatus) }}</el-descriptions-item>
@@ -82,15 +87,19 @@
 </template>
 
 <script setup name="VendorFactorScope" lang="ts">
-import { listFactorScope } from '@/api/vendor/factorScope';
+import { deleteFactorScope, listFactorScope } from '@/api/vendor/factorScope';
 import type { FactorScopeQuery, FactorScopeVO } from '@/api/vendor/factorScope/types';
 import { formatDateTime, formatScopeStatus, formatText, readRows, readTotal, scopeStatusTagType } from '../shared';
 
+import { useAutoQuery } from '@/hooks/useAutoQuery';
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const loading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
 const scopeList = ref<FactorScopeVO[]>([]);
 const detailRecord = ref<FactorScopeVO>();
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
 const detailDrawer = reactive({
   visible: false
 });
@@ -139,21 +148,40 @@ const resetQuery = async () => {
   await refreshList();
 };
 
+const handleSelectionChange = (selection: FactorScopeVO[]) => {
+  ids.value = selection.map((item) => item.id);
+  multiple.value = !selection.length;
+};
+
 const openDetail = (row: FactorScopeVO) => {
   detailRecord.value = row;
   detailDrawer.visible = true;
 };
 
+const handleDelete = async (row?: FactorScopeVO) => {
+  try {
+    const deleteIds = row?.id || ids.value;
+    const message = row ? `确认删除 License“${formatText(row.licenseId)}”的开放范围？` : `确认删除选中的 ${ids.value.length} 条开放范围？`;
+    await proxy?.$modal.confirm(message);
+    await deleteFactorScope(deleteIds);
+    proxy?.$modal.msgSuccess('删除成功');
+    await getList();
+  } catch {
+    // User cancelled or global request interceptor already shows the error.
+  }
+};
+
 onMounted(() => {
   void refreshList();
 });
+
+useAutoQuery(queryParams, () => handleQuery());
 </script>
 
 <style scoped lang="scss">
 .toolbar {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
   margin-bottom: 12px;
 }
 </style>

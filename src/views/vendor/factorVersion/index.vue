@@ -38,7 +38,6 @@
           </el-select>
         </div>
         <div class="search-actions">
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
         </div>
       </div>
@@ -77,7 +76,13 @@
         </el-table-column>
       </el-table>
 
-      <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="refreshList" />
+      <pagination
+        v-show="total > 0"
+        v-model:page="queryParams.pageNum"
+        v-model:limit="queryParams.pageSize"
+        :total="total"
+        @pagination="refreshList"
+      />
     </div>
 
     <el-drawer v-model="detailDrawer.visible" title="因子版本详情" size="560px" append-to-body>
@@ -100,6 +105,7 @@ import { listFactorVersion } from '@/api/vendor/factorVersion';
 import type { FactorVersionQuery, FactorVersionVO } from '@/api/vendor/factorVersion/types';
 import { formatDateTime, formatPublishStatus, formatText, publishStatusTagType, readRows, readTotal } from '../shared';
 
+import { useAutoQuery } from '@/hooks/useAutoQuery';
 const loading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
@@ -163,6 +169,8 @@ const isFrozen = (value?: number | boolean) => value === true || value === 1;
 onMounted(() => {
   void refreshList();
 });
+
+useAutoQuery(queryParams, () => handleQuery());
 </script>
 
 <style scoped lang="scss">
@@ -173,34 +181,40 @@ onMounted(() => {
 
 .head-notes {
   display: grid;
-  min-width: 420px;
-  max-width: 640px;
-  gap: 8px;
-  color: #4b5563;
-  font-size: 13px;
-
-  div {
-    display: grid;
-    grid-template-columns: 72px 1fr;
-    gap: 8px;
-  }
-
-  strong {
-    color: #1f2937;
-    font-weight: 600;
-  }
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  flex: 0 1 520px;
 }
 
-.toolbar {
-  display: flex;
-  justify-content: flex-end;
-  margin-bottom: 12px;
+.head-notes > div {
+  min-height: 58px;
+  padding: 12px;
+  border: 1px solid var(--carbon-soft-line);
+  border-radius: 8px;
+  background: var(--carbon-panel);
+}
+
+.head-notes strong,
+.head-notes span {
+  display: block;
+}
+
+.head-notes strong {
+  margin-bottom: 6px;
+  color: var(--carbon-ink);
+  font-size: 13px;
+}
+
+.head-notes span {
+  color: var(--carbon-muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 @media (max-width: 960px) {
   .head-notes {
-    min-width: 0;
-    max-width: none;
+    flex-basis: 100%;
+    grid-template-columns: 1fr;
   }
 }
 </style>

@@ -1,15 +1,26 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import { createPinia, setActivePinia } from 'pinia';
+import { usePermissionStore } from '@/store/modules/permission';
 import {
   filterVendorPortalRoutes,
+  isVendorAllowedRoute,
   isVendorForbiddenMenuTitle,
   vendorAllowedPermissionPrefixes,
   vendorPrototypeColorTokens
 } from './vendorPortalContract';
 
+vi.mock('@/router', () => ({
+  default: {
+    addRoute: vi.fn()
+  },
+  constantRoutes: [],
+  dynamicRoutes: []
+}));
+
 const titlesOf = (routes: any[]) => routes.map((route) => route.meta?.title);
 
 describe('vendor dynamic router guard', () => {
-  it('keeps backend returned vendor menus and removes enterprise menus', () => {
+  it('keeps only vendor portal menus and required system user menu', () => {
     const routes = [
       {
         path: '/vendor',
@@ -18,14 +29,67 @@ describe('vendor dynamic router guard', () => {
         children: [
           { path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'], meta: { title: '客户档案' } },
           { path: 'license', component: 'system/license/index', permissions: ['vendor:licenseIssue:list'], meta: { title: 'License 授权管理' } },
-          { path: 'factor-version', component: 'vendor/factorVersion/index', permissions: ['vendor:factorVersion:list'], meta: { title: '因子版本' } },
-          { path: 'factor-scope', component: 'vendor/factorScope/index', permissions: ['vendor:factorScope:list'], meta: { title: '因子开放范围' } },
-          { path: 'report-template', component: 'vendor/reportTemplate/index', permissions: ['vendor:reportTemplate:list'], meta: { title: '模板库' } },
-          { path: 'template-scope', component: 'vendor/templateScope/index', permissions: ['vendor:templateScope:list'], meta: { title: '模板分发' } },
-          { path: 'renewal-order', component: 'vendor/renewalOrder/index', permissions: ['vendor:renewalOrder:list'], meta: { title: '续费订单' } },
-          { path: 'activity-data', component: 'system/activityData/index', permissions: ['system:activityData:list'], meta: { title: '03 活动数据' } },
-          { path: 'license-import', component: 'enterprise/licenseImport/index', permissions: ['enterprise:license:import'], meta: { title: 'License 导入验签' } },
-          { path: 'power-bi-local', component: 'system/powerBi/localConnection/index', permissions: ['enterprise:powerBi:connection'], meta: { title: 'Power BI 本地连接' } }
+          {
+            path: 'renewal-order',
+            component: 'vendor/renewalOrder/index',
+            permissions: ['vendor:renewalOrder:list'],
+            meta: { title: '续费订单' }
+          },
+          {
+            path: 'license-import',
+            component: 'enterprise/licenseImport/index',
+            permissions: ['enterprise:license:import'],
+            meta: { title: 'License 导入验签' }
+          }
+        ]
+      },
+      {
+        path: '/data-management',
+        component: 'Layout',
+        meta: { title: '数据管理', icon: 'database' },
+        children: [
+          {
+            path: 'factor-version',
+            component: 'vendor/factorVersion/index',
+            permissions: ['vendor:factorVersion:list'],
+            meta: { title: '因子版本' }
+          },
+          {
+            path: 'factor-record',
+            component: 'vendor/factorRecord/index',
+            permissions: ['vendor:factorRecord:list'],
+            meta: { title: '因子明细' }
+          },
+          {
+            path: 'factor-scope',
+            component: 'vendor/factorScope/index',
+            permissions: ['vendor:factorScope:list'],
+            meta: { title: '因子开放范围' }
+          },
+          {
+            path: 'report-template',
+            component: 'vendor/reportTemplate/index',
+            permissions: ['vendor:reportTemplate:list'],
+            meta: { title: '模板库' }
+          },
+          {
+            path: 'template-scope',
+            component: 'vendor/templateScope/index',
+            permissions: ['vendor:templateScope:list'],
+            meta: { title: '模板分发' }
+          },
+          {
+            path: 'dimension',
+            component: 'vendor/dimension/index',
+            permissions: ['vendor:dimension:list'],
+            meta: { title: '维表管理' }
+          },
+          {
+            path: 'announcement',
+            component: 'vendor/announcement/index',
+            permissions: ['vendor:announcement:list'],
+            meta: { title: '公告管理' }
+          }
         ]
       },
       {
@@ -34,8 +98,39 @@ describe('vendor dynamic router guard', () => {
         meta: { title: '系统管理', icon: 'system' },
         children: [
           { path: 'user', component: 'system/user/index', permissions: ['system:user:list'], meta: { title: '用户管理' } },
-          { path: 'license-state', component: 'system/licenseState/index', permissions: ['system:licenseState:list'], meta: { title: 'License运行状态' } }
+          { path: 'notice', component: 'system/notice/index', permissions: ['system:notice:list'], meta: { title: '公告配置' } },
+          { path: 'role', component: 'system/role/index', permissions: ['system:role:list'], meta: { title: '角色管理' } },
+          { path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'], meta: { title: '菜单管理' } }
         ]
+      },
+      {
+        path: '/tenant',
+        component: 'Layout',
+        meta: { title: '租户管理', icon: 'chart' },
+        children: [{ path: 'tenant', component: 'system/tenant/index', meta: { title: '租户管理' } }]
+      },
+      {
+        path: 'https://gitee.com/dromara/RuoYi-Vue-Plus',
+        component: 'Layout',
+        meta: { title: 'PLUS官网', icon: 'guide', link: 'https://gitee.com/dromara/RuoYi-Vue-Plus' }
+      },
+      {
+        path: '/demo',
+        component: 'Layout',
+        meta: { title: '测试菜单', icon: 'star' },
+        children: [{ path: 'demo', component: 'demo/demo/index', meta: { title: '测试单表' } }]
+      },
+      {
+        path: '/workflow',
+        component: 'Layout',
+        meta: { title: '???', icon: 'workflow' },
+        children: [{ path: 'category', component: 'workflow/category/index', meta: { title: '????' } }]
+      },
+      {
+        path: '/task',
+        component: 'Layout',
+        meta: { title: '????', icon: 'my-task' },
+        children: [{ path: 'taskWaiting', component: 'workflow/task/taskWaiting', meta: { title: '????' } }]
       }
     ];
 
@@ -43,24 +138,77 @@ describe('vendor dynamic router guard', () => {
     const vendorMenu = filtered.find((route) => route.path === '/vendor') as any;
     const systemMenu = filtered.find((route) => route.path === '/system') as any;
 
-    expect(titlesOf(vendorMenu.children)).toEqual(['客户档案', 'License 授权管理', '因子版本', '因子开放范围', '模板库', '模板分发', '续费订单']);
-    expect(titlesOf(systemMenu.children)).toEqual(['用户管理']);
-    expect(JSON.stringify(filtered)).not.toContain('03 活动数据');
-    expect(JSON.stringify(filtered)).not.toContain('License 导入验签');
-    expect(JSON.stringify(filtered)).not.toContain('Power BI 本地连接');
+    expect(titlesOf(filtered)).toEqual(['厂商运营', '数据管理', '系统管理']);
+    expect(titlesOf(vendorMenu.children)).toEqual([
+      '客户档案',
+      'License 授权管理',
+      '续费订单'
+    ]);
+    const dataMenu = filtered.find((route) => route.path === '/data-management') as any;
+    expect(titlesOf(dataMenu.children)).toEqual([
+      '因子版本',
+      '因子明细',
+      '因子开放范围',
+      '模板库',
+      '模板分发',
+      '维表管理',
+      '公告管理'
+    ]);
+    expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '公告配置']);
+    expect(JSON.stringify(filtered)).not.toContain('PLUS官网');
+    expect(JSON.stringify(filtered)).not.toContain('测试菜单');
+    expect(JSON.stringify(filtered)).not.toContain('租户管理');
+    expect(JSON.stringify(filtered)).not.toContain('????');
+    expect(JSON.stringify(filtered)).not.toContain('workflow');
+    expect(JSON.stringify(filtered)).not.toContain('taskWaiting');
   });
 
-  it('recognizes Chinese, English, and mojibake enterprise-only titles', () => {
+  it('recognizes vendor allowed routes from stable route identities', () => {
+    expect(isVendorAllowedRoute({ path: '/vendor', component: 'Layout', meta: { title: '???' } } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: '/data-management', component: 'Layout', meta: { title: '数据管理' } } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: '/tenant', component: 'Layout', meta: { title: '租户管理' } } as any)).toBe(false);
+    expect(isVendorAllowedRoute({ path: '/workflow', component: 'Layout', meta: { title: '???' } } as any)).toBe(false);
+  });
+
+  it('recognizes enterprise-only and non-vendor titles', () => {
     expect(isVendorForbiddenMenuTitle('03 活动数据')).toBe(true);
     expect(isVendorForbiddenMenuTitle('License导入验签')).toBe(true);
-    expect(isVendorForbiddenMenuTitle('License杩愯?鐘舵?琛')).toBe(true);
     expect(isVendorForbiddenMenuTitle('Power BI 本地连接')).toBe(true);
+    expect(isVendorForbiddenMenuTitle('PLUS官网')).toBe(true);
+    expect(isVendorForbiddenMenuTitle('测试菜单')).toBe(true);
+    expect(isVendorForbiddenMenuTitle('???')).toBe(true);
     expect(isVendorForbiddenMenuTitle('License 授权管理')).toBe(false);
   });
 
   it('documents vendor portal prefixes and prototype tokens', () => {
-    expect(vendorAllowedPermissionPrefixes).toEqual(['vendor:', 'system:', 'monitor:', 'tool:gen']);
+    expect(vendorAllowedPermissionPrefixes).toEqual(['vendor:', 'system:']);
     expect(vendorPrototypeColorTokens.side).toBe('#18342f');
     expect(vendorPrototypeColorTokens.brand).toBe('#1f8f6a');
+  });
+
+  it('filters sidebar routes when layout interactions rewrite the sidebar store', () => {
+    setActivePinia(createPinia());
+    const permissionStore = usePermissionStore();
+
+    permissionStore.setSidebarRouters([
+      { path: '/vendor', component: 'Layout', meta: { title: '???' }, children: [{ path: 'customer', permissions: ['vendor:customer:list'] }] },
+      { path: '/data-management', component: 'Layout', meta: { title: '数据管理' }, children: [{ path: 'dimension', permissions: ['vendor:dimension:list'] }] },
+      { path: 'https://gitee.com/dromara/RuoYi-Vue-Plus', component: 'Layout', meta: { title: 'PLUS官网' } },
+      { path: '/demo', component: 'Layout', meta: { title: '测试菜单' } },
+      { path: '/workflow', component: 'Layout', meta: { title: '???' }, children: [{ path: 'category', meta: { title: '????' } }] },
+      { path: '/task', component: 'Layout', meta: { title: '????' }, children: [{ path: 'taskWaiting', meta: { title: '????' } }] }
+    ] as any);
+
+    const sidebarText = JSON.stringify(permissionStore.getSidebarRoutes());
+
+    expect(sidebarText).toContain('客户档案');
+    expect(sidebarText).toContain('数据管理');
+    expect(sidebarText).toContain('维表管理');
+    expect(sidebarText).not.toContain('PLUS官网');
+    expect(sidebarText).not.toContain('测试菜单');
+    expect(sidebarText).not.toContain('????');
+    expect(sidebarText).not.toContain('workflow');
+    expect(sidebarText).not.toContain('taskWaiting');
   });
 });

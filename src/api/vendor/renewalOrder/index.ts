@@ -18,3 +18,10 @@ export const getRenewalOrder = (id: string | number): Promise<ApiResponse<Renewa
     method: 'get'
   });
 };
+
+export const deleteRenewalOrder = (ids: string | number | Array<string | number>): Promise<ApiResponse> => {
+  return request({
+    url: `${RENEWAL_ORDER_BASE_URL}/${ids}`,
+    method: 'delete'
+  });
+};

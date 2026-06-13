@@ -15,13 +15,12 @@
               remote
               :remote-method="searchCustomers"
               :loading="customerLoading"
-              style="width: 220px"
             >
               <el-option v-for="customer in customerOptions" :key="customer.id" :label="formatCustomerLabel(customer)" :value="customer.id" />
             </el-select>
           </el-form-item>
           <el-form-item label="版本" prop="edition">
-            <el-select v-model="queryParams.edition" placeholder="请选择版本" clearable style="width: 160px">
+            <el-select v-model="queryParams.edition" placeholder="请选择版本" clearable>
               <el-option v-for="edition in editionOptions" :key="edition.value" :label="edition.label" :value="edition.value" />
             </el-select>
           </el-form-item>
@@ -29,14 +28,13 @@
             <el-input v-model="queryParams.installId" placeholder="请输入设备指纹" clearable @keyup.enter="handleQuery" />
           </el-form-item>
           <el-form-item label="签发状态" prop="issueStatus">
-            <el-select v-model="queryParams.issueStatus" placeholder="请选择状态" clearable style="width: 150px">
+            <el-select v-model="queryParams.issueStatus" placeholder="请选择状态" clearable>
               <el-option label="签发成功" value="SUCCESS" />
               <el-option label="签发失败" value="FAILED" />
               <el-option label="已撤销" value="REVOKED" />
             </el-select>
           </el-form-item>
           <el-form-item>
-            <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
             <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           </el-form-item>
         </el-form>
@@ -95,7 +93,7 @@
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </el-card>
 
-    <el-drawer v-model="issueDrawer.visible" title="签发 License" size="640px" append-to-body :close-on-click-modal="false">
+    <el-drawer v-model="issueDrawer.visible" title="签发 License" size="640px" append-to-body>
       <el-alert
         title="客户编码和客户名称来自供应商客户主数据，签发请求只发送客户 ID 和允许的授权字段。"
         type="info"
@@ -236,6 +234,7 @@ import type { LicenseIssueCommand, LicenseIssueQuery, LicenseIssueResult, Licens
 import { parseTime } from '@/utils/ruoyi';
 import type { AxiosError } from 'axios';
 
+import { useAutoQuery } from '@/hooks/useAutoQuery';
 interface IssueForm {
   customerId?: string | number;
   keyId: string;
@@ -597,6 +596,8 @@ onMounted(async () => {
   await searchCustomers();
   await getList();
 });
+
+useAutoQuery(queryParams, () => handleQuery());
 </script>
 
 <style scoped>

@@ -27,7 +27,6 @@
               ></el-date-picker>
             </el-form-item>
             <el-form-item>
-              <el-button type="primary" icon="Search" @click="handleQuery">搜索</el-button>
               <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
@@ -126,6 +125,7 @@
 import { listConfig, getConfig, delConfig, addConfig, updateConfig, refreshCache } from '@/api/system/config';
 import { ConfigForm, ConfigQuery, ConfigVO } from '@/api/system/config/types';
 
+import { useAutoQuery } from '@/hooks/useAutoQuery';
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_yes_no } = toRefs<any>(proxy?.useDict('sys_yes_no'));
 
@@ -258,4 +258,6 @@ const handleRefreshCache = async () => {
 onMounted(() => {
   getList();
 });
+
+useAutoQuery(queryParams, () => handleQuery(), [dateRange]);
 </script>

@@ -36,7 +36,6 @@
           <el-input v-model="queryParams.verificationStatus" placeholder="0待校验 1已校验 2已退回" clearable @keyup.enter="handleQuery" />
         </div>
         <div class="search-actions">
-          <el-button type="primary" icon="Search" @click="handleQuery">查询</el-button>
           <el-button icon="Refresh" @click="resetQuery">重置</el-button>
           <el-button link type="primary" @click="showSearch = false">
             <el-icon><ArrowUp /></el-icon>
@@ -94,7 +93,6 @@
       :title="dialog.title"
       size="600px"
       append-to-body
-      :close-on-click-modal="false"
     >
       <el-form ref="activityDataFormRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="排放源ID" prop="sourceId">
@@ -146,6 +144,7 @@
 import { listActivityData, getActivityData, delActivityData, addActivityData, updateActivityData } from '@/api/system/activityData';
 import { ActivityDataVO, ActivityDataQuery, ActivityDataForm } from '@/api/system/activityData/types';
 
+import { useAutoQuery } from '@/hooks/useAutoQuery';
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 const activityDataList = ref<ActivityDataVO[]>([]);
@@ -307,4 +306,6 @@ const handleExport = () => {
 onMounted(() => {
   getList();
 });
+
+useAutoQuery(queryParams, () => handleQuery());
 </script>
