@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { FactorScopeQuery, FactorScopeVO } from './types';
+import { FactorScopeForm, FactorScopeQuery, FactorScopeVO } from './types';
 import type { ApiResponse, ListResponse } from '../shared';
 
 const FACTOR_SCOPE_BASE_URL = '/vendor/factor-customer-scope';
@@ -16,6 +16,22 @@ export const getFactorScope = (id: string | number): Promise<ApiResponse<FactorS
   return request({
     url: `${FACTOR_SCOPE_BASE_URL}/${id}`,
     method: 'get'
+  });
+};
+
+export const addFactorScope = (data: FactorScopeForm): Promise<ApiResponse> => {
+  return request({
+    url: FACTOR_SCOPE_BASE_URL,
+    method: 'post',
+    data
+  });
+};
+
+export const updateFactorScope = (data: FactorScopeForm): Promise<ApiResponse> => {
+  return request({
+    url: FACTOR_SCOPE_BASE_URL,
+    method: 'put',
+    data
   });
 };
 

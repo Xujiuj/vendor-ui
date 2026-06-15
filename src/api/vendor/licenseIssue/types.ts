@@ -18,6 +18,16 @@ export interface LicenseIssueQuery extends PageQuery {
   customerId?: string | number;
 
   /**
+   * Purchased package primary key.
+   */
+  packageId?: string | number;
+
+  /**
+   * Purchased package name snapshot.
+   */
+  packageName?: string;
+
+  /**
    * Signing key identifier.
    */
   keyId?: string;
@@ -84,6 +94,7 @@ export interface LicenseIssueValidity {
  */
 export interface LicenseIssueCommand {
   customerId: string | number;
+  packageId: string | number;
   keyId: string;
   installId: string;
   validity: LicenseIssueValidity;
@@ -111,6 +122,8 @@ export interface LicenseIssueResult {
   id?: string | number;
   licenseId?: string;
   customerId?: string | number;
+  packageId?: string | number;
+  packageName?: string;
   keyId?: string;
   installId?: string;
   validFrom?: string;

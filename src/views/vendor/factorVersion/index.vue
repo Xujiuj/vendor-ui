@@ -24,10 +24,11 @@
         <div class="search-item">
           <label>发布状态</label>
           <el-select v-model="queryParams.publishStatus" placeholder="请选择发布状态" clearable>
-            <el-option label="草稿" value="DRAFT" />
-            <el-option label="已发布" value="PUBLISHED" />
-            <el-option label="已冻结" value="FROZEN" />
-            <el-option label="已停用" value="DISABLED" />
+            <el-option label="草稿" value="draft" />
+            <el-option label="已发布" value="published" />
+            <el-option label="已冻结" value="frozen" />
+            <el-option label="已退役" value="retired" />
+            <el-option label="已停用" value="disabled" />
           </el-select>
         </div>
         <div class="search-item">
@@ -69,9 +70,55 @@
           </template>
         </el-table-column>
         <el-table-column label="备注" align="center" prop="remark" min-width="180" :show-overflow-tooltip="true" />
-        <el-table-column label="操作" align="center" width="90" fixed="right">
+        <el-table-column label="操作" align="center" width="260" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
+            <div class="table-actions">
+              <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
+              <el-button
+                v-if="canPublish(row)"
+                v-hasPermi="['vendor:factorVersion:edit']"
+                link
+                type="primary"
+                icon="Promotion"
+                :disabled="actioningId === row.id"
+                @click="handlePublish(row)"
+              >
+                发布
+              </el-button>
+              <el-button
+                v-if="canFreeze(row)"
+                v-hasPermi="['vendor:factorVersion:edit']"
+                link
+                type="warning"
+                icon="CircleClose"
+                :disabled="actioningId === row.id"
+                @click="handleFreeze(row)"
+              >
+                冻结
+              </el-button>
+              <el-button
+                v-if="canRetire(row)"
+                v-hasPermi="['vendor:factorVersion:edit']"
+                link
+                type="danger"
+                icon="Delete"
+                :disabled="actioningId === row.id"
+                @click="handleRetire(row)"
+              >
+                退役
+              </el-button>
+              <el-button
+                v-if="canRestore(row)"
+                v-hasPermi="['vendor:factorVersion:edit']"
+                link
+                type="success"
+                icon="RefreshLeft"
+                :disabled="actioningId === row.id"
+                @click="handleRestore(row)"
+              >
+                恢复
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -101,16 +148,24 @@
 </template>
 
 <script setup name="VendorFactorVersion" lang="ts">
-import { listFactorVersion } from '@/api/vendor/factorVersion';
+import {
+  freezeFactorVersion,
+  listFactorVersion,
+  publishFactorVersion,
+  restoreFactorVersion,
+  retireFactorVersion
+} from '@/api/vendor/factorVersion';
 import type { FactorVersionQuery, FactorVersionVO } from '@/api/vendor/factorVersion/types';
 import { formatDateTime, formatPublishStatus, formatText, publishStatusTagType, readRows, readTotal } from '../shared';
 
 import { useAutoQuery } from '@/hooks/useAutoQuery';
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const loading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
 const factorVersionList = ref<FactorVersionVO[]>([]);
 const detailRecord = ref<FactorVersionVO>();
+const actioningId = ref<string | number>();
 const detailDrawer = reactive({
   visible: false
 });
@@ -164,7 +219,99 @@ const openDetail = (row: FactorVersionVO) => {
   detailDrawer.visible = true;
 };
 
+const normalizePublishStatus = (status?: string) => status?.trim().toUpperCase() ?? '';
 const isFrozen = (value?: number | boolean) => value === true || value === 1;
+
+const canPublish = (row: FactorVersionVO) => normalizePublishStatus(row.publishStatus) === 'DRAFT';
+const canFreeze = (row: FactorVersionVO) => {
+  const status = normalizePublishStatus(row.publishStatus);
+  return status === 'PUBLISHED' && !isFrozen(row.frozenFlag);
+};
+const canRetire = (row: FactorVersionVO) => {
+  const status = normalizePublishStatus(row.publishStatus);
+  return status === 'PUBLISHED' || status === 'FROZEN' || isFrozen(row.frozenFlag);
+};
+const canRestore = (row: FactorVersionVO) => normalizePublishStatus(row.publishStatus) === 'RETIRED' && !isFrozen(row.frozenFlag);
+
+const syncLocalLifecycleState = (row: FactorVersionVO, publishStatus: string, frozenFlag: boolean) => {
+  row.publishStatus = publishStatus;
+  row.frozenFlag = frozenFlag;
+
+  const currentRow = factorVersionList.value.find((item) => item.id === row.id);
+  if (currentRow) {
+    currentRow.publishStatus = publishStatus;
+    currentRow.frozenFlag = frozenFlag;
+  }
+
+  if (detailRecord.value?.id === row.id) {
+    detailRecord.value.publishStatus = publishStatus;
+    detailRecord.value.frozenFlag = frozenFlag;
+  }
+};
+
+const syncDetailFromList = (id: string | number) => {
+  if (detailRecord.value?.id !== id) {
+    return;
+  }
+
+  const refreshedRow = factorVersionList.value.find((item) => item.id === id);
+  if (refreshedRow) {
+    detailRecord.value = refreshedRow;
+  }
+};
+
+const runPublishStatusAction = async (
+  row: FactorVersionVO,
+  publishStatus: string,
+  frozenFlag: boolean,
+  action: (id: string | number) => Promise<unknown>,
+  successMessage: string
+) => {
+  actioningId.value = row.id;
+  try {
+    await action(row.id);
+    syncLocalLifecycleState(row, publishStatus, frozenFlag);
+    try {
+      await getList();
+      syncDetailFromList(row.id);
+      proxy?.$modal.msgSuccess(successMessage);
+    } catch {
+      proxy?.$modal.msgWarning('动作成功但列表刷新失败，请手动刷新列表');
+    }
+  } catch {
+    // Global request interceptor already shows the error.
+  } finally {
+    actioningId.value = undefined;
+  }
+};
+
+const handlePublish = async (row: FactorVersionVO) => {
+  if (!canPublish(row)) {
+    return;
+  }
+  await runPublishStatusAction(row, 'published', false, publishFactorVersion, '因子版本已发布');
+};
+
+const handleFreeze = async (row: FactorVersionVO) => {
+  if (!canFreeze(row)) {
+    return;
+  }
+  await runPublishStatusAction(row, 'frozen', true, freezeFactorVersion, '因子版本已冻结');
+};
+
+const handleRetire = async (row: FactorVersionVO) => {
+  if (!canRetire(row)) {
+    return;
+  }
+  await runPublishStatusAction(row, 'retired', false, retireFactorVersion, '因子版本已退役');
+};
+
+const handleRestore = async (row: FactorVersionVO) => {
+  if (!canRestore(row)) {
+    return;
+  }
+  await runPublishStatusAction(row, 'draft', false, restoreFactorVersion, '因子版本已恢复为草稿');
+};
 
 onMounted(() => {
   void refreshList();
@@ -209,6 +356,14 @@ useAutoQuery(queryParams, () => handleQuery());
   color: var(--carbon-muted);
   font-size: 12px;
   line-height: 1.5;
+}
+
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
 }
 
 @media (max-width: 960px) {

@@ -37,25 +37,29 @@ export const formatText = (value?: string | number | boolean): string => {
 };
 
 export const formatPublishStatus = (status?: string): string => {
+  const normalizedStatus = status?.toUpperCase();
   const statusMap: Record<string, string> = {
     DRAFT: '草稿',
     PUBLISHED: '已发布',
     RELEASED: '已发布',
     FROZEN: '已冻结',
+    RETIRED: '已退役',
     DISABLED: '已停用'
   };
-  return status ? statusMap[status] || status : '-';
+  return normalizedStatus ? statusMap[normalizedStatus] || status || '-' : '-';
 };
 
 export const publishStatusTagType = (status?: string): 'success' | 'warning' | 'info' | 'danger' => {
+  const normalizedStatus = status?.toUpperCase();
   const statusMap: Record<string, 'success' | 'warning' | 'info' | 'danger'> = {
     DRAFT: 'info',
     PUBLISHED: 'success',
     RELEASED: 'success',
     FROZEN: 'danger',
+    RETIRED: 'warning',
     DISABLED: 'warning'
   };
-  return status ? statusMap[status] || 'info' : 'info';
+  return normalizedStatus ? statusMap[normalizedStatus] || 'info' : 'info';
 };
 
 export const formatScopeStatus = (status?: string): string => {

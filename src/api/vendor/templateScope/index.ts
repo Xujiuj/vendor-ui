@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { TemplateScopeQuery, TemplateScopeVO } from './types';
+import { TemplateScopeForm, TemplateScopeQuery, TemplateScopeVO } from './types';
 import type { ApiResponse, ListResponse } from '../shared';
 
 const TEMPLATE_SCOPE_BASE_URL = '/vendor/report-template-scope';
@@ -16,6 +16,22 @@ export const getTemplateScope = (id: string | number): Promise<ApiResponse<Templ
   return request({
     url: `${TEMPLATE_SCOPE_BASE_URL}/${id}`,
     method: 'get'
+  });
+};
+
+export const addTemplateScope = (data: TemplateScopeForm): Promise<ApiResponse> => {
+  return request({
+    url: TEMPLATE_SCOPE_BASE_URL,
+    method: 'post',
+    data
+  });
+};
+
+export const updateTemplateScope = (data: TemplateScopeForm): Promise<ApiResponse> => {
+  return request({
+    url: TEMPLATE_SCOPE_BASE_URL,
+    method: 'put',
+    data
   });
 };
 

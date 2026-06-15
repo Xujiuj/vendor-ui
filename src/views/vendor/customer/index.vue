@@ -3,7 +3,6 @@
     <div class="page-head">
       <div>
         <h1>客户档案</h1>
-        <p>查看厂商侧客户基础档案、联系人和客户状态。</p>
       </div>
     </div>
 

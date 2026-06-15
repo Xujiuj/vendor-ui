@@ -63,7 +63,6 @@
         <el-table-column label="活动数据值" align="center" prop="activityValue" />
         <el-table-column label="活动数据单位" align="center" prop="activityUnit" />
         <el-table-column label="数据类型" align="center" prop="dataType" />
-        <el-table-column label="数据来源说明" align="center" prop="dataSource" :show-overflow-tooltip="true" />
         <el-table-column label="计算公式" align="center" prop="calculationFormula" :show-overflow-tooltip="true" />
         <el-table-column label="排放量计算结果" align="center" prop="emissionResult" />
         <el-table-column label="校验状态" align="center" prop="verificationStatus">
@@ -115,9 +114,6 @@
             <el-option label="原始数据" value="原始数据" />
             <el-option label="计算值" value="计算值" />
           </el-select>
-        </el-form-item>
-        <el-form-item label="数据来源说明" prop="dataSource">
-          <el-input v-model="form.dataSource" placeholder="请输入数据来源说明" />
         </el-form-item>
         <el-form-item label="计算公式" prop="calculationFormula">
           <el-input v-model="form.calculationFormula" type="textarea" placeholder="请输入计算公式" />
@@ -172,7 +168,6 @@ const initFormData: ActivityDataForm = {
   activityValue: undefined,
   activityUnit: undefined,
   dataType: undefined,
-  dataSource: undefined,
   calculationFormula: undefined,
   emissionResult: undefined,
   verificationStatus: undefined,
@@ -190,7 +185,6 @@ const data = reactive<PageData<ActivityDataForm, ActivityDataQuery>>({
     activityValue: undefined,
     activityUnit: undefined,
     dataType: undefined,
-    dataSource: undefined,
     calculationFormula: undefined,
     emissionResult: undefined,
     verificationStatus: undefined,

@@ -8,6 +8,7 @@ type PortalRoute = RouteRecordRaw & {
     permissions?: string[];
     title?: unknown;
     link?: unknown;
+    vendorPortalAllowed?: boolean;
   };
 };
 
@@ -33,7 +34,7 @@ const vendorMenuTitleRules = [
   { title: '厂商运营', keys: ['vendor'] },
   { title: '数据管理', keys: ['data-management', 'dataManagement'] },
   { title: '客户档案', keys: ['vendor:customer', 'vendor/customer', 'customer'] },
-  { title: 'License 授权管理', keys: ['vendor:licenseIssue', 'vendor/license', 'license', 'system/license/index'] },
+  { title: 'License 授权管理', keys: ['vendor:licenseIssue', 'vendor/license', 'vendor/licenseIssue/index', 'license'] },
   { title: '因子版本', keys: ['vendor:factorVersion', 'factor-version', 'factorVersion', 'vendor/factorVersion/index'] },
   { title: '因子明细', keys: ['vendor:factorRecord', 'factor-record', 'factorRecord', 'vendor/factorRecord/index'] },
   { title: '因子开放范围', keys: ['vendor:factorScope', 'factor-scope', 'factorScope', 'vendor/factorScope/index'] },
@@ -44,7 +45,18 @@ const vendorMenuTitleRules = [
   { title: '续费订单', keys: ['vendor:renewalOrder', 'renewal-order', 'renewalOrder', 'vendor/renewalOrder/index'] },
   { title: '系统管理', keys: ['system'] },
   { title: '用户管理', keys: ['system:user', 'system/user/index'] },
-  { title: '公告配置', keys: ['system:notice', 'system/notice/index'] }
+  { title: '角色管理', keys: ['system:role', 'system/role/index'] },
+  { title: '菜单管理', keys: ['system:menu', 'system/menu/index'] },
+  { title: '套餐管理', keys: ['system:tenantPackage', 'system/tenantPackage/index'] },
+  { title: '部门管理', keys: ['system:dept', 'system/dept/index'] },
+  { title: '岗位管理', keys: ['system:post', 'system/post/index'] },
+  { title: '字典管理', keys: ['system:dict', 'system/dict/index'] },
+  { title: '参数设置', keys: ['system:config', 'system/config/index'] },
+  { title: '公告配置', keys: ['system:notice', 'system/notice/index'] },
+  { title: '日志管理', keys: ['monitor'] },
+  { title: '操作日志', keys: ['monitor:operlog', 'monitor/operlog/index'] },
+  { title: '登录日志', keys: ['monitor:logininfor', 'monitor/logininfor/index'] },
+  { title: '代码生成', keys: ['tool:gen', 'tool/gen/index'] }
 ] as const;
 
 const vendorSystemManagementRouteKeys = [
@@ -61,7 +73,16 @@ const vendorSystemManagementRouteKeys = [
   'system:dict',
   'system/dict/index',
   'system:config',
-  'system/config/index'
+  'system/config/index',
+  'system:notice',
+  'system/notice/index',
+  'monitor',
+  'monitor:operlog',
+  'monitor/operlog/index',
+  'monitor:logininfor',
+  'monitor/logininfor/index',
+  'tool:gen',
+  'tool/gen/index'
 ] as const;
 
 export const vendorForbiddenMenuTitlePatterns = [
@@ -104,7 +125,6 @@ const vendorForbiddenRouteKeys = new Set(
     'licenseVerify',
     'licenseVerification',
     'localConnection',
-    'monitor',
     'myDocument',
     'online',
     'powerBiLocal',
@@ -120,7 +140,6 @@ const vendorForbiddenRouteKeys = new Set(
     'taskFinish',
     'taskWaiting',
     'tenant',
-    'tool',
     'workflow'
   ].map(normalizeRouteKey)
 );
@@ -148,6 +167,7 @@ const vendorForbiddenRoutePaths = new Set(
     'powerbi/localconnection',
     'submission/reminder',
     'submission/tracking',
+    'system/license/index',
     'system/activityData/index',
     'system/customFieldMeta/index',
     'system/emissionSource/index',
@@ -187,21 +207,31 @@ export function isVendorAllowedRoute(route: PortalRoute): boolean {
   if (isExternalMenu(route)) {
     return false;
   }
+  if (isVendorExplicitlyForbiddenRouteValue(route.component) || isVendorExplicitlyForbiddenRouteValue(route.path)) {
+    return false;
+  }
+  if (route.meta?.vendorPortalAllowed === true) {
+    return true;
+  }
   return getRouteIdentityValues(route)
     .map((value) => normalizeRouteKey(value))
     .some((value) => vendorAllowedRouteKeys.has(value));
 }
 
 export function isVendorForbiddenRoute(route: PortalRoute): boolean {
+  const routePermissions = getRoutePermissions(route);
+  if (
+    isExternalMenu(route) ||
+    isVendorExplicitlyForbiddenRouteValue(route.path) ||
+    isVendorExplicitlyForbiddenRouteValue(route.name) ||
+    isVendorExplicitlyForbiddenRouteValue(route.component)
+  ) {
+    return true;
+  }
   if (isVendorAllowedRoute(route)) {
     return false;
   }
-  const routePermissions = getRoutePermissions(route);
   return (
-    isExternalMenu(route) ||
-    hasVendorForbiddenRouteValue(route.path) ||
-    hasVendorForbiddenRouteValue(route.name) ||
-    hasVendorForbiddenRouteValue(route.component) ||
     hasVendorForbiddenPermission(routePermissions) ||
     isVendorForbiddenMenuTitle(route.meta?.title)
   );
@@ -248,7 +278,8 @@ function normalizeVendorPortalRoute(route: PortalRoute): RouteRecordRaw {
     ...route,
     meta: {
       ...route.meta,
-      title
+      title,
+      vendorPortalAllowed: true
     }
   } as RouteRecordRaw;
 }
@@ -265,17 +296,11 @@ function getRouteIdentityValues(route: PortalRoute): string[] {
     .map(String);
 }
 
-function hasVendorForbiddenRouteValue(value?: unknown): boolean {
+function isVendorExplicitlyForbiddenRouteValue(value?: unknown): boolean {
   if (!value) {
     return false;
   }
-  const normalizedValue = normalizeRouteKey(String(value));
-  const pathSegments = normalizedValue.split('/').filter(Boolean);
-  return (
-    vendorForbiddenRoutePaths.has(normalizedValue) ||
-    vendorForbiddenRouteKeys.has(normalizedValue) ||
-    pathSegments.some((segment) => vendorForbiddenRouteKeys.has(segment))
-  );
+  return vendorForbiddenRoutePaths.has(normalizeRouteKey(String(value)));
 }
 
 function hasVendorForbiddenPermission(permissions: string[]): boolean {

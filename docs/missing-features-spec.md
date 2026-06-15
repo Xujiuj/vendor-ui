@@ -1,6 +1,6 @@
 # Spec: Vendor UI Missing Features
 
-Updated: 2026-06-05
+Updated: 2026-06-14
 
 ## Objective
 
@@ -123,6 +123,17 @@ Requirements:
 - These pages reuse the existing `src/views/system/*` pages and real `/system/*` backend APIs.
 - Do not create duplicate vendor-specific system management pages unless RuoYi cannot cover the workflow.
 - Continue filtering enterprise-local workflow menus and tenant/customer compatibility menus that are not vendor administration functions.
+
+### VU-7: Vendor Data Management and Factor Scope Control
+
+Requirements:
+
+- Vendor UI exposes `数据管理` as a first-level vendor-only directory for data that enterprise requests from vendor open APIs.
+- Enterprise UI navigation is out of scope for this vendor requirement and continues to follow enterprise-side documents.
+- Vendor administrators have full control on vendor-owned data pages. `因子开放范围` must expose create, edit, detail, and delete actions when the backend grants the corresponding permissions.
+- `因子开放范围` is configured by factor version, optional customer, optional edition/package version, and enabled/disabled state. It must not present per-License assignment as the normal control model.
+- License determines access indirectly by the enterprise customer's purchased edition/package version when calling vendor open APIs.
+- Vendor data-management pages should not include decorative or explanatory header cards; keep operational controls and data tables only.
 
 ## Code Style
 

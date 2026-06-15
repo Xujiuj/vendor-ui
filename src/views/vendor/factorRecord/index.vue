@@ -3,11 +3,6 @@
     <div class="page-head factor-record-head">
       <div>
         <h1>因子明细</h1>
-        <p>维护厂商云端因子版本下的排放因子明细，企业端因子缓存由授权同步任务拉取本页数据。</p>
-      </div>
-      <div class="head-notes">
-        <div><strong>数据归属</strong><span>仅调用 /vendor/factor-record，不写入企业本地因子缓存表。</span></div>
-        <div><strong>同步关系</strong><span>发布版本和开放范围控制企业端可同步的因子明细。</span></div>
       </div>
     </div>
 
@@ -330,38 +325,6 @@ useAutoQuery(queryParams, () => handleQuery());
   gap: 16px;
 }
 
-.head-notes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  flex: 0 1 520px;
-}
-
-.head-notes > div {
-  min-height: 58px;
-  padding: 12px;
-  border: 1px solid var(--carbon-soft-line);
-  border-radius: 8px;
-  background: var(--carbon-panel);
-}
-
-.head-notes strong,
-.head-notes span {
-  display: block;
-}
-
-.head-notes strong {
-  margin-bottom: 6px;
-  color: var(--carbon-ink);
-  font-size: 13px;
-}
-
-.head-notes span {
-  color: var(--carbon-muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
 .toolbar {
   display: flex;
   justify-content: flex-end;
@@ -370,12 +333,5 @@ useAutoQuery(queryParams, () => handleQuery());
 
 .w-full {
   width: 100%;
-}
-
-@media (max-width: 960px) {
-  .head-notes {
-    flex-basis: 100%;
-    grid-template-columns: 1fr;
-  }
 }
 </style>

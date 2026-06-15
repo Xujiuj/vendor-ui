@@ -37,6 +37,7 @@ export const getLicenseIssue = (id: string | number): Promise<ApiResponse<Licens
 export const issueLicense = (data: LicenseIssueCommand): Promise<ApiResponse<LicenseIssueResult>> => {
   const payload = {
     customerId: data.customerId,
+    packageId: data.packageId,
     keyId: data.keyId,
     installId: data.installId,
     validFrom: data.validity?.validFrom,

@@ -3,11 +3,6 @@
     <div class="page-head announcement-head">
       <div>
         <h1>公告管理</h1>
-        <p>维护厂商侧公告内容，企业端工作台通过 /open/announcements 按 License 授权读取这里已启用的公告。</p>
-      </div>
-      <div class="head-notes">
-        <div><strong>数据归属</strong><span>仅写入厂商端 sys_notice 表，不写入企业端本地业务库。</span></div>
-        <div><strong>同步关系</strong><span>状态为正常的公告会被企业端授权同步读取。</span></div>
       </div>
     </div>
 
@@ -313,38 +308,6 @@ useAutoQuery(queryParams, () => handleQuery());
   gap: 16px;
 }
 
-.head-notes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  flex: 0 1 520px;
-}
-
-.head-notes > div {
-  min-height: 58px;
-  padding: 12px;
-  border: 1px solid var(--carbon-soft-line);
-  border-radius: 8px;
-  background: var(--carbon-panel);
-}
-
-.head-notes strong,
-.head-notes span {
-  display: block;
-}
-
-.head-notes strong {
-  margin-bottom: 6px;
-  color: var(--carbon-ink);
-  font-size: 13px;
-}
-
-.head-notes span {
-  color: var(--carbon-muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
 .toolbar {
   display: flex;
   justify-content: flex-end;
@@ -363,12 +326,5 @@ useAutoQuery(queryParams, () => handleQuery());
   color: var(--carbon-ink);
   background: var(--carbon-panel);
   line-height: 1.7;
-}
-
-@media (max-width: 960px) {
-  .head-notes {
-    flex-basis: 100%;
-    grid-template-columns: 1fr;
-  }
 }
 </style>

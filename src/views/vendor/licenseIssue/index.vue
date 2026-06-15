@@ -19,9 +19,9 @@
               <el-option v-for="customer in customerOptions" :key="customer.id" :label="formatCustomerLabel(customer)" :value="customer.id" />
             </el-select>
           </el-form-item>
-          <el-form-item label="版本" prop="edition">
-            <el-select v-model="queryParams.edition" placeholder="请选择版本" clearable>
-              <el-option v-for="edition in editionOptions" :key="edition.value" :label="edition.label" :value="edition.value" />
+          <el-form-item label="套餐" prop="packageId">
+            <el-select v-model="queryParams.packageId" placeholder="请选择套餐" clearable>
+              <el-option v-for="item in packageOptions" :key="item.packageId" :label="item.packageName" :value="item.packageId" />
             </el-select>
           </el-form-item>
           <el-form-item label="设备指纹" prop="installId">
@@ -58,7 +58,11 @@
             {{ customerNameMap.get(row.customerId) || row.customerId || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="版本" align="center" prop="edition" width="120" />
+        <el-table-column label="套餐" align="center" min-width="130" :show-overflow-tooltip="true">
+          <template #default="{ row }">
+            {{ formatPackage(row) }}
+          </template>
+        </el-table-column>
         <el-table-column label="设备指纹" align="center" prop="installId" min-width="170" :show-overflow-tooltip="true" />
         <el-table-column label="签发类型" align="center" prop="issueType" width="110" />
         <el-table-column label="签发状态" align="center" prop="issueStatus" width="120">
@@ -146,9 +150,15 @@
             </el-col>
           </el-row>
         </el-form-item>
-        <el-form-item label="版本" prop="edition">
-          <el-select v-model="issueForm.edition" placeholder="请选择版本" clearable class="w-full">
-            <el-option v-for="edition in editionOptions" :key="edition.value" :label="edition.label" :value="edition.value" />
+        <el-form-item label="套餐" prop="packageId">
+          <el-select v-model="issueForm.packageId" placeholder="请选择套餐" class="w-full" filterable>
+            <el-option
+              v-for="item in packageOptions"
+              :key="item.packageId"
+              :label="item.packageName"
+              :value="item.packageId"
+              :disabled="item.status === '1'"
+            />
           </el-select>
         </el-form-item>
         <el-form-item label="功能" prop="features">
@@ -214,7 +224,7 @@
         <el-descriptions-item label="License ID">{{ detailRecord.licenseId || detailRecord.id }}</el-descriptions-item>
         <el-descriptions-item label="客户">{{ customerNameMap.get(detailRecord.customerId) || detailRecord.customerId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="签名密钥 ID">{{ detailRecord.keyId || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="版本">{{ detailRecord.edition || '-' }}</el-descriptions-item>
+        <el-descriptions-item label="套餐">{{ formatPackage(detailRecord) }}</el-descriptions-item>
         <el-descriptions-item label="功能">{{ formatFeatures(detailRecord.featureCodes) }}</el-descriptions-item>
         <el-descriptions-item label="设备指纹">{{ detailRecord.installId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{ formatIssueStatus(detailRecord.issueStatus) }}</el-descriptions-item>
@@ -231,12 +241,15 @@ import { listCustomer } from '@/api/vendor/customer';
 import type { CustomerVO } from '@/api/vendor/customer/types';
 import { getLicenseIssue, issueLicense, listLicenseIssue } from '@/api/vendor/licenseIssue';
 import type { LicenseIssueCommand, LicenseIssueQuery, LicenseIssueResult, LicenseIssueVO } from '@/api/vendor/licenseIssue/types';
+import { selectTenantPackage } from '@/api/system/tenantPackage';
+import type { TenantPkgVO } from '@/api/system/tenantPackage/types';
 import { parseTime } from '@/utils/ruoyi';
 import type { AxiosError } from 'axios';
 
 import { useAutoQuery } from '@/hooks/useAutoQuery';
 interface IssueForm {
   customerId?: string | number;
+  packageId?: string | number;
   keyId: string;
   installId: string;
   validFrom: string;
@@ -263,6 +276,7 @@ const customerLoading = ref(false);
 const total = ref(0);
 const licenseList = ref<LicenseIssueVO[]>([]);
 const customerOptions = ref<CustomerVO[]>([]);
+const packageOptions = ref<TenantPkgVO[]>([]);
 const issuedResult = ref<LicenseIssueResult>();
 const issueError = ref('');
 const detailRecord = ref<LicenseIssueVO>();
@@ -285,6 +299,7 @@ const queryParams = reactive<LicenseIssueQuery>({
   pageSize: 10,
   licenseId: undefined,
   customerId: undefined,
+  packageId: undefined,
   edition: undefined,
   installId: undefined,
   issueStatus: undefined
@@ -292,11 +307,12 @@ const queryParams = reactive<LicenseIssueQuery>({
 
 const defaultIssueForm = (): IssueForm => ({
   customerId: undefined,
+  packageId: undefined,
   keyId: '',
   installId: '',
   validFrom: '',
   validTo: '',
-  edition: 'STANDARD',
+  edition: undefined,
   features: [],
   issueType: 'NEW',
   issuedBy: 'vendor-operator',
@@ -305,19 +321,13 @@ const defaultIssueForm = (): IssueForm => ({
 
 const issueForm = reactive<IssueForm>(defaultIssueForm());
 
-const editionOptions = [
-  { label: '基础版', value: 'BASIC' },
-  { label: '标准版', value: 'STANDARD' },
-  { label: '专业版', value: 'PROFESSIONAL' },
-  { label: '企业版', value: 'ENTERPRISE' }
-];
-
 const featureOptions = ['carbon-data', 'factor-library', 'report-template', 'power-bi'];
 
 const issueRules: Record<string, any> = {
   customerId: [{ required: true, message: '请选择供应商客户', trigger: 'change' }],
   keyId: [{ required: true, message: '请输入签名密钥 ID', trigger: 'blur' }],
   installId: [{ required: true, message: '请输入设备指纹', trigger: 'blur' }],
+  packageId: [{ required: true, message: '请选择套餐', trigger: 'change' }],
   validFrom: [{ required: true, message: '请选择有效期开始日期', trigger: 'change' }],
   validTo: [{ required: true, message: '请选择有效期结束日期', trigger: 'change' }],
   features: [{ required: true, type: 'array', min: 1, message: '请至少选择一个功能', trigger: 'change' }],
@@ -334,6 +344,7 @@ const customerNameMap = computed(() => {
 });
 
 const selectedCustomer = computed(() => customerOptions.value.find((customer) => customer.id === issueForm.customerId));
+const selectedPackage = computed(() => packageOptions.value.find((item) => item.packageId === issueForm.packageId));
 
 const normalizeRows = <T,>(res: ListResponse<T>): T[] => {
   if (Array.isArray(res.rows)) {
@@ -351,6 +362,19 @@ const normalizeTotal = <T,>(res: ListResponse<T>, fallback: T[]) => {
 
 const formatCustomerLabel = (customer: CustomerVO) => {
   return `${customer.customerCode} - ${customer.customerName}`;
+};
+
+const formatPackage = (record?: { packageId?: string | number; packageName?: string; edition?: string }) => {
+  if (!record) {
+    return '-';
+  }
+  if (record.packageName) {
+    return record.packageName;
+  }
+  if (record.packageId !== undefined && record.packageId !== null) {
+    return packageOptions.value.find((item) => item.packageId === record.packageId)?.packageName || String(record.packageId);
+  }
+  return record.edition || '-';
 };
 
 const isInactiveCustomer = (customer?: CustomerVO) => {
@@ -482,6 +506,15 @@ const searchCustomers = async (keyword?: string) => {
   }
 };
 
+const loadPackages = async () => {
+  const res = (await selectTenantPackage()) as unknown as { data?: TenantPkgVO[] } | TenantPkgVO[];
+  const rows = Array.isArray(res) ? res : res.data || [];
+  packageOptions.value = rows.filter((item) => item.status !== '1');
+  if (!issueForm.packageId && packageOptions.value.length > 0) {
+    issueForm.packageId = packageOptions.value[0].packageId;
+  }
+};
+
 const hydrateCustomersForRows = async (rows: LicenseIssueVO[]) => {
   const missingCustomer = rows.find((row) => row.customerId && !customerNameMap.value.has(row.customerId));
   if (missingCustomer) {
@@ -511,6 +544,7 @@ const resetQuery = () => {
   queryFormRef.value?.resetFields();
   queryParams.pageNum = 1;
   queryParams.pageSize = 10;
+  queryParams.packageId = undefined;
   getList();
 };
 
@@ -526,6 +560,9 @@ const openIssueDrawer = async () => {
   issueDrawer.visible = true;
   if (!customerOptions.value.length) {
     await searchCustomers();
+  }
+  if (!packageOptions.value.length) {
+    await loadPackages();
   }
 };
 
@@ -549,7 +586,8 @@ const buildIssueCommand = (): LicenseIssueCommand => ({
     validFrom: issueForm.validFrom,
     validTo: issueForm.validTo
   },
-  edition: issueForm.edition,
+  packageId: issueForm.packageId as string | number,
+  edition: selectedPackage.value?.packageName || issueForm.edition,
   features: issueForm.features,
   issueType: issueForm.issueType,
   issuedBy: issueForm.issuedBy,
@@ -593,7 +631,7 @@ const openDetail = async (row: LicenseIssueVO) => {
 };
 
 onMounted(async () => {
-  await searchCustomers();
+  await Promise.all([searchCustomers(), loadPackages()]);
   await getList();
 });
 

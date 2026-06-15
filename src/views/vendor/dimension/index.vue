@@ -3,11 +3,6 @@
     <div class="page-head">
       <div>
         <h1>维表管理</h1>
-        <p>厂商端基础维表</p>
-      </div>
-      <div class="btns">
-        <el-button icon="Refresh" @click="refreshList">刷新</el-button>
-        <el-button v-hasPermi="['vendor:dimension:add']" type="primary" icon="Plus" @click="handleAdd">新增</el-button>
       </div>
     </div>
 
@@ -267,7 +262,6 @@ const form = reactive<DimensionRecordForm>({
   recordCode: '',
   recordName: '',
   parentCode: undefined,
-  sourceType: 'vendor',
   field01: undefined,
   field02: undefined,
   field03: undefined,
@@ -297,7 +291,6 @@ const resetForm = () => {
   form.recordCode = '';
   form.recordName = '';
   form.parentCode = undefined;
-  form.sourceType = 'vendor';
   form.field01 = undefined;
   form.field02 = undefined;
   form.field03 = undefined;
@@ -358,7 +351,6 @@ const handleUpdate = async (row: DimensionRecordVO) => {
   const data = res.data ?? row;
   Object.assign(form, {
     ...data,
-    sourceType: data.sourceType || 'vendor',
     status: data.status || '0',
     sortOrder: data.sortOrder ?? 0
   });
@@ -371,7 +363,6 @@ const submitForm = async () => {
   if (!valid) return;
   submitLoading.value = true;
   try {
-    form.sourceType = 'vendor';
     if (form.id) {
       await updateDimensionRecord(form);
       proxy?.$modal.msgSuccess('维表记录已更新');

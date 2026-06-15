@@ -28,7 +28,8 @@ describe('vendor dynamic router guard', () => {
         meta: { title: '厂商运营', icon: 'guide' },
         children: [
           { path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'], meta: { title: '客户档案' } },
-          { path: 'license', component: 'system/license/index', permissions: ['vendor:licenseIssue:list'], meta: { title: 'License 授权管理' } },
+          { path: 'license', component: 'vendor/licenseIssue/index', permissions: ['vendor:licenseIssue:list'], meta: { title: 'License 授权管理' } },
+          { path: 'legacy-license', component: 'system/license/index', permissions: ['system:license:list'], meta: { title: 'License 授权管理' } },
           {
             path: 'renewal-order',
             component: 'vendor/renewalOrder/index',
@@ -114,6 +115,16 @@ describe('vendor dynamic router guard', () => {
         ]
       },
       {
+        path: '/monitor',
+        component: 'Layout',
+        meta: { title: '日志管理', icon: 'log' },
+        children: [
+          { path: 'operlog', component: 'monitor/operlog/index', permissions: ['monitor:operlog:list'], meta: { title: '操作日志' } },
+          { path: 'logininfor', component: 'monitor/logininfor/index', permissions: ['monitor:logininfor:list'], meta: { title: '登录日志' } }
+        ]
+      },
+      { path: '/gen', component: 'tool/gen/index', permissions: ['tool:gen:list'], meta: { title: '代码生成' } },
+      {
         path: '/tenant',
         component: 'Layout',
         meta: { title: '租户管理', icon: 'chart' },
@@ -147,9 +158,11 @@ describe('vendor dynamic router guard', () => {
     const filtered = filterVendorPortalRoutes(routes as any);
     const vendorMenu = filtered.find((route) => route.path === '/vendor') as any;
     const systemMenu = filtered.find((route) => route.path === '/system') as any;
+    const monitorMenu = filtered.find((route) => route.path === '/monitor') as any;
 
-    expect(titlesOf(filtered)).toEqual(['厂商运营', '数据管理', '系统管理']);
+    expect(titlesOf(filtered)).toEqual(['厂商运营', '数据管理', '系统管理', '日志管理', '代码生成']);
     expect(titlesOf(vendorMenu.children)).toEqual(['客户档案', 'License 授权管理', '续费订单']);
+    expect(JSON.stringify(vendorMenu)).not.toContain('system/license/index');
     const dataMenu = filtered.find((route) => route.path === '/data-management') as any;
     expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子明细', '因子开放范围', '模板库', '模板分发', '维表管理', '公告管理']);
     expect(titlesOf(systemMenu.children)).toEqual([
@@ -163,6 +176,8 @@ describe('vendor dynamic router guard', () => {
       '参数设置',
       '公告配置'
     ]);
+    expect(titlesOf(systemMenu.children).length).toBeGreaterThan(0);
+    expect(titlesOf(monitorMenu.children)).toEqual(['操作日志', '登录日志']);
     expect(JSON.stringify(filtered)).not.toContain('PLUS官网');
     expect(JSON.stringify(filtered)).not.toContain('测试菜单');
     expect(JSON.stringify(filtered)).not.toContain('租户管理');
@@ -176,6 +191,29 @@ describe('vendor dynamic router guard', () => {
     expect(isVendorAllowedRoute({ path: '/data-management', component: 'Layout', meta: { title: '数据管理' } } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'] } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'role', component: 'system/role/index', permissions: ['system:role:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'notice', component: 'system/notice/index', permissions: ['system:notice:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: '/monitor', component: 'Layout', meta: { title: '日志管理' } } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'operlog', component: 'monitor/operlog/index', permissions: ['monitor:operlog:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'logininfor', component: 'monitor/logininfor/index', permissions: ['monitor:logininfor:list'] } as any)).toBe(
+      true
+    );
+    expect(isVendorAllowedRoute({ path: 'gen', component: 'tool/gen/index', permissions: ['tool:gen:list'] } as any)).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'tenantPackage', component: 'system/tenantPackage/index', permissions: ['system:tenantPackage:list'] } as any)
+    ).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'factor-scope', component: 'vendor/factorScope/index', permissions: ['vendor:factorCustomerScope:add'] } as any)
+    ).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'factor-scope', component: 'vendor/factorScope/index', permissions: ['vendor:factorCustomerScope:edit'] } as any)
+    ).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'renewal-order', component: 'vendor/renewalOrder/index', permissions: ['vendor:renewalOrder:callback'] } as any)
+    ).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'renewal-order', component: 'vendor/renewalOrder/index', permissions: ['vendor:renewalOrder:retryIssue'] } as any)
+    ).toBe(true);
     expect(isVendorAllowedRoute({ path: '/tenant', component: 'Layout', meta: { title: '租户管理' } } as any)).toBe(false);
     expect(isVendorAllowedRoute({ path: '/workflow', component: 'Layout', meta: { title: '???' } } as any)).toBe(false);
   });
@@ -240,5 +278,37 @@ describe('vendor dynamic router guard', () => {
     expect(sidebarText).not.toContain('????');
     expect(sidebarText).not.toContain('workflow');
     expect(sidebarText).not.toContain('taskWaiting');
+  });
+
+  it('keeps vendor system children after dynamic route components are transformed', () => {
+    const filtered = filterVendorPortalRoutes([
+      {
+        path: '/system',
+        component: 'Layout',
+        meta: { title: '系统管理', icon: 'system' },
+        children: [
+          { path: 'user', component: 'system/user/index', meta: { title: '用户管理' } },
+          { path: 'role', component: 'system/role/index', meta: { title: '角色管理' } },
+          { path: 'menu', component: 'system/menu/index', meta: { title: '菜单管理' } },
+          { path: 'tenantPackage', component: 'system/tenantPackage/index', meta: { title: '套餐管理' } },
+          { path: 'oss', component: 'system/oss/index', meta: { title: '文件管理' } }
+        ]
+      }
+    ] as any);
+
+    const transformed = filtered.map((route: any) => ({
+      ...route,
+      component: () => Promise.resolve({}),
+      children: route.children?.map((child: any) => ({
+        ...child,
+        component: () => Promise.resolve({})
+      }))
+    }));
+
+    const sidebar = filterVendorPortalRoutes(transformed as any);
+    const systemMenu = sidebar.find((route) => route.path === '/system') as any;
+
+    expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '角色管理', '菜单管理', '套餐管理']);
+    expect(JSON.stringify(systemMenu)).not.toContain('文件管理');
   });
 });
