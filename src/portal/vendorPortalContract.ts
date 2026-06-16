@@ -44,45 +44,41 @@ const vendorMenuTitleRules = [
   { title: '公告管理', keys: ['vendor:announcement', 'announcement', 'vendor/announcement/index'] },
   { title: '续费订单', keys: ['vendor:renewalOrder', 'renewal-order', 'renewalOrder', 'vendor/renewalOrder/index'] },
   { title: '系统管理', keys: ['system'] },
+  { title: '分配用户', keys: ['role-auth/user/:roleId', 'system/role/authUser', 'system:role:edit'] },
+  { title: '分配角色', keys: ['user-auth/role/:userId', 'system/user/authRole', 'system:user:edit'] },
   { title: '用户管理', keys: ['system:user', 'system/user/index'] },
   { title: '角色管理', keys: ['system:role', 'system/role/index'] },
-  { title: '菜单管理', keys: ['system:menu', 'system/menu/index'] },
   { title: '套餐管理', keys: ['system:tenantPackage', 'system/tenantPackage/index'] },
   { title: '部门管理', keys: ['system:dept', 'system/dept/index'] },
   { title: '岗位管理', keys: ['system:post', 'system/post/index'] },
-  { title: '字典管理', keys: ['system:dict', 'system/dict/index'] },
-  { title: '参数设置', keys: ['system:config', 'system/config/index'] },
   { title: '公告配置', keys: ['system:notice', 'system/notice/index'] },
   { title: '日志管理', keys: ['monitor'] },
   { title: '操作日志', keys: ['monitor:operlog', 'monitor/operlog/index'] },
-  { title: '登录日志', keys: ['monitor:logininfor', 'monitor/logininfor/index'] },
-  { title: '代码生成', keys: ['tool:gen', 'tool/gen/index'] }
+  { title: '登录日志', keys: ['monitor:logininfor', 'monitor/logininfor/index'] }
 ] as const;
 
 const vendorSystemManagementRouteKeys = [
   'system:role',
   'system/role/index',
-  'system:menu',
-  'system/menu/index',
+  'role-auth/user/:roleId',
+  'system/role/authUser',
+  'system:role:edit',
+  'user-auth/role/:userId',
+  'system/user/authRole',
+  'system:user:edit',
   'system:tenantPackage',
   'system/tenantPackage/index',
   'system:dept',
   'system/dept/index',
   'system:post',
   'system/post/index',
-  'system:dict',
-  'system/dict/index',
-  'system:config',
-  'system/config/index',
   'system:notice',
   'system/notice/index',
   'monitor',
   'monitor:operlog',
   'monitor/operlog/index',
   'monitor:logininfor',
-  'monitor/logininfor/index',
-  'tool:gen',
-  'tool/gen/index'
+  'monitor/logininfor/index'
 ] as const;
 
 export const vendorForbiddenMenuTitlePatterns = [
@@ -231,10 +227,7 @@ export function isVendorForbiddenRoute(route: PortalRoute): boolean {
   if (isVendorAllowedRoute(route)) {
     return false;
   }
-  return (
-    hasVendorForbiddenPermission(routePermissions) ||
-    isVendorForbiddenMenuTitle(route.meta?.title)
-  );
+  return hasVendorForbiddenPermission(routePermissions) || isVendorForbiddenMenuTitle(route.meta?.title);
 }
 
 export function isVendorForbiddenMenuTitle(title?: unknown): boolean {

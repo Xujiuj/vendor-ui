@@ -100,6 +100,18 @@ describe('vendor dynamic router guard', () => {
         children: [
           { path: 'user', component: 'system/user/index', permissions: ['system:user:list'], meta: { title: '用户管理' } },
           { path: 'role', component: 'system/role/index', permissions: ['system:role:list'], meta: { title: '角色管理' } },
+          {
+            path: 'role-auth/user/:roleId',
+            component: 'system/role/authUser',
+            permissions: ['system:role:edit'],
+            meta: { title: '分配用户', activeMenu: '/system/role' }
+          },
+          {
+            path: 'user-auth/role/:userId',
+            component: 'system/user/authRole',
+            permissions: ['system:user:edit'],
+            meta: { title: '分配角色', activeMenu: '/system/user' }
+          },
           { path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'], meta: { title: '菜单管理' } },
           {
             path: 'tenantPackage',
@@ -160,27 +172,21 @@ describe('vendor dynamic router guard', () => {
     const systemMenu = filtered.find((route) => route.path === '/system') as any;
     const monitorMenu = filtered.find((route) => route.path === '/monitor') as any;
 
-    expect(titlesOf(filtered)).toEqual(['厂商运营', '数据管理', '系统管理', '日志管理', '代码生成']);
+    expect(titlesOf(filtered)).toEqual(['厂商运营', '数据管理', '系统管理', '日志管理']);
     expect(titlesOf(vendorMenu.children)).toEqual(['客户档案', 'License 授权管理', '续费订单']);
     expect(JSON.stringify(vendorMenu)).not.toContain('system/license/index');
     const dataMenu = filtered.find((route) => route.path === '/data-management') as any;
     expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子明细', '因子开放范围', '模板库', '模板分发', '维表管理', '公告管理']);
-    expect(titlesOf(systemMenu.children)).toEqual([
-      '用户管理',
-      '角色管理',
-      '菜单管理',
-      '套餐管理',
-      '部门管理',
-      '岗位管理',
-      '字典管理',
-      '参数设置',
-      '公告配置'
-    ]);
+    expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '角色管理', '分配用户', '分配角色', '套餐管理', '部门管理', '岗位管理', '公告配置']);
     expect(titlesOf(systemMenu.children).length).toBeGreaterThan(0);
     expect(titlesOf(monitorMenu.children)).toEqual(['操作日志', '登录日志']);
     expect(JSON.stringify(filtered)).not.toContain('PLUS官网');
     expect(JSON.stringify(filtered)).not.toContain('测试菜单');
     expect(JSON.stringify(filtered)).not.toContain('租户管理');
+    expect(JSON.stringify(filtered)).not.toContain('菜单管理');
+    expect(JSON.stringify(filtered)).not.toContain('字典管理');
+    expect(JSON.stringify(filtered)).not.toContain('参数设置');
+    expect(JSON.stringify(filtered)).not.toContain('代码生成');
     expect(JSON.stringify(filtered)).not.toContain('????');
     expect(JSON.stringify(filtered)).not.toContain('workflow');
     expect(JSON.stringify(filtered)).not.toContain('taskWaiting');
@@ -191,14 +197,20 @@ describe('vendor dynamic router guard', () => {
     expect(isVendorAllowedRoute({ path: '/data-management', component: 'Layout', meta: { title: '数据管理' } } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'] } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'role', component: 'system/role/index', permissions: ['system:role:list'] } as any)).toBe(true);
-    expect(isVendorAllowedRoute({ path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'] } as any)).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'role-auth/user/:roleId', component: 'system/role/authUser', permissions: ['system:role:edit'] } as any)
+    ).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'user-auth/role/:userId', component: 'system/user/authRole', permissions: ['system:user:edit'] } as any)
+    ).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'menu', component: 'system/menu/index', permissions: ['system:menu:list'] } as any)).toBe(false);
     expect(isVendorAllowedRoute({ path: 'notice', component: 'system/notice/index', permissions: ['system:notice:list'] } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: '/monitor', component: 'Layout', meta: { title: '日志管理' } } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'operlog', component: 'monitor/operlog/index', permissions: ['monitor:operlog:list'] } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'logininfor', component: 'monitor/logininfor/index', permissions: ['monitor:logininfor:list'] } as any)).toBe(
       true
     );
-    expect(isVendorAllowedRoute({ path: 'gen', component: 'tool/gen/index', permissions: ['tool:gen:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'gen', component: 'tool/gen/index', permissions: ['tool:gen:list'] } as any)).toBe(false);
     expect(
       isVendorAllowedRoute({ path: 'tenantPackage', component: 'system/tenantPackage/index', permissions: ['system:tenantPackage:list'] } as any)
     ).toBe(true);
@@ -308,7 +320,7 @@ describe('vendor dynamic router guard', () => {
     const sidebar = filterVendorPortalRoutes(transformed as any);
     const systemMenu = sidebar.find((route) => route.path === '/system') as any;
 
-    expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '角色管理', '菜单管理', '套餐管理']);
+    expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '角色管理', '套餐管理']);
     expect(JSON.stringify(systemMenu)).not.toContain('文件管理');
   });
 });
