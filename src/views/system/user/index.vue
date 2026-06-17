@@ -273,7 +273,7 @@
           <div class="text-center el-upload__tip">
             <div class="el-upload__tip"><el-checkbox v-model="upload.updateSupport" />是否更新已经存在的用户数据</div>
             <span>仅允许导入xls、xlsx格式文件。</span>
-            <el-link type="primary" :underline="false" style="font-size: 12px; vertical-align: baseline" @click="importTemplate">下载模板</el-link>
+            <el-link type="primary" underline="never" style="font-size: 12px; vertical-align: baseline" @click="importTemplate">下载模板</el-link>
           </div>
         </template>
       </el-upload>
@@ -615,9 +615,7 @@ const handleUpdate = async (row?: UserForm) => {
   dialog.title = '修改用户';
   Object.assign(form.value, data.user);
   postOptions.value = data.posts;
-  roleOptions.value = Array.from(
-    new Map([...data.roles, ...data.user.roles].map(role => [role.roleId, role])).values()
-  );
+  roleOptions.value = Array.from(new Map([...data.roles, ...data.user.roles].map((role) => [role.roleId, role])).values());
   form.value.postIds = data.postIds;
   form.value.roleIds = data.roleIds;
   form.value.password = '';

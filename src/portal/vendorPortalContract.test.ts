@@ -230,6 +230,23 @@ describe('vendor dynamic router guard', () => {
     expect(isVendorAllowedRoute({ path: '/workflow', component: 'Layout', meta: { title: '???' } } as any)).toBe(false);
   });
 
+  it('keeps vendor menu order stable even when backend returns routes out of order', () => {
+    const filtered = filterVendorPortalRoutes([
+      { path: '/monitor', component: 'Layout', meta: { title: '日志管理' }, children: [{ path: 'operlog', component: 'monitor/operlog/index' }] },
+      { path: '/system', component: 'Layout', meta: { title: '系统管理' }, children: [{ path: 'user', component: 'system/user/index' }] },
+      {
+        path: '/data-management',
+        component: 'Layout',
+        meta: { title: '数据管理' },
+        children: [{ path: 'dimension', component: 'vendor/dimension/index' }]
+      },
+      { path: '/vendor', component: 'Layout', meta: { title: '厂商运营' }, children: [{ path: 'customer', component: 'system/tenant/index' }] },
+      { path: '/index', component: 'Layout', meta: { title: '首页' } }
+    ] as any);
+
+    expect(titlesOf(filtered)).toEqual(['首页', '厂商运营', '数据管理', '系统管理', '日志管理']);
+  });
+
   it('rejects unrelated routes that reuse system child path names outside RuoYi system pages', () => {
     const filtered = filterVendorPortalRoutes([
       {

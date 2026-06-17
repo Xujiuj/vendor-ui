@@ -81,6 +81,10 @@ const vendorSystemManagementRouteKeys = [
   'monitor/logininfor/index'
 ] as const;
 
+const vendorTopMenuOrder = [['index', '/index', 'Index'], ['vendor'], ['data-management', 'dataManagement'], ['system'], ['monitor']].map((keys) =>
+  keys.map(normalizeRouteKey)
+);
+
 export const vendorForbiddenMenuTitlePatterns = [
   /^0?[1-5][\s.、_-]/,
   /活动数据|绿电绿证|强度管理|强度分母|排放源|排放因子确认|企业本地|本地业务/,
@@ -196,7 +200,8 @@ export function filterVendorPortalRoutes(routes: PortalRoute[]): RouteRecordRaw[
         ...(route.children ? (hasChildren ? { children } : { children: undefined }) : {})
       } as PortalRoute);
     })
-    .filter((route): route is RouteRecordRaw => Boolean(route));
+    .filter((route): route is RouteRecordRaw => Boolean(route))
+    .sort(compareVendorPortalRouteOrder);
 }
 
 export function isVendorAllowedRoute(route: PortalRoute): boolean {
@@ -275,6 +280,20 @@ function normalizeVendorPortalRoute(route: PortalRoute): RouteRecordRaw {
       vendorPortalAllowed: true
     }
   } as RouteRecordRaw;
+}
+
+function compareVendorPortalRouteOrder(a: RouteRecordRaw, b: RouteRecordRaw): number {
+  return getVendorTopMenuOrder(a as PortalRoute) - getVendorTopMenuOrder(b as PortalRoute);
+}
+
+function getVendorTopMenuOrder(route: PortalRoute): number {
+  const values = getRouteOrderIdentityValues(route).map((value) => normalizeRouteKey(value));
+  const order = vendorTopMenuOrder.findIndex((keys) => keys.some((key) => values.includes(key)));
+  return order === -1 ? vendorTopMenuOrder.length : order;
+}
+
+function getRouteOrderIdentityValues(route: PortalRoute): string[] {
+  return [route, ...(route.children ?? [])].flatMap(getRouteIdentityValues);
 }
 
 function getRouteIdentityValues(route: PortalRoute): string[] {
