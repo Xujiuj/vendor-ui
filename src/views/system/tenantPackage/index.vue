@@ -1,14 +1,18 @@
 <template>
   <div class="p-2">
+    <section class="page-head">
+      <div>
+        <h1>套餐管理</h1>
+        <p>维护厂商端授权套餐、功能范围、租户容量与启停状态。</p>
+      </div>
+    </section>
+
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
           <el-form ref="queryFormRef" :model="queryParams" :inline="true">
             <el-form-item label="套餐名称" prop="packageName">
               <el-input v-model="queryParams.packageName" placeholder="请输入套餐名称" clearable @keyup.enter="handleQuery" />
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
         </el-card>

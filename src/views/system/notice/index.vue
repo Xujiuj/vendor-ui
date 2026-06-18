@@ -1,5 +1,12 @@
 <template>
   <div class="p-2">
+    <section class="page-head">
+      <div>
+        <h1>公告配置</h1>
+        <p>维护厂商端公告标题、公告类型、发布状态与展示内容。</p>
+      </div>
+    </section>
+
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
@@ -14,9 +21,6 @@
               <el-select v-model="queryParams.noticeType" placeholder="公告类型" clearable>
                 <el-option v-for="dict in sys_notice_type" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
         </el-card>

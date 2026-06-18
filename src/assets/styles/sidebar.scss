@@ -296,14 +296,14 @@
 // RuoYi prototype sidebar alignment.
 :root {
   --vendor-sidebar-bg: #fbfefc;
-  --vendor-sidebar-text: #395448;
+  --vendor-sidebar-text: #243d32;
   --vendor-sidebar-border: #dcefe3;
   --vendor-sidebar-title: #123524;
-  --vendor-sidebar-hover-bg: #edf8f0;
-  --vendor-sidebar-active-bg: #e7f6ef;
-  --vendor-sidebar-active-text: #1f8f6a;
-  --vendor-sidebar-arrow: #7aa58a;
-  --vendor-sidebar-focus-ring: rgba(31, 143, 106, 0.2);
+  --vendor-sidebar-hover-bg: #e7f4ec;
+  --vendor-sidebar-active-bg: #dcefe6;
+  --vendor-sidebar-active-text: #0f5f45;
+  --vendor-sidebar-arrow: #527866;
+  --vendor-sidebar-focus-ring: rgba(15, 95, 69, 0.24);
 }
 
 html.dark {
@@ -511,7 +511,7 @@ html.dark {
   --el-menu-bg-color: var(--vendor-sidebar-bg, #fff);
   --el-menu-text-color: var(--vendor-sidebar-text, #475569);
   --el-menu-hover-bg-color: var(--vendor-sidebar-hover-bg, #edf8f0);
-  --el-menu-active-color: var(--vendor-sidebar-active-text, #1f8f6a);
+  --el-menu-active-color: var(--vendor-sidebar-active-text, #0f5f45);
 
   background: var(--vendor-sidebar-bg, #fff) !important;
   border: 1px solid var(--vendor-sidebar-border, #e5eaf2);
@@ -527,7 +527,7 @@ html.dark {
   .el-menu-item:focus,
   .el-sub-menu__title:hover,
   .el-sub-menu__title:focus {
-    color: var(--vendor-sidebar-active-text, #1f8f6a) !important;
+    color: var(--vendor-sidebar-active-text, #0f5f45) !important;
     background: var(--vendor-sidebar-hover-bg, #edf8f0) !important;
     outline: none;
   }
@@ -540,7 +540,7 @@ html.dark {
 
   .el-menu-item.is-active,
   .el-sub-menu.is-active > .el-sub-menu__title {
-    color: var(--vendor-sidebar-active-text, #1f8f6a) !important;
+    color: var(--vendor-sidebar-active-text, #0f5f45) !important;
     background: var(--vendor-sidebar-active-bg, #e7f6ef) !important;
   }
 }

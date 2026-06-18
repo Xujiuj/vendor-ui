@@ -276,7 +276,7 @@ describe('vendor dynamic router guard', () => {
   it('documents vendor portal prefixes and prototype tokens', () => {
     expect(vendorAllowedPermissionPrefixes).toEqual(['vendor:', 'system:']);
     expect(vendorPrototypeColorTokens.side).toBe('#18342f');
-    expect(vendorPrototypeColorTokens.brand).toBe('#1f8f6a');
+    expect(vendorPrototypeColorTokens.brand).toBe('#167656');
   });
 
   it('filters sidebar routes when layout interactions rewrite the sidebar store', () => {

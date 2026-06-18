@@ -8,14 +8,14 @@
    CSS 变量（原型色彩体系）
    ============================================================ */
 :root {
-  --carbon-primary: #1677ff;
-  --carbon-primary-dark: #0f5fcb;
+  --carbon-primary: #167656;
+  --carbon-primary-dark: #0f5f45;
   --carbon-success: #18a058;
   --carbon-warning: #d48806;
   --carbon-danger: #d92d20;
   --carbon-ink: #1f2937;
   --carbon-text: #4b5563;
-  --carbon-muted: #8a94a6;
+  --carbon-muted: #64748b;
   --carbon-line: #e5e7eb;
   --carbon-soft-line: #eef1f5;
   --carbon-bg: #f3f7f5;
@@ -25,14 +25,14 @@
   --carbon-input-bg: #fff;
   --carbon-table-head: #f7faf8;
   --carbon-table-row-hover: #f4faf7;
-  --carbon-table-selected: #edf7ff;
-  --carbon-table-selected-hover: #e6f4ff;
+  --carbon-table-selected: #e7f6ef;
+  --carbon-table-selected-hover: #dcefe6;
   --carbon-disabled-bg: #f5f7fa;
   --carbon-side: #18342f;
   --carbon-side-deep: #102820;
   --carbon-side-active: #0e211d;
-  --carbon-brand: #1f8f6a;
-  --carbon-green: #1f8f6a;
+  --carbon-brand: #167656;
+  --carbon-green: #167656;
   --carbon-green-soft: #e7f6ef;
   --carbon-shadow: 0 10px 26px rgba(31, 45, 61, 0.08);
   --carbon-shadow-soft: 0 1px 2px rgba(31, 45, 61, 0.025), 0 6px 18px -10px rgba(31, 45, 61, 0.06);
@@ -52,8 +52,8 @@
 }
 
 html.dark {
-  --carbon-primary: #60a5fa;
-  --carbon-primary-dark: #93c5fd;
+  --carbon-primary: #45d483;
+  --carbon-primary-dark: #86efac;
   --carbon-success: #45d483;
   --carbon-warning: #f3b44f;
   --carbon-danger: #f87171;
@@ -78,7 +78,7 @@ html.dark {
   --carbon-green-soft: rgba(31, 143, 106, 0.18);
   --carbon-shadow: 0 10px 26px rgba(0, 0, 0, 0.32);
   --carbon-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.28), 0 8px 18px rgba(0, 0, 0, 0.22);
-  --carbon-focus: 0 0 0 3px rgba(96, 165, 250, 0.22);
+  --carbon-focus: 0 0 0 3px rgba(69, 212, 131, 0.24);
   --el-bg-color-page: var(--carbon-bg);
 }
 
@@ -125,7 +125,7 @@ body {
   bottom: 6px;
   width: 3px;
   border-radius: 2px;
-  background: linear-gradient(180deg, #22c55e, #1677ff);
+  background: linear-gradient(180deg, #22c55e, #167656);
 }
 
 .page-head p {
@@ -204,8 +204,8 @@ body {
 
 .search-item > input:focus,
 .search-item > select:focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+  border-color: var(--carbon-primary);
+  box-shadow: var(--carbon-focus);
 }
 
 .search-item > select {
@@ -249,8 +249,8 @@ body {
 
 .search-item .el-input.is-focus .el-input__wrapper,
 .search-item .el-select__wrapper.is-focused {
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12) !important;
+  border-color: var(--carbon-primary);
+  box-shadow: var(--carbon-focus) !important;
 }
 
 .search-actions {
@@ -296,10 +296,10 @@ body {
   display: inline-flex;
   align-items: center;
   padding: 0 8px;
-  border: 1px solid #d9ecff;
+  border: 1px solid #cfe8dc;
   border-radius: 3px;
   background: var(--carbon-table-selected);
-  color: #1677ff;
+  color: var(--carbon-primary-dark);
   font-size: 12px;
   white-space: nowrap;
 }
@@ -338,7 +338,7 @@ body {
 
 .btn:hover {
   color: var(--carbon-primary);
-  border-color: #b3d8ff;
+  border-color: #9fcfb9;
   background: var(--carbon-table-selected);
   transform: translateY(-1px);
 }
@@ -371,14 +371,14 @@ body {
 
 .btn.primary {
   color: #fff;
-  background: linear-gradient(180deg, #1f8f6a, #167656);
+  background: linear-gradient(180deg, #18805f, #0f5f45);
   border-color: #167656;
   box-shadow: 0 2px 6px rgba(31, 143, 106, 0.25);
 }
 
 .btn.primary:hover {
-  background: linear-gradient(180deg, #1fa37a, #157a5b);
-  border-color: #167656;
+  background: linear-gradient(180deg, #167656, #0f5f45);
+  border-color: #0f5f45;
   color: #fff;
   box-shadow: 0 4px 12px rgba(31, 143, 106, 0.32);
 }
@@ -709,8 +709,8 @@ tr.is-selected:hover td {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  border-color: #409eff;
-  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.12);
+  border-color: var(--carbon-primary);
+  box-shadow: var(--carbon-focus);
 }
 
 .field select {
@@ -737,8 +737,8 @@ tr.is-selected:hover td {
 .toast {
   width: 300px;
   padding: 10px 12px;
-  border: 1px solid #d9ecff;
-  border-left: 4px solid #1677ff;
+  border: 1px solid #cfe8dc;
+  border-left: 4px solid var(--carbon-primary);
   border-radius: 4px;
   background: var(--carbon-panel);
   color: var(--carbon-text);
@@ -807,13 +807,14 @@ tr.is-selected:hover td {
 
 /* el-button → 原型 btn */
 .page-panel .el-button--primary:not(.is-link):not(.is-text):not(.el-button--text) {
-  background: linear-gradient(180deg, #1f8f6a, #167656) !important;
+  background: linear-gradient(180deg, #18805f, #0f5f45) !important;
   border-color: #167656 !important;
   box-shadow: 0 2px 6px rgba(31, 143, 106, 0.25);
 }
 
 .page-panel .el-button--primary:not(.is-link):not(.is-text):not(.el-button--text):hover {
-  background: linear-gradient(180deg, #1fa37a, #157a5b) !important;
+  background: linear-gradient(180deg, #167656, #0f5f45) !important;
+  border-color: #0f5f45 !important;
   box-shadow: 0 4px 12px rgba(31, 143, 106, 0.32);
 }
 
@@ -872,7 +873,7 @@ tr.is-selected:hover td {
 .page-panel .el-input.is-focus .el-input__wrapper,
 .page-panel .el-select__wrapper.is-focused,
 .page-panel .el-textarea__inner:focus {
-  border-color: #409eff;
+  border-color: var(--carbon-primary);
   box-shadow: var(--carbon-focus) !important;
 }
 
@@ -971,9 +972,9 @@ html.dark {
   }
 
   .tag.info {
-    color: #93c5fd;
-    background: rgba(37, 99, 235, 0.2);
-    border-color: rgba(96, 165, 250, 0.36);
+    color: #86efac;
+    background: rgba(22, 118, 86, 0.22);
+    border-color: rgba(69, 212, 131, 0.36);
   }
 
   .tag.warn {

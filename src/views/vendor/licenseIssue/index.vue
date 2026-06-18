@@ -1,5 +1,11 @@
-<template>
-  <div class="p-2">
+﻿<template>
+  <div class="p-2 page-panel vendor-license-issue">
+    <section class="page-head">
+      <div>
+        <h1>License 授权管理</h1>
+        <p>为客户签发、下载和追踪 License 授权记录。</p>
+      </div>
+    </section>
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="search">
         <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
@@ -34,22 +40,17 @@
               <el-option label="已撤销" value="REVOKED" />
             </el-select>
           </el-form-item>
-          <el-form-item>
-            <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-          </el-form-item>
         </el-form>
       </div>
     </transition>
 
-    <el-card shadow="never">
-      <template #header>
-        <el-row :gutter="10" class="mb8">
-          <el-col :span="1.5">
-            <el-button type="primary" plain icon="Plus" @click="openIssueDrawer">签发 License</el-button>
-          </el-col>
-          <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
-        </el-row>
-      </template>
+    <section class="panel">
+      <el-row :gutter="10" class="mb8">
+        <el-col :span="1.5">
+          <el-button type="primary" plain icon="Plus" @click="openIssueDrawer">签发 License</el-button>
+        </el-col>
+        <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
+      </el-row>
 
       <el-table v-loading="loading" :data="licenseList" border>
         <el-table-column label="License ID" align="center" prop="licenseId" min-width="160" :show-overflow-tooltip="true" />
@@ -95,7 +96,7 @@
       </el-table>
 
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
-    </el-card>
+    </section>
 
     <el-drawer v-model="issueDrawer.visible" title="签发 License" size="640px" append-to-body>
       <el-alert
@@ -639,6 +640,10 @@ useAutoQuery(queryParams, () => handleQuery());
 </script>
 
 <style scoped>
+.vendor-license-issue .search {
+  margin-bottom: 16px;
+}
+
 .mb12 {
   margin-bottom: 12px;
 }

@@ -1,5 +1,12 @@
 <template>
   <div class="p-2">
+    <section class="page-head">
+      <div>
+        <h1>用户管理</h1>
+        <p>维护厂商端系统用户、部门归属、状态与角色授权。</p>
+      </div>
+    </section>
+
     <el-row :gutter="20">
       <!-- 部门树 -->
       <el-col :lg="4" :xs="24" style="">
@@ -49,9 +56,6 @@
                     end-placeholder="结束日期"
                     :default-time="[new Date(2000, 1, 1, 0, 0, 0), new Date(2000, 1, 1, 23, 59, 59)]"
                   ></el-date-picker>
-                </el-form-item>
-                <el-form-item>
-                  <el-button icon="Refresh" @click="resetQuery">重置</el-button>
                 </el-form-item>
               </el-form>
             </el-card>

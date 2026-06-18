@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-panel">
     <div class="page-head factor-record-head">
       <div>
@@ -31,9 +31,6 @@
             <el-option label="停用" :value="false" />
           </el-select>
         </div>
-        <div class="search-actions">
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-        </div>
       </div>
 
       <div class="toolbar">
@@ -42,7 +39,6 @@
           <el-button v-hasPermi="['vendor:factorRecord:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
             删除
           </el-button>
-          <el-button type="primary" icon="Search" @click="showSearch = !showSearch">{{ showSearch ? '收起搜索' : '展开搜索' }}</el-button>
           <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
       </div>

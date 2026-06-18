@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <div class="page-panel">
     <div class="page-head">
       <div>
@@ -40,14 +40,10 @@
             <el-option label="签发失败" value="issue_failed" />
           </el-select>
         </div>
-        <div class="search-actions">
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-        </div>
       </div>
 
       <div class="toolbar">
         <div class="btns">
-          <el-button type="primary" icon="Search" @click="showSearch = !showSearch">{{ showSearch ? '收起搜索' : '展开搜索' }}</el-button>
           <el-button v-hasPermi="['vendor:renewalOrder:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
           <el-button v-hasPermi="['vendor:renewalOrder:callback']" type="primary" plain icon="Finished" @click="openCallbackDrawer()">
             登记回调

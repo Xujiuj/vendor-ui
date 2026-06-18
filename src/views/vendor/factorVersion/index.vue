@@ -1,13 +1,9 @@
-<template>
+﻿<template>
   <div class="page-panel">
     <div class="page-head factor-version-head">
       <div>
         <h1>因子版本</h1>
         <p>管理厂商云端排放因子版本元数据，查看发布、冻结和开放范围前置状态。</p>
-      </div>
-      <div class="head-notes">
-        <div><strong>归属</strong><span>厂商云端维护，不承载企业本地填报、导入或报表入口。</span></div>
-        <div><strong>数据来源</strong><span>仅调用 /vendor/factor-version。</span></div>
       </div>
     </div>
 
@@ -38,14 +34,10 @@
             <el-option label="已冻结" :value="true" />
           </el-select>
         </div>
-        <div class="search-actions">
-          <el-button icon="Refresh" @click="resetQuery">重置</el-button>
-        </div>
       </div>
 
       <div class="toolbar">
         <div class="btns">
-          <el-button type="primary" icon="Search" @click="showSearch = !showSearch">{{ showSearch ? '收起搜索' : '展开搜索' }}</el-button>
           <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
       </div>
@@ -321,43 +313,6 @@ useAutoQuery(queryParams, () => handleQuery());
 </script>
 
 <style scoped lang="scss">
-.factor-version-head {
-  align-items: flex-start;
-  gap: 16px;
-}
-
-.head-notes {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  flex: 0 1 520px;
-}
-
-.head-notes > div {
-  min-height: 58px;
-  padding: 12px;
-  border: 1px solid var(--carbon-soft-line);
-  border-radius: 8px;
-  background: var(--carbon-panel);
-}
-
-.head-notes strong,
-.head-notes span {
-  display: block;
-}
-
-.head-notes strong {
-  margin-bottom: 6px;
-  color: var(--carbon-ink);
-  font-size: 13px;
-}
-
-.head-notes span {
-  color: var(--carbon-muted);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
 .table-actions {
   display: inline-flex;
   align-items: center;
@@ -366,10 +321,4 @@ useAutoQuery(queryParams, () => handleQuery());
   flex-wrap: wrap;
 }
 
-@media (max-width: 960px) {
-  .head-notes {
-    flex-basis: 100%;
-    grid-template-columns: 1fr;
-  }
-}
 </style>

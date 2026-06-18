@@ -1,5 +1,12 @@
 <template>
   <div class="p-2">
+    <section class="page-head">
+      <div>
+        <h1>部门管理</h1>
+        <p>维护厂商端组织部门、类别编码、状态与层级结构。</p>
+      </div>
+    </section>
+
     <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
       <div v-show="showSearch" class="mb-[10px]">
         <el-card shadow="hover">
@@ -14,9 +21,6 @@
               <el-select v-model="queryParams.status" placeholder="部门状态" clearable>
                 <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
               </el-select>
-            </el-form-item>
-            <el-form-item>
-              <el-button icon="Refresh" @click="resetQuery">重置</el-button>
             </el-form-item>
           </el-form>
         </el-card>

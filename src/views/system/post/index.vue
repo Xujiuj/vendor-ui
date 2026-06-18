@@ -1,5 +1,12 @@
 <template>
   <div class="p-2">
+    <section class="page-head">
+      <div>
+        <h1>岗位管理</h1>
+        <p>维护厂商端岗位编码、岗位名称、排序与启停状态。</p>
+      </div>
+    </section>
+
     <el-row :gutter="20">
       <!-- 部门树 -->
       <el-col :lg="4" :xs="24" style="">
@@ -53,9 +60,6 @@
                   <el-select v-model="queryParams.status" placeholder="岗位状态" clearable>
                     <el-option v-for="dict in sys_normal_disable" :key="dict.value" :label="dict.label" :value="dict.value" />
                   </el-select>
-                </el-form-item>
-                <el-form-item>
-                  <el-button icon="Refresh" @click="resetQuery">重置</el-button>
                 </el-form-item>
               </el-form>
             </el-card>
