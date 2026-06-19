@@ -148,10 +148,13 @@ jobs:
           echo "$SUDO_PASSWORD" | sudo -S systemctl restart nginx
           verify_url() {
             local url="$1"
-            if curl -fsS --max-time 8 "$url" | grep -q '"code":200'; then
-              echo "$DEPLOY_SERVICE proxy is healthy at $url"
-              return 0
-            fi
+            for attempt in $(seq 1 24); do
+              if curl -fsS --max-time 8 "$url" | grep -q '"code":200'; then
+                echo "$DEPLOY_SERVICE proxy is healthy at $url"
+                return 0
+              fi
+              sleep 5
+            done
             echo "$DEPLOY_SERVICE proxy health check failed at $url" >&2
             return 1
           }
