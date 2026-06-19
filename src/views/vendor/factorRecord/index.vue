@@ -31,6 +31,14 @@
             <el-option label="停用" :value="false" />
           </el-select>
         </div>
+          <div class="search-actions">
+            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+          </div>
+      </div>
+      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
 
       <div class="toolbar">
@@ -39,7 +47,6 @@
           <el-button v-hasPermi="['vendor:factorRecord:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
             删除
           </el-button>
-          <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
       </div>
 

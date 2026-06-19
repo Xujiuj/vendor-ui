@@ -33,11 +33,20 @@
             <el-option label="停用" value="1" />
           </el-select>
         </div>
+          <div class="search-actions">
+            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+          </div>
+      </div>
+      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
 
       <div class="toolbar">
         <div class="btns">
           <el-button v-hasPermi="['vendor:dimension:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+          <el-button v-hasPermi="['vendor:dimension:edit']" icon="Grid" @click="openSheetDrawer">在线填报</el-button>
           <el-button v-hasPermi="['vendor:dimension:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
             删除
           </el-button>
@@ -143,6 +152,18 @@
         <el-descriptions-item label="备注">{{ formatText(detailRecord.remark) }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
+
+    <el-drawer v-model="sheetDrawer.visible" title="维表在线填报" size="92%" append-to-body destroy-on-close>
+      <SpreadsheetEditor
+        title="维表管理"
+        :columns="sheetColumns"
+        :rows="sheetRows"
+        :empty-row="sheetEmptyRow"
+        :saving="sheetSaving"
+        hint="支持从 Excel 复制多行粘贴。维表类型、记录编码、记录名称和状态必填，保存时按行调用真实后端接口。"
+        @save="saveSheetRows"
+      />
+    </el-drawer>
   </div>
 </template>
 
@@ -159,6 +180,8 @@ import {
 import type { DimensionRecordForm, DimensionRecordQuery, DimensionRecordVO } from '@/api/vendor/dimensionRecord/types';
 import { useAutoQuery } from '@/hooks/useAutoQuery';
 import { formatDateTime, formatText, readRows, readTotal } from '../shared';
+import SpreadsheetEditor from '@/components/SpreadsheetEditor/index.vue';
+import type { SpreadsheetColumn } from '@/components/SpreadsheetEditor/types';
 
 type FieldProp = 'field01' | 'field02' | 'field03' | 'field04' | 'field05' | 'field06';
 
@@ -240,6 +263,8 @@ const multiple = ref(true);
 const formRef = ref<FormInstance>();
 const formDrawer = reactive({ visible: false, title: '' });
 const detailDrawer = reactive({ visible: false });
+const sheetDrawer = reactive({ visible: false });
+const sheetSaving = ref(false);
 
 const queryParams = reactive<DimensionRecordQuery>({
   pageNum: 1,
@@ -272,6 +297,70 @@ const form = reactive<DimensionRecordForm>({
 const activeFields = computed(() => fieldConfig[queryParams.dimensionCode || ''] ?? fieldConfig['admin-division']);
 const formFields = computed(() => fieldConfig[form.dimensionCode || ''] ?? fieldConfig['admin-division']);
 const detailFields = computed(() => fieldConfig[detailRecord.value?.dimensionCode || ''] ?? []);
+const sheetColumns = computed<SpreadsheetColumn[]>(() => [
+  {
+    prop: 'dimensionCode',
+    label: '维表类型',
+    type: 'select',
+    required: true,
+    width: 190,
+    options: dimensionOptions
+  },
+  { prop: 'recordCode', label: '记录编码', required: true, width: 170 },
+  { prop: 'recordName', label: '记录名称', required: true, width: 190 },
+  { prop: 'parentCode', label: '上级编码', width: 150 },
+  ...formFields.value.map<SpreadsheetColumn>((field) => ({
+    prop: field.prop,
+    label: field.label,
+    width: 150
+  })),
+  {
+    prop: 'status',
+    label: '状态',
+    type: 'select',
+    required: true,
+    width: 120,
+    options: [
+      { label: '启用', value: '0' },
+      { label: '停用', value: '1' }
+    ]
+  },
+  { prop: 'sortOrder', label: '排序', type: 'number', width: 110, min: 0, precision: 0 },
+  { prop: 'remark', label: '备注', width: 220 }
+]);
+const sheetRows = computed(() =>
+  recordList.value.map((row) => ({
+    id: row.id,
+    dimensionCode: row.dimensionCode || queryParams.dimensionCode,
+    recordCode: row.recordCode,
+    recordName: row.recordName,
+    parentCode: row.parentCode,
+    field01: row.field01,
+    field02: row.field02,
+    field03: row.field03,
+    field04: row.field04,
+    field05: row.field05,
+    field06: row.field06,
+    status: row.status || '0',
+    sortOrder: row.sortOrder ?? 0,
+    remark: row.remark
+  }))
+);
+const sheetEmptyRow = computed(() => ({
+  dimensionCode: queryParams.dimensionCode || 'admin-division',
+  recordCode: undefined,
+  recordName: undefined,
+  parentCode: undefined,
+  field01: undefined,
+  field02: undefined,
+  field03: undefined,
+  field04: undefined,
+  field05: undefined,
+  field06: undefined,
+  status: '0',
+  sortOrder: 0,
+  remark: undefined
+}));
 
 const rules: FormRules<DimensionRecordForm> = {
   dimensionCode: [{ required: true, message: '维表类型不能为空', trigger: 'change' }],
@@ -341,6 +430,10 @@ const handleAdd = () => {
   formDrawer.visible = true;
 };
 
+const openSheetDrawer = () => {
+  sheetDrawer.visible = true;
+};
+
 const handleUpdate = async (row: DimensionRecordVO) => {
   resetForm();
   const res = await getDimensionRecord(row.id);
@@ -370,6 +463,29 @@ const submitForm = async () => {
     await getList();
   } finally {
     submitLoading.value = false;
+  }
+};
+
+const saveSheetRows = async (rows: Record<string, any>[]) => {
+  sheetSaving.value = true;
+  try {
+    for (const row of rows) {
+      const payload: DimensionRecordForm = {
+        ...sheetEmptyRow.value,
+        ...row,
+        sortOrder: Number(row.sortOrder ?? 0)
+      };
+      if (payload.id) {
+        await updateDimensionRecord(payload);
+      } else {
+        await addDimensionRecord(payload);
+      }
+    }
+    proxy?.$modal.msgSuccess('在线填报已保存');
+    sheetDrawer.visible = false;
+    await getList();
+  } finally {
+    sheetSaving.value = false;
   }
 };
 

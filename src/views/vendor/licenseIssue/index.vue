@@ -6,9 +6,8 @@
         <p>为客户签发、下载和追踪 License 授权记录。</p>
       </div>
     </section>
-    <transition :enter-active-class="proxy?.animate.searchAnimate.enter" :leave-active-class="proxy?.animate.searchAnimate.leave">
-      <div v-show="showSearch" class="search">
-        <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px">
+    <div v-show="showSearch" class="search-bar wide">
+      <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px" class="license-search">
           <el-form-item label="License ID" prop="licenseId">
             <el-input v-model="queryParams.licenseId" placeholder="请输入 License ID" clearable @keyup.enter="handleQuery" />
           </el-form-item>
@@ -40,16 +39,22 @@
               <el-option label="已撤销" value="REVOKED" />
             </el-select>
           </el-form-item>
-        </el-form>
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="getList"></right-toolbar>
+        </div>
+      </el-form>
+    </div>
+    <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+      <div class="search-actions">
+        <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="getList"></right-toolbar>
       </div>
-    </transition>
+    </div>
 
     <section class="panel">
       <el-row :gutter="10" class="mb8">
         <el-col :span="1.5">
           <el-button type="primary" plain icon="Plus" @click="openIssueDrawer">签发 License</el-button>
         </el-col>
-        <right-toolbar v-model:show-search="showSearch" @query-table="getList"></right-toolbar>
       </el-row>
 
       <el-table v-loading="loading" :data="licenseList" border>
@@ -640,8 +645,24 @@ useAutoQuery(queryParams, () => handleQuery());
 </script>
 
 <style scoped>
-.vendor-license-issue .search {
-  margin-bottom: 16px;
+.vendor-license-issue .license-search {
+  display: contents;
+}
+
+.vendor-license-issue .license-search :deep(.el-form-item) {
+  flex: 1 1 260px;
+  min-width: 240px;
+  max-width: 380px;
+  margin-right: 0;
+  margin-bottom: 0;
+}
+
+.vendor-license-issue .license-search :deep(.el-form-item__content),
+.vendor-license-issue .license-search :deep(.el-input),
+.vendor-license-issue .license-search :deep(.el-select),
+.vendor-license-issue .license-search :deep(.el-date-editor) {
+  width: 100%;
+  min-width: 220px;
 }
 
 .mb12 {

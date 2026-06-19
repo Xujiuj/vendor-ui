@@ -34,11 +34,18 @@
             <el-option label="已冻结" :value="true" />
           </el-select>
         </div>
+          <div class="search-actions">
+            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+          </div>
+      </div>
+      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
 
       <div class="toolbar">
         <div class="btns">
-          <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
       </div>
 

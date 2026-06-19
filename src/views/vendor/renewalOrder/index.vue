@@ -40,6 +40,14 @@
             <el-option label="签发失败" value="issue_failed" />
           </el-select>
         </div>
+          <div class="search-actions">
+            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+          </div>
+      </div>
+      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
 
       <div class="toolbar">
@@ -51,7 +59,6 @@
           <el-button v-hasPermi="['vendor:renewalOrder:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
             删除
           </el-button>
-          <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
         <span v-if="ids.length > 0" class="select-count">已选 {{ ids.length }} 项</span>
       </div>

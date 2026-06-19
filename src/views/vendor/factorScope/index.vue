@@ -33,6 +33,14 @@
             <el-option label="停用" value="disabled" />
           </el-select>
         </div>
+          <div class="search-actions">
+            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+          </div>
+      </div>
+      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
 
       <div class="toolbar">
@@ -48,7 +56,6 @@
           >
             删除
           </el-button>
-          <el-button icon="Refresh" @click="refreshList">刷新</el-button>
         </div>
         <span v-if="ids.length > 0" class="select-count">已选 {{ ids.length }} 项</span>
       </div>

@@ -28,10 +28,14 @@
             <el-option label="停用" value="inactive" />
           </el-select>
         </div>
+          <div class="search-actions">
+            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+          </div>
       </div>
-
-      <div class="toolbar">
-        <el-button icon="Refresh" @click="refreshList">刷新</el-button>
+      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
 
       <el-table v-loading="loading" :data="customerList" border>
