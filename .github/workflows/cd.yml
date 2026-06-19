@@ -146,6 +146,22 @@ jobs:
           echo "$SUDO_PASSWORD" | sudo -S nginx -t
           echo "$SUDO_PASSWORD" | sudo -S systemctl enable --now nginx
           echo "$SUDO_PASSWORD" | sudo -S systemctl restart nginx
+          verify_url() {
+            local url="$1"
+            if curl -fsS --max-time 8 "$url" | grep -q '"code":200'; then
+              echo "$DEPLOY_SERVICE proxy is healthy at $url"
+              return 0
+            fi
+            echo "$DEPLOY_SERVICE proxy health check failed at $url" >&2
+            return 1
+          }
+          if ! verify_url "http://127.0.0.1:$DEPLOY_PORT${PUBLIC_PATH}prod-api/auth/code" \
+            || ! verify_url "http://127.0.0.1${PUBLIC_PATH}prod-api/auth/code"; then
+            echo "$SUDO_PASSWORD" | sudo -S nginx -T || true
+            echo "$SUDO_PASSWORD" | sudo -S tail -n 120 /var/log/nginx/access.log || true
+            echo "$SUDO_PASSWORD" | sudo -S tail -n 120 /var/log/nginx/error.log || true
+            exit 1
+          fi
           EOF
           sshpass -p "$DEPLOY_PASSWORD" ssh -p "$DEPLOY_PORT_SECRET" -o StrictHostKeyChecking=accept-new "$DEPLOY_USER@$DEPLOY_HOST" "mkdir -p '$DEPLOY_PATH'"
           sshpass -p "$DEPLOY_PASSWORD" scp -P "$DEPLOY_PORT_SECRET" -o StrictHostKeyChecking=accept-new vendor-ui-dist.tar.gz "$DEPLOY_USER@$DEPLOY_HOST:$REMOTE_ARCHIVE"
