@@ -99,6 +99,22 @@ jobs:
                   try_files \$uri \$uri/ ${PUBLIC_PATH}index.html;
               }
 
+              location ${PUBLIC_PATH}prod-api/resource/sse {
+                  proxy_pass http://127.0.0.1:$BACKEND_PORT/resource/sse;
+                  proxy_http_version 1.1;
+                  proxy_set_header Host \$host;
+                  proxy_set_header X-Real-IP \$remote_addr;
+                  proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+                  proxy_set_header X-Forwarded-Proto \$scheme;
+                  proxy_set_header Connection '';
+                  proxy_buffering off;
+                  proxy_cache off;
+                  proxy_read_timeout 1d;
+                  proxy_send_timeout 1d;
+                  gzip off;
+                  add_header X-Accel-Buffering no always;
+              }
+
               location ${PUBLIC_PATH}prod-api/ {
                   proxy_pass http://127.0.0.1:$BACKEND_PORT/;
                   proxy_http_version 1.1;
@@ -115,6 +131,22 @@ jobs:
           location $PUBLIC_PATH {
               root $DEPLOY_PATH/www;
               try_files \$uri \$uri/ ${PUBLIC_PATH}index.html;
+          }
+
+          location ${PUBLIC_PATH}prod-api/resource/sse {
+              proxy_pass http://127.0.0.1:$BACKEND_PORT/resource/sse;
+              proxy_http_version 1.1;
+              proxy_set_header Host \$host;
+              proxy_set_header X-Real-IP \$remote_addr;
+              proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto \$scheme;
+              proxy_set_header Connection '';
+              proxy_buffering off;
+              proxy_cache off;
+              proxy_read_timeout 1d;
+              proxy_send_timeout 1d;
+              gzip off;
+              add_header X-Accel-Buffering no always;
           }
 
           location ${PUBLIC_PATH}prod-api/ {
@@ -158,8 +190,20 @@ jobs:
             echo "$DEPLOY_SERVICE proxy health check failed at $url" >&2
             return 1
           }
+          verify_sse_proxy_config() {
+            local config_path="$1"
+            if echo "$SUDO_PASSWORD" | sudo -S grep -A16 -F "location ${PUBLIC_PATH}prod-api/resource/sse" "$config_path" \
+              | grep -q 'proxy_buffering off'; then
+              echo "$DEPLOY_SERVICE SSE proxy config is present in $config_path"
+              return 0
+            fi
+            echo "$DEPLOY_SERVICE SSE proxy config missing in $config_path" >&2
+            return 1
+          }
           if ! verify_url "http://127.0.0.1:$DEPLOY_PORT${PUBLIC_PATH}prod-api/auth/code" \
-            || ! verify_url "http://127.0.0.1${PUBLIC_PATH}prod-api/auth/code"; then
+            || ! verify_url "http://127.0.0.1${PUBLIC_PATH}prod-api/auth/code" \
+            || ! verify_sse_proxy_config "/etc/nginx/conf.d/$DEPLOY_SERVICE.conf" \
+            || ! verify_sse_proxy_config "/etc/nginx/fx-locations/$DEPLOY_SERVICE.conf"; then
             echo "$SUDO_PASSWORD" | sudo -S nginx -T || true
             echo "$SUDO_PASSWORD" | sudo -S tail -n 120 /var/log/nginx/access.log || true
             echo "$SUDO_PASSWORD" | sudo -S tail -n 120 /var/log/nginx/error.log || true
