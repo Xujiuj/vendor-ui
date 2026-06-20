@@ -1,7 +1,7 @@
 import { getToken } from '@/utils/auth';
 import { ElNotification } from 'element-plus';
 import { useNoticeStore } from '@/store/modules/notice';
-import { useEventSource } from '@vueuse/core';
+import { useEventSource } from '@/utils/vueuse-lite';
 import { watch } from 'vue';
 
 // 初始化

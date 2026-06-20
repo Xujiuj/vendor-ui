@@ -24,7 +24,7 @@ vi.mock('element-plus', () => ({
   ElNotification: notification
 }));
 
-vi.mock('@vueuse/core', () => ({
+vi.mock('@/utils/vueuse-lite', () => ({
   useEventSource: useEventSourceMock
 }));
 
