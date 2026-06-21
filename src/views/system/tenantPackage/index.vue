@@ -45,6 +45,25 @@
       <el-table v-loading="loading" border :data="tenantPackageList" @selection-change="handleSelectionChange">
         <el-table-column type="selection" width="55" align="center" />
         <el-table-column label="套餐名称" align="center" prop="packageName" />
+        <el-table-column label="价格" align="center" min-width="110">
+          <template #default="{ row }">
+            {{ formatPrice(row) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="在线购买" align="center" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.onlinePurchaseEnabled ? 'success' : 'info'">
+              {{ row.onlinePurchaseEnabled ? '启用' : '关闭' }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="自动发证" align="center" width="100">
+          <template #default="{ row }">
+            <el-tag :type="row.licenseAutoIssueEnabled ? 'success' : 'info'">
+              {{ row.licenseAutoIssueEnabled ? '启用' : '关闭' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column label="默认数据范围" align="center" prop="remark" width="150">
           <template #default="{ row }">
             {{ formatVisibilityScope(readDataVisibility(row.remark)?.defaultScope) }}
@@ -90,11 +109,67 @@
     </el-card>
 
     <!-- 添加或修改客户套餐对话框 -->
-    <el-dialog v-model="dialog.visible" :title="dialog.title" width="500px" append-to-body>
-      <el-form ref="tenantPackageFormRef" :model="form" :rules="rules" label-width="80px">
+    <el-dialog v-model="dialog.visible" :title="dialog.title" width="720px" append-to-body>
+      <el-form ref="tenantPackageFormRef" :model="form" :rules="rules" label-width="120px">
         <el-form-item label="套餐名称" prop="packageName">
           <el-input v-model="form.packageName" placeholder="请输入套餐名称" />
         </el-form-item>
+        <el-row :gutter="12">
+          <el-col :span="8">
+            <el-form-item label="套餐价格" prop="priceAmount">
+              <el-input-number v-model="form.priceAmount" :min="0" :precision="2" :step="100" class="w-full" controls-position="right" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="币种" prop="priceCurrency">
+              <el-input v-model="form.priceCurrency" maxlength="3" placeholder="CNY" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="8">
+            <el-form-item label="计费周期" prop="billingCycle">
+              <el-select v-model="form.billingCycle" class="w-full" placeholder="请选择计费周期">
+                <el-option v-for="option in billingCycleOptions" :key="option.value" :label="option.label" :value="option.value" />
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="12">
+          <el-col :span="12">
+            <el-form-item label="在线购买">
+              <el-switch v-model="form.onlinePurchaseEnabled" />
+            </el-form-item>
+          </el-col>
+          <el-col :span="12">
+            <el-form-item label="支付后自动发证">
+              <el-switch v-model="form.licenseAutoIssueEnabled" :disabled="!form.onlinePurchaseEnabled" />
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <template v-if="form.licenseAutoIssueEnabled">
+          <el-form-item label="签名 keyId" prop="licenseKeyId">
+            <el-input v-model="form.licenseKeyId" placeholder="请输入 cv_signing_key 中启用的 keyId" maxlength="64" />
+          </el-form-item>
+          <el-row :gutter="12">
+            <el-col :span="10">
+              <el-form-item label="有效天数" prop="licenseValidityDays">
+                <el-input-number v-model="form.licenseValidityDays" :min="1" :step="30" class="w-full" controls-position="right" />
+              </el-form-item>
+            </el-col>
+            <el-col :span="14">
+              <el-form-item label="功能码" prop="licenseFeatureCodes">
+                <el-input v-model="form.licenseFeatureCodes" placeholder="多个功能码用英文逗号分隔" />
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-form-item label="模板授权 JSON" prop="licenseTemplateEntitlements">
+            <el-input
+              v-model="form.licenseTemplateEntitlements"
+              type="textarea"
+              :rows="4"
+              placeholder='[{"templateCode":"RPT-001","templateVersion":"v1","scope":"all"}]'
+            />
+          </el-form-item>
+        </template>
         <el-form-item label="默认数据范围">
           <el-select v-model="dataVisibility.defaultScope" class="w-full" placeholder="请选择默认数据范围">
             <el-option v-for="option in visibilityScopeOptions" :key="option.value" :label="option.label" :value="option.value" />
@@ -167,6 +242,13 @@ const visibilityCategories = [
   { label: '报表模板数据', code: 'report_template' }
 ];
 
+const billingCycleOptions = [
+  { label: '月付', value: 'MONTH' },
+  { label: '季度', value: 'QUARTER' },
+  { label: '半年', value: 'HALF_YEAR' },
+  { label: '年付', value: 'YEAR' }
+];
+
 const dataVisibility = reactive({
   defaultScope: 'tenant',
   items: visibilityCategories.map((item) => ({ ...item, scope: 'tenant' }))
@@ -182,7 +264,16 @@ const initFormData: TenantPkgForm = {
   packageName: '',
   menuIds: '',
   remark: '',
-  menuCheckStrictly: false
+  menuCheckStrictly: false,
+  priceAmount: 0,
+  priceCurrency: 'CNY',
+  billingCycle: 'YEAR',
+  onlinePurchaseEnabled: false,
+  licenseAutoIssueEnabled: false,
+  licenseKeyId: '',
+  licenseValidityDays: 365,
+  licenseFeatureCodes: '',
+  licenseTemplateEntitlements: ''
 };
 const data = reactive<PageData<TenantPkgForm, TenantPkgQuery>>({
   form: { ...initFormData },
@@ -192,7 +283,14 @@ const data = reactive<PageData<TenantPkgForm, TenantPkgQuery>>({
     packageName: ''
   },
   rules: {
-    packageName: [{ required: true, message: '套餐名称不能为空', trigger: 'blur' }]
+    packageName: [{ required: true, message: '套餐名称不能为空', trigger: 'blur' }],
+    priceAmount: [{ required: true, message: '套餐价格不能为空', trigger: 'blur' }],
+    priceCurrency: [{ required: true, message: '币种不能为空', trigger: 'blur' }],
+    billingCycle: [{ required: true, message: '计费周期不能为空', trigger: 'change' }],
+    licenseKeyId: [{ validator: validateLicenseKeyId, trigger: 'blur' }],
+    licenseValidityDays: [{ validator: validateLicenseValidityDays, trigger: 'blur' }],
+    licenseFeatureCodes: [{ validator: validateLicenseFeatureCodes, trigger: 'blur' }],
+    licenseTemplateEntitlements: [{ validator: validateLicenseTemplateEntitlements, trigger: 'blur' }]
   }
 });
 
@@ -200,6 +298,15 @@ const { queryParams, form, rules } = toRefs(data);
 
 const visibilityPrefix = '[DATA_VISIBILITY]';
 type DataVisibilityPayload = { defaultScope?: string; items?: Array<{ code: string; scope: string }> };
+
+watch(
+  () => form.value.onlinePurchaseEnabled,
+  (enabled) => {
+    if (!enabled) {
+      form.value.licenseAutoIssueEnabled = false;
+    }
+  }
+);
 
 const resetDataVisibility = () => {
   dataVisibility.defaultScope = 'tenant';
@@ -231,6 +338,13 @@ const buildRemarkWithDataVisibility = (remark?: string) => {
 
 const formatVisibilityScope = (scope?: string) => visibilityScopeOptions.find((option) => option.value === scope)?.label || '-';
 
+const formatPrice = (row: TenantPkgVO) => {
+  const amount = row.priceAmount ?? 0;
+  const currency = row.priceCurrency || 'CNY';
+  const cycle = billingCycleOptions.find((option) => option.value === row.billingCycle)?.label || row.billingCycle || '年付';
+  return `${currency} ${Number(amount).toFixed(2)} / ${cycle}`;
+};
+
 const formatPlainRemark = (remark?: string) => {
   if (!remark?.includes(visibilityPrefix)) {
     return remark || '';
@@ -248,6 +362,51 @@ const readDataVisibility = (remark?: string): DataVisibilityPayload | undefined 
     return undefined;
   }
 };
+
+function validateLicenseKeyId(_rule: unknown, value: string | undefined, callback: (error?: Error) => void) {
+  if (form.value.licenseAutoIssueEnabled && !value?.trim()) {
+    callback(new Error('自动发证时签名 keyId 不能为空'));
+    return;
+  }
+  callback();
+}
+
+function validateLicenseValidityDays(_rule: unknown, value: number | undefined, callback: (error?: Error) => void) {
+  if (form.value.licenseAutoIssueEnabled && (!value || value < 1)) {
+    callback(new Error('自动发证时有效天数必须大于0'));
+    return;
+  }
+  callback();
+}
+
+function validateLicenseFeatureCodes(_rule: unknown, value: string | undefined, callback: (error?: Error) => void) {
+  if (form.value.licenseAutoIssueEnabled && !value?.split(',').some((item) => item.trim())) {
+    callback(new Error('自动发证时功能码不能为空'));
+    return;
+  }
+  callback();
+}
+
+function validateLicenseTemplateEntitlements(_rule: unknown, value: string | undefined, callback: (error?: Error) => void) {
+  if (!form.value.licenseAutoIssueEnabled) {
+    callback();
+    return;
+  }
+  if (!value?.trim()) {
+    callback(new Error('自动发证时模板授权 JSON 不能为空'));
+    return;
+  }
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      callback(new Error('模板授权 JSON 必须是非空数组'));
+      return;
+    }
+    callback();
+  } catch {
+    callback(new Error('模板授权 JSON 格式不正确'));
+  }
+}
 
 /** 查询客户套餐列表 */
 const getList = async () => {
@@ -314,7 +473,7 @@ const handleUpdate = async (row?: TenantPkgVO) => {
   reset();
   const _packageId = row?.packageId || ids.value[0];
   const response = await getTenantPackage(_packageId);
-  form.value = response.data;
+  form.value = { ...initFormData, ...response.data };
   form.value.remark = parseDataVisibilityFromRemark(form.value.remark);
   dialog.visible = true;
   dialog.title = '修改套餐';
@@ -327,6 +486,10 @@ const submitForm = () => {
       buttonLoading.value = true;
       form.value.menuIds = '';
       form.value.menuCheckStrictly = false;
+      form.value.priceCurrency = (form.value.priceCurrency || 'CNY').trim().toUpperCase();
+      if (!form.value.onlinePurchaseEnabled) {
+        form.value.licenseAutoIssueEnabled = false;
+      }
       form.value.remark = buildRemarkWithDataVisibility(form.value.remark);
       if (form.value.packageId != null) {
         await updateTenantPackage(form.value).finally(() => (buttonLoading.value = false));
