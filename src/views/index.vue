@@ -69,29 +69,15 @@
       <div class="toolbar">
         <b>待办</b>
       </div>
-      <div v-if="todos.length" class="todo-table-wrap">
-        <table class="todo-table">
-          <thead>
-            <tr>
-              <th>类型</th>
-              <th>客户</th>
-              <th>说明</th>
-              <th>操作</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="item in todos" :key="`${item.type}-${item.customer}`">
-              <td>
-                <span class="todo-type">{{ item.type }}</span>
-              </td>
-              <td>{{ item.customer }}</td>
-              <td>{{ item.description }}</td>
-              <td>
-                <button type="button" class="btn text" @click="goTarget(item.path)">{{ item.action }}</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+      <div v-if="todos.length" class="todo-list" role="list">
+        <article v-for="item in todos" :key="`${item.type}-${item.customer}-${item.description}`" class="todo-card" role="listitem">
+          <div class="todo-copy">
+            <span class="todo-type">{{ item.type || '--' }}</span>
+            <b>{{ item.customer || '--' }}</b>
+            <p>{{ item.description || '--' }}</p>
+          </div>
+          <button type="button" class="btn text" @click="goTarget(item.path)">{{ item.action || '查看' }}</button>
+        </article>
       </div>
       <el-empty v-else description="暂无待办事项" />
     </section>
@@ -351,17 +337,52 @@ onMounted(() => {
   margin-top: 20px;
 }
 
-.todo-table-wrap {
-  overflow-x: auto;
+.todo-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  padding: 18px;
 }
 
-.todo-table {
-  min-width: 640px;
+.todo-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  min-height: 116px;
+  padding: 16px;
+  border: 1px solid var(--carbon-soft-line);
+  border-radius: 8px;
+  background: var(--carbon-panel-soft);
+}
+
+.todo-copy {
+  display: grid;
+  min-width: 0;
+  gap: 8px;
+}
+
+.todo-copy b {
+  overflow-wrap: anywhere;
+  color: var(--carbon-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.todo-copy p {
+  margin: 0;
+  overflow-wrap: anywhere;
+  color: var(--carbon-muted);
+  font-size: 12px;
+  line-height: 1.55;
 }
 
 .todo-type {
+  width: fit-content;
+  min-width: 44px;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   height: 24px;
   padding: 0 8px;
   border: 1px solid rgba(31, 143, 106, 0.24);
@@ -380,7 +401,8 @@ onMounted(() => {
   .dash-stat,
   .chart-panel,
   .reminder-panel,
-  .todo-panel {
+  .todo-panel,
+  .todo-card {
     background: var(--carbon-panel);
     border-color: var(--carbon-soft-line);
     box-shadow: var(--carbon-shadow-soft);
@@ -403,7 +425,8 @@ onMounted(() => {
 
 @media (max-width: 1200px) {
   .dash-stats,
-  .workbench-grid {
+  .workbench-grid,
+  .todo-list {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -411,8 +434,18 @@ onMounted(() => {
 @media (max-width: 768px) {
   .dash-stats,
   .workbench-grid,
-  .bar-chart {
+  .bar-chart,
+  .todo-list {
     grid-template-columns: 1fr;
+  }
+
+  .todo-card {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .todo-card .btn {
+    justify-self: start;
   }
 
   .bar-chart {
