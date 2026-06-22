@@ -15,7 +15,7 @@
     <section v-loading="loading" class="dash-stats" aria-label="运营指标">
       <article v-for="item in stats" :key="item.label" class="dash-stat">
         <div class="label">{{ item.label }}</div>
-        <div class="value">{{ item.value || '--' }}</div>
+        <div class="value">{{ displayValue(item.value) }}</div>
         <div class="sub">{{ item.note || '--' }}</div>
       </article>
       <el-empty v-if="!loading && !stats.length" class="overview-empty" description="暂无运营指标数据" />
@@ -115,6 +115,8 @@ const reminders = ref<VendorOverviewReminder[]>([]);
 const todos = ref<VendorOverviewTodo[]>([]);
 
 const seriesColors = ['#1f8f6a', '#1677ff', '#f59e0b', '#7c3aed', '#ef4444'];
+
+const displayValue = (value?: number | string) => (value === undefined || value === null || value === '' ? '--' : value);
 
 const loadOverview = async () => {
   loading.value = true;
