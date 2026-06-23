@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head factor-record-head">
       <div>
@@ -10,38 +10,29 @@
       <div v-show="showSearch" class="search-bar wide">
         <div class="search-item">
           <label>因子表类型</label>
-          <el-select v-model="queryParams.factorTableCode" placeholder="请选择因子表类型" clearable filterable>
+          <el-select v-model="queryParams.tableCode" placeholder="请选择因子表类型" clearable filterable>
             <el-option v-for="item in factorTableOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
         <div class="search-item">
-          <label>版本ID</label>
-          <el-input v-model="queryParams.versionId" placeholder="请输入版本ID" clearable @keyup.enter="handleQuery" />
+          <label>字段编码</label>
+          <el-input v-model="queryParams.fieldKey" placeholder="请输入字段编码" clearable @keyup.enter="handleQuery" />
         </div>
         <div class="search-item">
-          <label>因子编码</label>
-          <el-input v-model="queryParams.factorCode" placeholder="请输入因子编码" clearable @keyup.enter="handleQuery" />
+          <label>字段名称</label>
+          <el-input v-model="queryParams.fieldLabel" placeholder="请输入字段名称" clearable @keyup.enter="handleQuery" />
         </div>
         <div class="search-item">
-          <label>因子名称</label>
-          <el-input v-model="queryParams.factorName" placeholder="请输入因子名称" clearable @keyup.enter="handleQuery" />
-        </div>
-        <div class="search-item">
-          <label>样例主键</label>
-          <el-input v-model="queryParams.factorKey" placeholder="请输入样例主键" clearable @keyup.enter="handleQuery" />
-        </div>
-        <div class="search-item">
-          <label>状态</label>
-          <el-select v-model="queryParams.enabledFlag" placeholder="请选择状态" clearable>
-            <el-option label="启用" :value="true" />
-            <el-option label="停用" :value="false" />
+          <label>字段类型</label>
+          <el-select v-model="queryParams.fieldType" placeholder="请选择字段类型" clearable>
+            <el-option v-for="item in fieldTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </div>
-          <div class="search-actions">
-            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
-          </div>
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
-      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+      <div v-show="!showSearch" class="search-bar search-bar-collapsed">
         <div class="search-actions">
           <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
         </div>
@@ -49,46 +40,54 @@
 
       <div class="toolbar">
         <div class="btns">
-          <el-button v-hasPermi="['vendor:factorRecord:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+          <el-button v-hasPermi="['vendor:factorRecord:add']" type="primary" plain icon="Plus" @click="handleAdd">新增字段</el-button>
+          <el-button v-hasPermi="['vendor:factorRecord:add']" plain icon="DocumentAdd" @click="initializeDefaultFields">初始化样例字段</el-button>
           <el-button v-hasPermi="['vendor:factorRecord:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
             删除
           </el-button>
         </div>
+        <span v-if="ids.length > 0" class="select-count">已选 {{ ids.length }} 项</span>
       </div>
 
-      <el-table v-loading="loading" :data="recordList" border @selection-change="handleSelectionChange">
-        <el-table-column type="selection" width="55" align="center" />
-        <el-table-column label="版本ID" align="center" prop="versionId" width="100" />
-        <el-table-column label="因子表类型" align="center" prop="factorTableCode" min-width="170" :show-overflow-tooltip="true">
+      <el-table v-loading="loading" :data="fieldList" border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="48" align="center" />
+        <el-table-column label="因子表类型" align="center" prop="tableCode" min-width="190" :show-overflow-tooltip="true">
           <template #default="{ row }">
-            {{ formatFactorTableLabel(row.factorTableCode) }}
+            {{ formatFactorTableLabel(row.tableCode) }}
           </template>
         </el-table-column>
-        <el-table-column
-          v-for="column in activeColumns"
-          :key="column.prop"
-          :label="column.label"
-          align="center"
-          :prop="column.prop"
-          :min-width="column.width || 140"
-          :show-overflow-tooltip="true"
-        />
-        <el-table-column label="状态" align="center" prop="enabledFlag" width="90">
+        <el-table-column label="字段编码" align="center" prop="fieldKey" min-width="150" :show-overflow-tooltip="true" />
+        <el-table-column label="字段名称" align="center" prop="fieldLabel" min-width="220" :show-overflow-tooltip="true" />
+        <el-table-column label="字段类型" align="center" prop="fieldType" width="110">
+          <template #default="{ row }">{{ formatFieldType(row.fieldType) }}</template>
+        </el-table-column>
+        <el-table-column label="精度" align="center" prop="fieldPrecision" width="90">
+          <template #default="{ row }">{{ formatText(row.fieldPrecision) }}</template>
+        </el-table-column>
+        <el-table-column label="列宽" align="center" prop="fieldWidth" width="90">
+          <template #default="{ row }">{{ formatText(row.fieldWidth) }}</template>
+        </el-table-column>
+        <el-table-column label="必填" align="center" prop="requiredFlag" width="90">
           <template #default="{ row }">
-            <el-tag :type="row.enabledFlag === false ? 'info' : 'success'">{{ row.enabledFlag === false ? '停用' : '启用' }}</el-tag>
+            <el-tag :type="row.requiredFlag ? 'danger' : 'info'">{{ row.requiredFlag ? '是' : '否' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="创建时间" align="center" prop="createTime" width="170">
+        <el-table-column label="排序" align="center" prop="sortOrder" width="90" />
+        <el-table-column label="状态" align="center" prop="status" width="90">
           <template #default="{ row }">
-            {{ formatDateTime(row.createTime) }}
+            <el-tag :type="row.status === '1' ? 'info' : 'success'">{{ row.status === '1' ? '停用' : '启用' }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="210" fixed="right">
-          <template #default="{ row }">
-            <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
-            <el-button v-hasPermi="['vendor:factorRecord:edit']" link type="primary" icon="Edit" @click="handleUpdate(row)">编辑</el-button>
-            <el-button v-hasPermi="['vendor:factorRecord:remove']" link type="danger" icon="Delete" @click="handleDelete(row)">删除</el-button>
-          </template>
+        <el-table-column label="更新时间" align="center" prop="updateTime" width="170">
+          <template #default="{ row }">{{ formatDateTime(row.updateTime || row.createTime) }}</template>
+        </el-table-column>
+        <el-table-column label="备注" align="center" prop="remark" min-width="180" :show-overflow-tooltip="true" />
+        <el-table-column label="操作" align="center" width="230" fixed="right"> 
+          <template #default="{ row }"> 
+            <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button> 
+            <el-button v-hasPermi="['vendor:factorRecord:edit']" link type="primary" icon="Edit" @click="handleUpdate(row)">编辑</el-button> 
+            <el-button v-hasPermi="['vendor:factorRecord:remove']" link type="danger" icon="Delete" @click="handleDelete(row)">删除</el-button> 
+          </template> 
         </el-table-column>
       </el-table>
 
@@ -102,28 +101,40 @@
     </div>
 
     <el-drawer v-model="formDrawer.visible" :title="formDrawer.title" size="620px" append-to-body>
-      <el-form ref="formRef" :model="form" :rules="rules" label-width="130px">
-        <el-form-item label="版本ID" prop="versionId">
-          <el-input v-model="form.versionId" placeholder="请输入版本ID" />
-        </el-form-item>
-        <el-form-item label="因子表类型" prop="factorTableCode">
-          <el-select v-model="form.factorTableCode" placeholder="请选择因子表类型" class="w-full" filterable>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+        <el-form-item label="因子表类型" prop="tableCode">
+          <el-select v-model="form.tableCode" placeholder="请选择因子表类型" class="w-full" filterable>
             <el-option v-for="item in factorTableOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
         </el-form-item>
-        <el-form-item v-for="column in formColumns" :key="column.prop" :label="column.label" :prop="column.prop">
-          <el-input-number
-            v-if="column.type === 'number'"
-            v-model="form[column.prop]"
-            :precision="column.precision ?? 10"
-            :controls="false"
-            class="w-full"
-            :placeholder="`请输入${column.label}`"
-          />
-          <el-input v-else v-model="form[column.prop]" :placeholder="`请输入${column.label}`" maxlength="255" />
+        <el-form-item label="字段编码" prop="fieldKey">
+          <el-input v-model="form.fieldKey" placeholder="请输入字段编码，如 factorKey" maxlength="128" />
         </el-form-item>
-        <el-form-item label="状态" prop="enabledFlag">
-          <el-switch v-model="form.enabledFlag" active-text="启用" inactive-text="停用" />
+        <el-form-item label="字段名称" prop="fieldLabel">
+          <el-input v-model="form.fieldLabel" placeholder="请输入字段名称" maxlength="255" />
+        </el-form-item>
+        <el-form-item label="字段类型" prop="fieldType">
+          <el-select v-model="form.fieldType" placeholder="请选择字段类型" class="w-full">
+            <el-option v-for="item in fieldTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="精度" prop="fieldPrecision">
+          <el-input-number v-model="form.fieldPrecision" :min="0" :max="10" :precision="0" class="w-full" />
+        </el-form-item>
+        <el-form-item label="列宽" prop="fieldWidth">
+          <el-input-number v-model="form.fieldWidth" :min="80" :max="500" :precision="0" class="w-full" />
+        </el-form-item>
+        <el-form-item label="是否必填" prop="requiredFlag">
+          <el-switch v-model="form.requiredFlag" active-text="是" inactive-text="否" />
+        </el-form-item>
+        <el-form-item label="排序" prop="sortOrder">
+          <el-input-number v-model="form.sortOrder" :min="0" :max="9999" :precision="0" class="w-full" />
+        </el-form-item>
+        <el-form-item label="状态" prop="status">
+          <el-radio-group v-model="form.status">
+            <el-radio value="0">启用</el-radio>
+            <el-radio value="1">停用</el-radio>
+          </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="3" maxlength="500" show-word-limit />
@@ -132,42 +143,48 @@
       <template #footer>
         <el-button @click="formDrawer.visible = false">取消</el-button>
         <el-button type="primary" :loading="submitLoading" @click="submitForm">确定</el-button>
-      </template>
-    </el-drawer>
+      </template> 
+    </el-drawer> 
 
-    <el-drawer v-model="detailDrawer.visible" title="因子明细详情" size="560px" append-to-body>
+    <el-drawer v-model="detailDrawer.visible" title="因子字段详情" size="560px" append-to-body>
       <el-descriptions v-if="detailRecord" :column="1" border>
-        <el-descriptions-item label="版本ID">{{ formatText(detailRecord.versionId) }}</el-descriptions-item>
-        <el-descriptions-item label="因子表类型">{{ formatFactorTableLabel(detailRecord.factorTableCode) }}</el-descriptions-item>
-        <el-descriptions-item v-for="column in detailColumns" :key="column.prop" :label="column.label">
-          {{ formatText(detailRecord[column.prop]) }}
-        </el-descriptions-item>
-        <el-descriptions-item label="状态">{{ detailRecord.enabledFlag === false ? '停用' : '启用' }}</el-descriptions-item>
+        <el-descriptions-item label="因子表类型">{{ formatFactorTableLabel(detailRecord.tableCode) }}</el-descriptions-item>
+        <el-descriptions-item label="字段编码">{{ formatText(detailRecord.fieldKey) }}</el-descriptions-item>
+        <el-descriptions-item label="字段名称">{{ formatText(detailRecord.fieldLabel) }}</el-descriptions-item>
+        <el-descriptions-item label="字段类型">{{ formatFieldType(detailRecord.fieldType) }}</el-descriptions-item>
+        <el-descriptions-item label="精度">{{ formatText(detailRecord.fieldPrecision) }}</el-descriptions-item>
+        <el-descriptions-item label="列宽">{{ formatText(detailRecord.fieldWidth) }}</el-descriptions-item>
+        <el-descriptions-item label="是否必填">{{ detailRecord.requiredFlag ? '是' : '否' }}</el-descriptions-item>
+        <el-descriptions-item label="排序">{{ formatText(detailRecord.sortOrder) }}</el-descriptions-item>
+        <el-descriptions-item label="状态">{{ detailRecord.status === '1' ? '停用' : '启用' }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ formatDateTime(detailRecord.createTime) }}</el-descriptions-item>
+        <el-descriptions-item label="更新时间">{{ formatDateTime(detailRecord.updateTime) }}</el-descriptions-item>
         <el-descriptions-item label="备注">{{ formatText(detailRecord.remark) }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
-  </div>
-</template>
+  </div> 
+</template> 
 
 <script setup name="VendorFactorRecord" lang="ts">
 import { type FormInstance, type FormRules } from 'element-plus';
-import { addFactorRecord, deleteFactorRecord, getFactorRecord, listFactorRecord, updateFactorRecord } from '@/api/vendor/factorRecord';
-import type { FactorRecordForm, FactorRecordQuery, FactorRecordVO } from '@/api/vendor/factorRecord/types';
+import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue';
+import { addVendorTableField, deleteVendorTableField, getVendorTableField, listVendorTableField, updateVendorTableField } from '@/api/vendor/tableField';
+import type { VendorTableFieldForm, VendorTableFieldQuery, VendorTableFieldVO } from '@/api/vendor/tableField/types';
 import { useAutoQuery } from '@/hooks/useAutoQuery';
 import { formatDateTime, formatText, readRows, readTotal } from '../shared';
 
-const { proxy } = getCurrentInstance() as ComponentInternalInstance;
+type FieldType = 'text' | 'number' | 'date' | 'select' | 'boolean';
 
-type FactorColumnType = 'text' | 'number';
-
-interface FactorColumn {
-  prop: keyof FactorRecordForm & string;
-  label: string;
-  type?: FactorColumnType;
-  width?: number;
-  precision?: number;
+interface DefaultField {
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType?: FieldType;
+  fieldPrecision?: number;
+  fieldWidth?: number;
+  requiredFlag?: boolean;
 }
+
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 const factorTableOptions = [
   { label: '201 EF排放因子维度表', value: '201ef' },
@@ -178,280 +195,164 @@ const factorTableOptions = [
   { label: '206 温室气体维度', value: '206' }
 ];
 
+const fieldTypeOptions = [
+  { label: '文本', value: 'text' },
+  { label: '数值', value: 'number' },
+  { label: '日期', value: 'date' },
+  { label: '选项', value: 'select' },
+  { label: '是/否', value: 'boolean' }
+];
+
 const factorTableLabelMap = factorTableOptions.reduce<Record<string, string>>((map, item) => {
   map[item.value] = item.label;
   return map;
 }, {});
+const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, item) => {
+  map[item.value] = item.label;
+  return map;
+}, {});
 
-const factorColumns: Record<string, FactorColumn[]> = {
+const defaultFields: Record<string, DefaultField[]> = {
   '201ef': [
-    { prop: 'factorKey', label: 'SK_排放因子', width: 160 },
-    { prop: 'emissionSourceName', label: '排放源', width: 170 },
-    { prop: 'emissionSourceNameEn', label: '排放源_EN', width: 170 },
-    { prop: 'fuelMaterialCategory', label: '燃料/物质类别', width: 170 },
-    { prop: 'sourceUnit', label: '排放源单位', width: 140 },
-    { prop: 'co2', label: 'CO2', type: 'number', width: 120 },
-    { prop: 'ch4', label: 'CH4', type: 'number', width: 120 },
-    { prop: 'n2o', label: 'N2O', type: 'number', width: 120 },
-    { prop: 'hfcs', label: 'HFCs', type: 'number', width: 120 },
-    { prop: 'pfcs', label: 'PFCs', type: 'number', width: 120 },
-    { prop: 'sf6', label: 'SF6', type: 'number', width: 120 },
-    { prop: 'nf3', label: 'NF3', type: 'number', width: 120 },
-    { prop: 'applicableScope', label: '适用范围', width: 160 },
-    { prop: 'factorSource', label: '因子来源', width: 180 },
-    { prop: 'gwpCh4', label: 'GWP_CH4', type: 'number', width: 120 },
-    { prop: 'gwpN2o', label: 'GWP_N2O', type: 'number', width: 120 },
-    { prop: 'gwpHfcs', label: 'GWP_HFCs', type: 'number', width: 130 },
-    { prop: 'gwpPfcs', label: 'GWP_PFCs', type: 'number', width: 130 },
-    { prop: 'gwpSf6', label: 'GWP_SF6', type: 'number', width: 120 },
-    { prop: 'gwpNf3', label: 'GWP_NF3', type: 'number', width: 120 },
-    { prop: 'factorGwp', label: '因子GWP', type: 'number', width: 120 },
-    { prop: 'factorUnit', label: '因子单位', width: 130 }
+    { fieldKey: 'factorKey', fieldLabel: 'SK_排放因子', fieldWidth: 160, requiredFlag: true },
+    { fieldKey: 'emissionSourceName', fieldLabel: '排放源', fieldWidth: 170 },
+    { fieldKey: 'emissionSourceNameEn', fieldLabel: '排放源_EN', fieldWidth: 170 },
+    { fieldKey: 'fuelMaterialCategory', fieldLabel: '燃料/物质类别', fieldWidth: 170 },
+    { fieldKey: 'sourceUnit', fieldLabel: '排放源单位', fieldWidth: 140 },
+    { fieldKey: 'co2', fieldLabel: 'CO2', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'ch4', fieldLabel: 'CH4', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'n2o', fieldLabel: 'N2O', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'hfcs', fieldLabel: 'HFCs', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'pfcs', fieldLabel: 'PFCs', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'sf6', fieldLabel: 'SF6', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'nf3', fieldLabel: 'NF3', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'applicableScope', fieldLabel: '适用范围', fieldWidth: 160 },
+    { fieldKey: 'factorSource', fieldLabel: '因子来源', fieldWidth: 180 },
+    { fieldKey: 'gwpCh4', fieldLabel: 'GWP_CH4', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'gwpN2o', fieldLabel: 'GWP_N2O', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'gwpHfcs', fieldLabel: 'GWP_HFCs', fieldType: 'number', fieldWidth: 130 },
+    { fieldKey: 'gwpPfcs', fieldLabel: 'GWP_PFCs', fieldType: 'number', fieldWidth: 130 },
+    { fieldKey: 'gwpSf6', fieldLabel: 'GWP_SF6', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'gwpNf3', fieldLabel: 'GWP_NF3', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'factorGwp', fieldLabel: '因子GWP', fieldType: 'number', fieldWidth: 120 },
+    { fieldKey: 'factorUnit', fieldLabel: '因子单位', fieldWidth: 130 }
   ],
   '202ef': [
-    { prop: 'versionProvinceCode', label: 'PK_因子版本省份代码', width: 190 },
-    { prop: 'factorVersion', label: '因子版本', width: 140 },
-    { prop: 'divisionCode', label: '行政区划代码', width: 150 },
-    { prop: 'divisionName', label: '行政区划', width: 150 },
-    { prop: 'regionName', label: '区域划分', width: 150 },
-    { prop: 'provinceFactor', label: '省级因子（kgCO2/kWh)', type: 'number', width: 190 },
-    { prop: 'regionFactor', label: '区域因子（kgCO2/kWh)', type: 'number', width: 190 },
-    { prop: 'nationalFactor', label: '全国因子（kgCO2/kWh）', type: 'number', width: 190 },
-    { prop: 'nonFossilExcludedFactor', label: '不包括市场化交易的非化石能源电量因子（kgCO2/kWh）', type: 'number', width: 360 },
-    { prop: 'nationalFossilPowerFactor', label: '全国化石能源电力二氧化碳排放因子（kgCO2/kWh）', type: 'number', width: 360 }
+    { fieldKey: 'versionProvinceCode', fieldLabel: 'PK_因子版本省份代码', fieldWidth: 190, requiredFlag: true },
+    { fieldKey: 'factorVersion', fieldLabel: '因子版本', fieldWidth: 140 },
+    { fieldKey: 'divisionCode', fieldLabel: '行政区划代码', fieldWidth: 150 },
+    { fieldKey: 'divisionName', fieldLabel: '行政区划', fieldWidth: 150 },
+    { fieldKey: 'regionName', fieldLabel: '区域划分', fieldWidth: 150 },
+    { fieldKey: 'provinceFactor', fieldLabel: '省级因子（kgCO2/kWh)', fieldType: 'number', fieldWidth: 190 },
+    { fieldKey: 'regionFactor', fieldLabel: '区域因子（kgCO2/kWh)', fieldType: 'number', fieldWidth: 190 },
+    { fieldKey: 'nationalFactor', fieldLabel: '全国因子（kgCO2/kWh）', fieldType: 'number', fieldWidth: 190 },
+    { fieldKey: 'nonFossilExcludedFactor', fieldLabel: '不包括市场化交易的非化石能源电量因子（kgCO2/kWh）', fieldType: 'number', fieldWidth: 360 },
+    { fieldKey: 'nationalFossilPowerFactor', fieldLabel: '全国化石能源电力二氧化碳排放因子（kgCO2/kWh）', fieldType: 'number', fieldWidth: 360 }
   ],
   '203ef': [
-    { prop: 'factorKey', label: '年份', width: 120 },
-    { prop: 'factorVersion', label: '对应因子版本', width: 180 }
+    { fieldKey: 'factorKey', fieldLabel: '年份', fieldWidth: 120, requiredFlag: true },
+    { fieldKey: 'factorVersion', fieldLabel: '对应因子版本', fieldWidth: 180 }
   ],
   '204ef': [
-    { prop: 'rowNo', label: '序号', type: 'number', width: 90, precision: 0 },
-    { prop: 'fuelLevel1', label: '一类', width: 140 },
-    { prop: 'fuelLevel2', label: '二类', width: 140 },
-    { prop: 'fuelLevel3', label: '三类', width: 140 },
-    { prop: 'fuelLevel4', label: '四类', width: 140 },
-    { prop: 'lowerHeatValue', label: '低位发热量 (TJ/10^8 Nm3)', type: 'number', width: 220 },
-    { prop: 'lowerHeatValueCv', label: '低位发热量变异系数（%）', type: 'number', width: 210 },
-    { prop: 'co2Factor', label: '因子 (tCO2/TJ)', type: 'number', width: 170 },
-    { prop: 'co2FactorCv', label: '因子变异系数（%）', type: 'number', width: 180 },
-    { prop: 'gwpValue', label: 'GWP', type: 'number', width: 110 },
-    { prop: 'convertedFactor', label: '因子（转换）', type: 'number', width: 150 },
-    { prop: 'factorUnit', label: '因子单位', width: 150 },
-    { prop: 'factorSource', label: '因子来源', width: 180 },
-    { prop: 'remark', label: '备注', width: 180 }
+    { fieldKey: 'fuelLevel1', fieldLabel: '一类', fieldWidth: 140 },
+    { fieldKey: 'fuelLevel2', fieldLabel: '二类', fieldWidth: 140 },
+    { fieldKey: 'fuelLevel3', fieldLabel: '三类', fieldWidth: 140 },
+    { fieldKey: 'fuelLevel4', fieldLabel: '四类', fieldWidth: 140 },
+    { fieldKey: 'lowerHeatValue', fieldLabel: '低位发热量 (TJ/10^8 Nm3)', fieldType: 'number', fieldWidth: 220 },
+    { fieldKey: 'lowerHeatValueCv', fieldLabel: '低位发热量变异系数（%）', fieldType: 'number', fieldWidth: 210 },
+    { fieldKey: 'co2Factor', fieldLabel: '因子 (tCO2/TJ)', fieldType: 'number', fieldWidth: 170 },
+    { fieldKey: 'co2FactorCv', fieldLabel: '因子变异系数（%）', fieldType: 'number', fieldWidth: 180 },
+    { fieldKey: 'gwpValue', fieldLabel: 'GWP', fieldType: 'number', fieldWidth: 110 },
+    { fieldKey: 'convertedFactor', fieldLabel: '因子（转换）', fieldType: 'number', fieldWidth: 150 },
+    { fieldKey: 'factorUnit', fieldLabel: '因子单位', fieldWidth: 150 },
+    { fieldKey: 'factorSource', fieldLabel: '因子来源', fieldWidth: 180 },
+    { fieldKey: 'remark', fieldLabel: '备注', fieldWidth: 180 }
   ],
   '205ef': [
-    { prop: 'factorKey', label: '因子口径Key', width: 160 },
-    { prop: 'factorName', label: '因子口径', width: 180 }
+    { fieldKey: 'factorKey', fieldLabel: '因子口径Key', fieldWidth: 160, requiredFlag: true },
+    { fieldKey: 'factorName', fieldLabel: '因子口径', fieldWidth: 180 }
   ],
   '206': [
-    { prop: 'factorKey', label: 'GasKey', width: 140 },
-    { prop: 'factorName', label: '气体', width: 140 },
-    { prop: 'rowNo', label: '排序', type: 'number', width: 100, precision: 0 }
+    { fieldKey: 'factorKey', fieldLabel: 'GasKey', fieldWidth: 140, requiredFlag: true },
+    { fieldKey: 'factorName', fieldLabel: '气体', fieldWidth: 140 }
   ]
 };
 
 const loading = ref(false);
 const submitLoading = ref(false);
 const showSearch = ref(true);
-const total = ref(0);
-const recordList = ref<FactorRecordVO[]>([]);
-const detailRecord = ref<FactorRecordVO>();
-const ids = ref<Array<string | number>>([]);
-const multiple = ref(true);
-const formRef = ref<FormInstance>();
-const formDrawer = reactive({
-  visible: false,
-  title: ''
-});
-const detailDrawer = reactive({
-  visible: false
-});
+const total = ref(0); 
+const fieldList = ref<VendorTableFieldVO[]>([]); 
+const detailRecord = ref<VendorTableFieldVO>(); 
+const ids = ref<Array<string | number>>([]); 
+const multiple = ref(true); 
+const formRef = ref<FormInstance>(); 
+const formDrawer = reactive({ visible: false, title: '' }); 
+const detailDrawer = reactive({ visible: false }); 
 
-const queryParams = reactive<FactorRecordQuery>({
+const queryParams = reactive<VendorTableFieldQuery>({
   pageNum: 1,
   pageSize: 10,
-  factorTableCode: '201ef',
-  versionId: undefined,
-  factorCode: undefined,
-  factorName: undefined,
-  factorKey: undefined,
-  emissionSourceName: undefined,
-  factorVersion: undefined,
-  enabledFlag: undefined,
+  tableGroup: 'factor',
+  tableCode: '201ef',
+  fieldKey: undefined,
+  fieldLabel: undefined,
+  fieldType: undefined,
+  status: undefined,
   params: {}
 });
 
-const form = reactive<FactorRecordForm>({
+const form = reactive<VendorTableFieldForm>({
   id: undefined,
-  versionId: undefined,
-  factorTableCode: '201ef',
-  factorCode: '',
-  factorName: '',
-  factorCategory: '',
-  factorValue: undefined,
-  factorUnit: '',
-  factorKey: undefined,
-  emissionSourceName: undefined,
-  emissionSourceNameEn: undefined,
-  fuelMaterialCategory: undefined,
-  sourceUnit: undefined,
-  co2: undefined,
-  ch4: undefined,
-  n2o: undefined,
-  hfcs: undefined,
-  pfcs: undefined,
-  sf6: undefined,
-  nf3: undefined,
-  applicableScope: undefined,
-  factorSource: undefined,
-  gwpCh4: undefined,
-  gwpN2o: undefined,
-  gwpHfcs: undefined,
-  gwpPfcs: undefined,
-  gwpSf6: undefined,
-  gwpNf3: undefined,
-  factorGwp: undefined,
-  versionProvinceCode: undefined,
-  factorVersion: undefined,
-  divisionCode: undefined,
-  divisionName: undefined,
-  regionName: undefined,
-  provinceFactor: undefined,
-  regionFactor: undefined,
-  nationalFactor: undefined,
-  nonFossilExcludedFactor: undefined,
-  nationalFossilPowerFactor: undefined,
-  rowNo: undefined,
-  fuelLevel1: undefined,
-  fuelLevel2: undefined,
-  fuelLevel3: undefined,
-  fuelLevel4: undefined,
-  lowerHeatValue: undefined,
-  lowerHeatValueCv: undefined,
-  co2Factor: undefined,
-  co2FactorCv: undefined,
-  gwpValue: undefined,
-  convertedFactor: undefined,
-  sourceRef: '',
-  enabledFlag: true,
+  tableGroup: 'factor',
+  tableCode: '201ef',
+  fieldKey: '',
+  fieldLabel: '',
+  fieldType: 'text',
+  fieldPrecision: undefined,
+  fieldWidth: 140,
+  requiredFlag: false,
+  sortOrder: 0,
+  status: '0',
   remark: undefined
 });
 
-const rules: FormRules<FactorRecordForm> = {
-  versionId: [{ required: true, message: '版本ID不能为空', trigger: 'blur' }],
-  factorTableCode: [{ required: true, message: '因子表类型不能为空', trigger: 'change' }]
+const rules: FormRules<VendorTableFieldForm> = {
+  tableCode: [{ required: true, message: '因子表类型不能为空', trigger: 'change' }],
+  fieldKey: [{ required: true, message: '字段编码不能为空', trigger: 'blur' }],
+  fieldLabel: [{ required: true, message: '字段名称不能为空', trigger: 'blur' }],
+  fieldType: [{ required: true, message: '字段类型不能为空', trigger: 'change' }]
 };
 
-const activeColumns = computed(() => factorColumns[queryParams.factorTableCode || '201ef'] ?? factorColumns['201ef']);
-const formColumns = computed(() => factorColumns[form.factorTableCode || '201ef'] ?? factorColumns['201ef']);
-const detailColumns = computed(() => factorColumns[detailRecord.value?.factorTableCode || '201ef'] ?? factorColumns['201ef']);
+const activeDefaultFields = computed(() => defaultFields[queryParams.tableCode || '201ef'] ?? []);
 const formatFactorTableLabel = (code?: string) => (code ? factorTableLabelMap[code] || code : '-');
+const formatFieldType = (type?: string) => (type ? fieldTypeLabelMap[type] || type : '-');
 
 const resetForm = () => {
-  form.id = undefined;
-  form.versionId = undefined;
-  form.factorTableCode = queryParams.factorTableCode || '201ef';
-  form.factorCode = '';
-  form.factorName = '';
-  form.factorCategory = '';
-  form.factorValue = undefined;
-  form.factorUnit = '';
-  form.factorKey = undefined;
-  form.emissionSourceName = undefined;
-  form.emissionSourceNameEn = undefined;
-  form.fuelMaterialCategory = undefined;
-  form.sourceUnit = undefined;
-  form.co2 = undefined;
-  form.ch4 = undefined;
-  form.n2o = undefined;
-  form.hfcs = undefined;
-  form.pfcs = undefined;
-  form.sf6 = undefined;
-  form.nf3 = undefined;
-  form.applicableScope = undefined;
-  form.factorSource = undefined;
-  form.gwpCh4 = undefined;
-  form.gwpN2o = undefined;
-  form.gwpHfcs = undefined;
-  form.gwpPfcs = undefined;
-  form.gwpSf6 = undefined;
-  form.gwpNf3 = undefined;
-  form.factorGwp = undefined;
-  form.versionProvinceCode = undefined;
-  form.factorVersion = undefined;
-  form.divisionCode = undefined;
-  form.divisionName = undefined;
-  form.regionName = undefined;
-  form.provinceFactor = undefined;
-  form.regionFactor = undefined;
-  form.nationalFactor = undefined;
-  form.nonFossilExcludedFactor = undefined;
-  form.nationalFossilPowerFactor = undefined;
-  form.rowNo = undefined;
-  form.fuelLevel1 = undefined;
-  form.fuelLevel2 = undefined;
-  form.fuelLevel3 = undefined;
-  form.fuelLevel4 = undefined;
-  form.lowerHeatValue = undefined;
-  form.lowerHeatValueCv = undefined;
-  form.co2Factor = undefined;
-  form.co2FactorCv = undefined;
-  form.gwpValue = undefined;
-  form.convertedFactor = undefined;
-  form.sourceRef = '';
-  form.enabledFlag = true;
-  form.remark = undefined;
+  Object.assign(form, {
+    id: undefined,
+    tableGroup: 'factor',
+    tableCode: queryParams.tableCode || '201ef',
+    fieldKey: '',
+    fieldLabel: '',
+    fieldType: 'text',
+    fieldPrecision: undefined,
+    fieldWidth: 140,
+    requiredFlag: false,
+    sortOrder: fieldList.value.length + 1,
+    status: '0',
+    remark: undefined
+  });
   formRef.value?.clearValidate();
-};
-
-const normalizeFactorPayload = (payload: FactorRecordForm) => {
-  const code =
-    payload.factorCode ||
-    payload.factorKey ||
-    payload.versionProvinceCode ||
-    payload.factorVersion ||
-    payload.fuelLevel4 ||
-    payload.fuelLevel3 ||
-    payload.fuelLevel2 ||
-    payload.fuelLevel1 ||
-    'UNKNOWN';
-  const name =
-    payload.factorName ||
-    payload.emissionSourceName ||
-    payload.divisionName ||
-    payload.fuelLevel4 ||
-    payload.fuelLevel3 ||
-    payload.fuelLevel2 ||
-    payload.fuelLevel1 ||
-    code;
-  return {
-    ...payload,
-    factorCode: code,
-    factorName: name,
-    factorCategory: payload.factorCategory || payload.factorTableCode || '201ef',
-    factorValue:
-      payload.factorValue ??
-      payload.factorGwp ??
-      payload.provinceFactor ??
-      payload.regionFactor ??
-      payload.nationalFactor ??
-      payload.convertedFactor ??
-      payload.co2Factor ??
-      payload.co2 ??
-      0,
-    factorUnit: payload.factorUnit || payload.sourceUnit || 'kgCO2e',
-    sourceRef: payload.sourceRef || payload.factorSource,
-    enabledFlag: payload.enabledFlag !== false
-  };
 };
 
 const getList = async () => {
   loading.value = true;
   try {
-    const res = await listFactorRecord(queryParams);
-    recordList.value = readRows<FactorRecordVO>(res);
-    total.value = readTotal(res, recordList.value);
+    queryParams.tableGroup = 'factor';
+    const res = await listVendorTableField(queryParams);
+    fieldList.value = readRows<VendorTableFieldVO>(res);
+    total.value = readTotal(res, fieldList.value);
   } finally {
     loading.value = false;
   }
@@ -470,87 +371,106 @@ const handleQuery = async () => {
   await refreshList();
 };
 
-const resetQuery = async () => {
-  queryParams.pageNum = 1;
-  queryParams.pageSize = 10;
-  queryParams.factorTableCode = '201ef';
-  queryParams.versionId = undefined;
-  queryParams.factorCode = undefined;
-  queryParams.factorName = undefined;
-  queryParams.factorKey = undefined;
-  queryParams.emissionSourceName = undefined;
-  queryParams.factorVersion = undefined;
-  queryParams.enabledFlag = undefined;
-  await refreshList();
-};
-
-const handleSelectionChange = (selection: FactorRecordVO[]) => {
+const handleSelectionChange = (selection: VendorTableFieldVO[]) => {
   ids.value = selection.map((item) => item.id);
   multiple.value = !selection.length;
 };
 
 const handleAdd = () => {
   resetForm();
-  formDrawer.title = '新增因子明细';
+  formDrawer.title = '新增因子字段';
   formDrawer.visible = true;
 };
 
-const handleUpdate = async (row: FactorRecordVO) => {
-  resetForm();
-  try {
-    const res = await getFactorRecord(row.id);
-    const data = res.data ?? row;
-    form.id = data.id;
-    form.versionId = data.versionId;
-    Object.assign(form, data);
-    form.factorTableCode = data.factorTableCode || '201ef';
-    form.enabledFlag = data.enabledFlag !== false;
-    formDrawer.title = '编辑因子明细';
+const handleUpdate = async (row: VendorTableFieldVO) => { 
+  resetForm(); 
+  try { 
+    const res = await getVendorTableField(row.id);
+    Object.assign(form, res.data ?? row);
+    form.tableGroup = 'factor';
+    form.status = form.status || '0';
+    form.requiredFlag = form.requiredFlag === true;
+    formDrawer.title = '编辑因子字段';
     formDrawer.visible = true;
+  } catch {
+    // Global request interceptor already shows the error.
+  } 
+}; 
+
+const openDetail = async (row: VendorTableFieldVO) => {
+  try {
+    const res = await getVendorTableField(row.id);
+    detailRecord.value = res.data ?? row;
+    detailDrawer.visible = true;
   } catch {
     // Global request interceptor already shows the error.
   }
 };
-
-const submitForm = async () => {
+ 
+const submitForm = async () => { 
   const valid = await formRef.value?.validate().catch(() => false);
-  if (!valid) {
-    return;
-  }
+  if (!valid) return;
   submitLoading.value = true;
   try {
-    const payload = normalizeFactorPayload({ ...form });
-    if (form.id) {
-      await updateFactorRecord(payload);
-      proxy?.$modal.msgSuccess('因子明细已更新');
+    const payload = { ...form, tableGroup: 'factor' };
+    if (payload.id) {
+      await updateVendorTableField(payload);
+      proxy?.$modal.msgSuccess('因子字段已更新');
     } else {
-      await addFactorRecord(payload);
-      proxy?.$modal.msgSuccess('因子明细已新增');
+      await addVendorTableField(payload);
+      proxy?.$modal.msgSuccess('因子字段已新增');
     }
     formDrawer.visible = false;
     await getList();
-  } catch {
-    // Global request interceptor already shows the error.
   } finally {
     submitLoading.value = false;
   }
 };
 
-const openDetail = (row: FactorRecordVO) => {
-  detailRecord.value = row;
-  detailDrawer.visible = true;
-};
-
-const handleDelete = async (row?: FactorRecordVO) => {
+const handleDelete = async (row?: VendorTableFieldVO) => {
   try {
     const deleteIds = row?.id || ids.value;
-    const message = row ? `确认删除因子“${row.factorName}”？` : `确认删除选中的 ${ids.value.length} 条因子明细？`;
+    const message = row ? `确认删除字段“${row.fieldLabel}”？` : `确认删除选中的 ${ids.value.length} 个字段？`;
     await proxy?.$modal.confirm(message);
-    await deleteFactorRecord(deleteIds);
+    await deleteVendorTableField(deleteIds);
     proxy?.$modal.msgSuccess('删除成功');
     await getList();
   } catch {
     // User cancelled or global request interceptor already shows the error.
+  }
+};
+
+const initializeDefaultFields = async () => {
+  const tableCode = queryParams.tableCode || '201ef';
+  const existingRes = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'factor', tableCode, params: {} });
+  const existingKeys = new Set(readRows<VendorTableFieldVO>(existingRes).map((item) => item.fieldKey));
+  const fieldsToCreate = activeDefaultFields.value.filter((field) => !existingKeys.has(field.fieldKey));
+  if (!fieldsToCreate.length) {
+    proxy?.$modal.msgWarning('当前因子表字段已初始化');
+    return;
+  }
+  await proxy?.$modal.confirm(`确认按客户样例初始化 ${fieldsToCreate.length} 个字段？`);
+  submitLoading.value = true;
+  try {
+    for (const [index, field] of fieldsToCreate.entries()) {
+      await addVendorTableField({
+        tableGroup: 'factor',
+        tableCode,
+        fieldKey: field.fieldKey,
+        fieldLabel: field.fieldLabel,
+        fieldType: field.fieldType || 'text',
+        fieldPrecision: field.fieldType === 'number' ? (field.fieldPrecision ?? 10) : undefined,
+        fieldWidth: field.fieldWidth,
+        requiredFlag: field.requiredFlag === true,
+        sortOrder: fieldList.value.length + index + 1,
+        status: '0',
+        remark: '按客户样例字段初始化'
+      });
+    }
+    proxy?.$modal.msgSuccess('样例字段初始化完成');
+    await getList();
+  } finally {
+    submitLoading.value = false;
   }
 };
 
@@ -569,7 +489,9 @@ useAutoQuery(queryParams, () => handleQuery());
 
 .toolbar {
   display: flex;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
 }
 

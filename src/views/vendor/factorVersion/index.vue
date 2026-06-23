@@ -46,10 +46,16 @@
 
       <div class="toolbar">
         <div class="btns">
+          <el-button v-hasPermi="['vendor:factorVersion:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+          <el-button v-hasPermi="['vendor:factorVersion:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
+            删除
+          </el-button>
         </div>
+        <span v-if="ids.length > 0" class="select-count">已选 {{ ids.length }} 项</span>
       </div>
 
-      <el-table v-loading="loading" :data="factorVersionList" border>
+      <el-table v-loading="loading" :data="factorVersionList" border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="48" align="center" />
         <el-table-column label="版本编码" align="center" prop="versionCode" min-width="150" :show-overflow-tooltip="true" />
         <el-table-column label="版本名称" align="center" prop="versionName" min-width="180" :show-overflow-tooltip="true" />
         <el-table-column label="发布状态" align="center" prop="publishStatus" width="120">
@@ -73,6 +79,17 @@
           <template #default="{ row }">
             <div class="table-actions">
               <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
+              <el-button
+                v-if="canEditMetadata(row)"
+                v-hasPermi="['vendor:factorVersion:edit']"
+                link
+                type="primary"
+                icon="Edit"
+                :disabled="actioningId === row.id"
+                @click="handleUpdate(row)"
+              >
+                编辑
+              </el-button>
               <el-button
                 v-if="canPublish(row)"
                 v-hasPermi="['vendor:factorVersion:edit']"
@@ -117,6 +134,17 @@
               >
                 恢复
               </el-button>
+              <el-button
+                v-if="canEditMetadata(row)"
+                v-hasPermi="['vendor:factorVersion:remove']"
+                link
+                type="danger"
+                icon="Delete"
+                :disabled="actioningId === row.id"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -130,6 +158,24 @@
         @pagination="refreshList"
       />
     </div>
+
+    <el-drawer v-model="formDrawer.visible" :title="formDrawer.title" size="560px" append-to-body>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="110px">
+        <el-form-item label="版本编码" prop="versionCode">
+          <el-input v-model="form.versionCode" placeholder="请输入版本编码" maxlength="64" />
+        </el-form-item>
+        <el-form-item label="版本名称" prop="versionName">
+          <el-input v-model="form.versionName" placeholder="请输入版本名称" maxlength="128" />
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :rows="4" maxlength="500" show-word-limit />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="formDrawer.visible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="submitForm">确定</el-button>
+      </template>
+    </el-drawer>
 
     <el-drawer v-model="detailDrawer.visible" title="因子版本详情" size="560px" append-to-body>
       <el-descriptions v-if="detailRecord" :column="1" border>
@@ -147,24 +193,37 @@
 </template>
 
 <script setup name="VendorFactorVersion" lang="ts">
+import { type FormInstance, type FormRules } from 'element-plus';
 import {
+  addFactorVersion,
+  deleteFactorVersion,
   freezeFactorVersion,
+  getFactorVersion,
   listFactorVersion,
   publishFactorVersion,
   restoreFactorVersion,
-  retireFactorVersion
+  retireFactorVersion,
+  updateFactorVersion
 } from '@/api/vendor/factorVersion';
-import type { FactorVersionQuery, FactorVersionVO } from '@/api/vendor/factorVersion/types';
+import type { FactorVersionForm, FactorVersionQuery, FactorVersionVO } from '@/api/vendor/factorVersion/types';
 import { formatDateTime, formatPublishStatus, formatText, publishStatusTagType, readRows, readTotal } from '../shared';
 
 import { useAutoQuery } from '@/hooks/useAutoQuery';
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const loading = ref(false);
+const submitLoading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
 const factorVersionList = ref<FactorVersionVO[]>([]);
 const detailRecord = ref<FactorVersionVO>();
 const actioningId = ref<string | number>();
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const formRef = ref<FormInstance>();
+const formDrawer = reactive({
+  visible: false,
+  title: ''
+});
 const detailDrawer = reactive({
   visible: false
 });
@@ -178,6 +237,18 @@ const queryParams = reactive<FactorVersionQuery>({
   frozenFlag: undefined,
   params: {}
 });
+
+const form = reactive<FactorVersionForm>({
+  id: undefined,
+  versionCode: '',
+  versionName: '',
+  remark: undefined
+});
+
+const rules: FormRules<FactorVersionForm> = {
+  versionCode: [{ required: true, message: '版本编码不能为空', trigger: 'blur' }],
+  versionName: [{ required: true, message: '版本名称不能为空', trigger: 'blur' }]
+};
 
 const getList = async () => {
   loading.value = true;
@@ -218,6 +289,21 @@ const openDetail = (row: FactorVersionVO) => {
   detailDrawer.visible = true;
 };
 
+const resetForm = () => {
+  Object.assign(form, {
+    id: undefined,
+    versionCode: '',
+    versionName: '',
+    remark: undefined
+  });
+  formRef.value?.clearValidate();
+};
+
+const handleSelectionChange = (selection: FactorVersionVO[]) => {
+  ids.value = selection.map((item) => item.id);
+  multiple.value = !selection.length;
+};
+
 const normalizePublishStatus = (status?: string) => status?.trim().toUpperCase() ?? '';
 const isFrozen = (value?: number | boolean) => value === true || value === 1;
 
@@ -231,6 +317,72 @@ const canRetire = (row: FactorVersionVO) => {
   return status === 'PUBLISHED' || status === 'FROZEN' || isFrozen(row.frozenFlag);
 };
 const canRestore = (row: FactorVersionVO) => normalizePublishStatus(row.publishStatus) === 'RETIRED' && !isFrozen(row.frozenFlag);
+const canEditMetadata = (row: FactorVersionVO) => {
+  const status = normalizePublishStatus(row.publishStatus);
+  return status === 'DRAFT' || status === 'RETIRED';
+};
+
+const handleAdd = () => {
+  resetForm();
+  formDrawer.title = '新增因子版本';
+  formDrawer.visible = true;
+};
+
+const handleUpdate = async (row: FactorVersionVO) => {
+  if (!canEditMetadata(row)) {
+    return;
+  }
+  resetForm();
+  try {
+    const res = await getFactorVersion(row.id);
+    const data = res.data ?? row;
+    Object.assign(form, {
+      id: data.id,
+      versionCode: data.versionCode,
+      versionName: data.versionName,
+      remark: data.remark
+    });
+    formDrawer.title = '编辑因子版本';
+    formDrawer.visible = true;
+  } catch {
+    // Global request interceptor already shows the error.
+  }
+};
+
+const submitForm = async () => {
+  const valid = await formRef.value?.validate().catch(() => false);
+  if (!valid) return;
+  submitLoading.value = true;
+  try {
+    if (form.id) {
+      await updateFactorVersion(form);
+      proxy?.$modal.msgSuccess('因子版本已更新');
+    } else {
+      await addFactorVersion(form);
+      proxy?.$modal.msgSuccess('因子版本已新增');
+    }
+    formDrawer.visible = false;
+    await getList();
+  } finally {
+    submitLoading.value = false;
+  }
+};
+
+const handleDelete = async (row?: FactorVersionVO) => {
+  try {
+    const deleteIds = row?.id || ids.value;
+    if (!row && multiple.value) {
+      return;
+    }
+    const message = row ? `确认删除因子版本“${row.versionName}”？` : `确认删除选中的 ${ids.value.length} 个因子版本？`;
+    await proxy?.$modal.confirm(message);
+    await deleteFactorVersion(deleteIds);
+    proxy?.$modal.msgSuccess('删除成功');
+    await getList();
+  } catch {
+    // User cancelled or global request interceptor already shows the error.
+  }
+};
 
 const syncLocalLifecycleState = (row: FactorVersionVO, publishStatus: string, frozenFlag: boolean) => {
   row.publishStatus = publishStatus;

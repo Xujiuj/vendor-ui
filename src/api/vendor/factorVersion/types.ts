@@ -87,3 +87,12 @@ export interface FactorVersionVO extends BaseEntity {
    */
   [key: string]: any;
 }
+
+export interface FactorVersionForm {
+  id?: string | number;
+  versionCode?: string;
+  versionName?: string;
+  publishStatus?: string;
+  frozenFlag?: number | boolean;
+  remark?: string;
+}

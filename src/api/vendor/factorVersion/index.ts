@@ -1,5 +1,5 @@
 import request from '@/utils/request';
-import { FactorVersionQuery, FactorVersionVO } from './types';
+import { FactorVersionForm, FactorVersionQuery, FactorVersionVO } from './types';
 import type { ApiResponse, ListResponse } from '../shared';
 
 const FACTOR_VERSION_BASE_URL = '/vendor/factor-version';
@@ -24,6 +24,29 @@ export const getFactorVersion = (id: string | number): Promise<ApiResponse<Facto
   return request({
     url: `${FACTOR_VERSION_BASE_URL}/${id}`,
     method: 'get'
+  });
+};
+
+export const addFactorVersion = (data: FactorVersionForm): Promise<ApiResponse<void>> => {
+  return request({
+    url: FACTOR_VERSION_BASE_URL,
+    method: 'post',
+    data
+  });
+};
+
+export const updateFactorVersion = (data: FactorVersionForm): Promise<ApiResponse<void>> => {
+  return request({
+    url: FACTOR_VERSION_BASE_URL,
+    method: 'put',
+    data
+  });
+};
+
+export const deleteFactorVersion = (ids: string | number | Array<string | number>): Promise<ApiResponse<void>> => {
+  return request({
+    url: `${FACTOR_VERSION_BASE_URL}/${ids}`,
+    method: 'delete'
   });
 };
 
