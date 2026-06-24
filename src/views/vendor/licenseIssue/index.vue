@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="p-2 page-panel vendor-license-issue">
     <section class="page-head">
       <div>
@@ -327,7 +327,16 @@ const defaultIssueForm = (): IssueForm => ({
 
 const issueForm = reactive<IssueForm>(defaultIssueForm());
 
-const featureOptions = ['carbon-data', 'factor-library', 'report-template', 'power-bi'];
+const featureOptions = [
+  'carbon-data',
+  'factor-library',
+  'factor-sync',
+  'factor-confirm',
+  'report-template',
+  'report-template-download',
+  'report-gate',
+  'power-bi'
+];
 
 const issueRules: Record<string, any> = {
   customerId: [{ required: true, message: '请选择供应商客户', trigger: 'change' }],
