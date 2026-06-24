@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h1>维表管理</h1>
-        <p>管理厂商侧维度表的字段定义和数据记录，包括排放源分类、行政区划、因子口径等。</p>
+        <p>管理厂商侧基础维度表的字段定义。因子类字段统一在因子明细中维护，避免管理范围重复。</p>
       </div>
     </div>
 
@@ -191,10 +191,6 @@ const dimensionOptions = [
   { label: '101 行政区划', value: 'admin-division' },
   { label: '103 排放源分类', value: 'emission-source-category' },
   { label: '106 基准年维度表', value: 'base-year' },
-  { label: '202 EF电力因子维度表', value: 'ef-electricity-factor' },
-  { label: '203 EF电力因子版本对应', value: 'ef-electricity-version' },
-  { label: '205 EF电力因子口径维度', value: 'ef-electricity-scope' },
-  { label: '206 温室气体维度', value: 'greenhouse-gas' },
   { label: '报表模板下载', value: 'report-template-download' }
 ];
 
@@ -246,24 +242,6 @@ const defaultFields: Record<string, DefaultField[]> = {
     { fieldKey: 'field02', fieldLabel: '基准年', fieldType: 'number', fieldPrecision: 0 },
     { fieldKey: 'field03', fieldLabel: '是否当前基准', fieldType: 'boolean' },
     { fieldKey: 'field04', fieldLabel: '说明' }
-  ],
-  'ef-electricity-factor': [
-    { fieldKey: 'field01', fieldLabel: '行政区划代码', requiredFlag: true },
-    { fieldKey: 'field02', fieldLabel: '排放因子', fieldType: 'number', requiredFlag: true },
-    { fieldKey: 'field03', fieldLabel: '单位', requiredFlag: true },
-    { fieldKey: 'field04', fieldLabel: '年份', fieldType: 'number', fieldPrecision: 0 }
-  ],
-  'ef-electricity-version': [
-    { fieldKey: 'field01', fieldLabel: '年份', fieldType: 'number', fieldPrecision: 0 },
-    { fieldKey: 'field02', fieldLabel: '对应因子版本' }
-  ],
-  'ef-electricity-scope': [
-    { fieldKey: 'field01', fieldLabel: '因子口径Key', requiredFlag: true },
-    { fieldKey: 'field02', fieldLabel: '因子口径' }
-  ],
-  'greenhouse-gas': [
-    { fieldKey: 'field01', fieldLabel: 'GasKey', requiredFlag: true },
-    { fieldKey: 'field02', fieldLabel: '气体' }
   ],
   'report-template-download': [
     { fieldKey: 'field01', fieldLabel: '模板类型' },
