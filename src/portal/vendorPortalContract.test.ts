@@ -273,6 +273,45 @@ describe('vendor dynamic router guard', () => {
     expect(isVendorForbiddenMenuTitle('License 授权管理')).toBe(false);
   });
 
+  it('filters enterprise generated business pages from vendor portal menus', () => {
+    const filtered = filterVendorPortalRoutes([
+      {
+        path: '/system',
+        component: 'Layout',
+        meta: { title: '系统管理' },
+        children: [
+          { path: 'activityData', component: 'system/activityData/index', permissions: ['system:activityData:list'], meta: { title: '活动数据' } },
+          {
+            path: 'greenElectricity',
+            component: 'system/greenElectricity/index',
+            permissions: ['system:greenElectricity:list'],
+            meta: { title: '绿电绿证' }
+          },
+          {
+            path: 'intensityDenominator',
+            component: 'system/intensityDenominator/index',
+            permissions: ['system:intensityDenominator:list'],
+            meta: { title: '强度分母' }
+          },
+          {
+            path: 'emissionSource',
+            component: 'system/emissionSource/index',
+            permissions: ['system:emissionSource:list'],
+            meta: { title: '排放源' }
+          },
+          { path: 'user', component: 'system/user/index', permissions: ['system:user:list'], meta: { title: '用户管理' } }
+        ]
+      }
+    ] as any);
+
+    const serialized = JSON.stringify(filtered);
+    expect(serialized).toContain('用户管理');
+    expect(serialized).not.toContain('system/activityData/index');
+    expect(serialized).not.toContain('system/greenElectricity/index');
+    expect(serialized).not.toContain('system/intensityDenominator/index');
+    expect(serialized).not.toContain('system/emissionSource/index');
+  });
+
   it('documents vendor portal prefixes and prototype tokens', () => {
     expect(vendorAllowedPermissionPrefixes).toEqual(['vendor:', 'system:']);
     expect(vendorPrototypeColorTokens.side).toBe('#18342f');

@@ -49,7 +49,7 @@
         </el-button>
 
         <div class="login-support">
-          <a href="https://example.com" target="_blank" rel="noreferrer">官网</a>
+          <a :href="supportLinks.website" target="_blank" rel="noreferrer">官网</a>
           <span>技术支持：400-000-0000</span>
         </div>
       </el-form>
@@ -58,9 +58,9 @@
     <div class="login-footer">
       <p>技术支持：400-000-0000 &nbsp;|&nbsp; support@carbondata.com</p>
       <p>
-        <a href="https://example.com" target="_blank" rel="noreferrer">官方网站</a> ·
-        <a href="https://example.com/privacy" target="_blank" rel="noreferrer">隐私政策</a> ·
-        <a href="https://example.com/terms" target="_blank" rel="noreferrer">服务条款</a>
+        <a :href="supportLinks.website" target="_blank" rel="noreferrer">官方网站</a> ·
+        <a :href="supportLinks.privacy" target="_blank" rel="noreferrer">隐私政策</a> ·
+        <a :href="supportLinks.terms" target="_blank" rel="noreferrer">服务条款</a>
       </p>
     </div>
   </div>
@@ -99,6 +99,11 @@ const redirect = ref('/');
 const loginRef = ref<ElFormInstance>();
 const autoLogin = ref(false);
 const autoLoginTriggered = ref(false);
+const supportLinks = {
+  website: 'https://www.carbondata.com',
+  privacy: 'https://www.carbondata.com/privacy',
+  terms: 'https://www.carbondata.com/terms'
+};
 
 const LOGIN_STORAGE_KEYS = {
   tenantId: 'vendorLoginTenantId',
