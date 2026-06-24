@@ -3,6 +3,7 @@
     <div class="page-head">
       <div>
         <h1>维表管理</h1>
+        <p>管理厂商侧维度表的字段定义和数据记录，包括排放源分类、行政区划、因子口径等。</p>
       </div>
     </div>
 
@@ -188,12 +189,12 @@ const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 const dimensionOptions = [
   { label: '101 行政区划', value: 'admin-division' },
-  { label: '102 公司表', value: 'company' },
   { label: '103 排放源分类', value: 'emission-source-category' },
   { label: '106 基准年维度表', value: 'base-year' },
-  { label: '501 碳排放强度分母维度表', value: 'intensity-denominator' },
-  { label: '502 强度目标表', value: 'intensity-target' },
-  { label: '504 碳排放强度容忍率参数表', value: 'intensity-tolerance' },
+  { label: '202 EF电力因子维度表', value: 'ef-electricity-factor' },
+  { label: '203 EF电力因子版本对应', value: 'ef-electricity-version' },
+  { label: '205 EF电力因子口径维度', value: 'ef-electricity-scope' },
+  { label: '206 温室气体维度', value: 'greenhouse-gas' },
   { label: '报表模板下载', value: 'report-template-download' }
 ];
 
@@ -218,28 +219,6 @@ const defaultFields: Record<string, DefaultField[]> = {
   'admin-division': [
     { fieldKey: 'field01', fieldLabel: '行政区划代码', requiredFlag: true },
     { fieldKey: 'field02', fieldLabel: '行政区划', requiredFlag: true }
-  ],
-  company: [
-    { fieldKey: 'field01', fieldLabel: 'SK_公司', requiredFlag: true },
-    { fieldKey: 'field02', fieldLabel: '公司编号' },
-    { fieldKey: 'field03', fieldLabel: 'BK_工厂编号' },
-    { fieldKey: 'field04', fieldLabel: '公司' },
-    { fieldKey: 'field05', fieldLabel: '工厂' },
-    { fieldKey: 'field06', fieldLabel: '省份编码' },
-    { fieldKey: 'field07', fieldLabel: '所在省份' },
-    { fieldKey: 'field08', fieldLabel: '工厂类型' },
-    { fieldKey: 'field09', fieldLabel: '行业门类代码' },
-    { fieldKey: 'field10', fieldLabel: '行业门类名称' },
-    { fieldKey: 'field11', fieldLabel: '行业大类代码' },
-    { fieldKey: 'field12', fieldLabel: '行业大类名称' },
-    { fieldKey: 'field13', fieldLabel: '行业中类代码' },
-    { fieldKey: 'field14', fieldLabel: '行业中类名称' },
-    { fieldKey: 'field15', fieldLabel: '行业小类代码' },
-    { fieldKey: 'field16', fieldLabel: '行业小类名称' },
-    { fieldKey: 'field17', fieldLabel: '生效日期', fieldType: 'date' },
-    { fieldKey: 'field18', fieldLabel: '失效日期', fieldType: 'date' },
-    { fieldKey: 'field19', fieldLabel: '是否有效', fieldType: 'boolean' },
-    { fieldKey: 'field20', fieldLabel: '备注' }
   ],
   'emission-source-category': [
     { fieldKey: 'field01', fieldLabel: 'SK_排放源分类', requiredFlag: true },
@@ -268,6 +247,12 @@ const defaultFields: Record<string, DefaultField[]> = {
     { fieldKey: 'field03', fieldLabel: '是否当前基准', fieldType: 'boolean' },
     { fieldKey: 'field04', fieldLabel: '说明' }
   ],
+  'ef-electricity-factor': [
+    { fieldKey: 'field01', fieldLabel: '行政区划代码', requiredFlag: true },
+    { fieldKey: 'field02', fieldLabel: '排放因子', fieldType: 'number', requiredFlag: true },
+    { fieldKey: 'field03', fieldLabel: '单位', requiredFlag: true },
+    { fieldKey: 'field04', fieldLabel: '年份', fieldType: 'number', fieldPrecision: 0 }
+  ],
   'ef-electricity-version': [
     { fieldKey: 'field01', fieldLabel: '年份', fieldType: 'number', fieldPrecision: 0 },
     { fieldKey: 'field02', fieldLabel: '对应因子版本' }
@@ -279,28 +264,6 @@ const defaultFields: Record<string, DefaultField[]> = {
   'greenhouse-gas': [
     { fieldKey: 'field01', fieldLabel: 'GasKey', requiredFlag: true },
     { fieldKey: 'field02', fieldLabel: '气体' }
-  ],
-  'intensity-denominator': [
-    { fieldKey: 'field01', fieldLabel: '分母规则Key', requiredFlag: true },
-    { fieldKey: 'field02', fieldLabel: '工厂类型' },
-    { fieldKey: 'field03', fieldLabel: '分母类型' },
-    { fieldKey: 'field04', fieldLabel: '分母度量名称' },
-    { fieldKey: 'field05', fieldLabel: '强度单位展示' },
-    { fieldKey: 'field06', fieldLabel: '是否启用', fieldType: 'boolean' },
-    { fieldKey: 'field07', fieldLabel: '备注' }
-  ],
-  'intensity-target': [
-    { fieldKey: 'field01', fieldLabel: '工厂类型' },
-    { fieldKey: 'field02', fieldLabel: '年份', fieldType: 'number', fieldPrecision: 0 },
-    { fieldKey: 'field03', fieldLabel: '强度目标值', fieldType: 'number' },
-    { fieldKey: 'field04', fieldLabel: '单位' }
-  ],
-  'intensity-tolerance': [
-    { fieldKey: 'field01', fieldLabel: '容忍率Key', requiredFlag: true },
-    { fieldKey: 'field02', fieldLabel: '行业门类' },
-    { fieldKey: 'field03', fieldLabel: '容忍率', fieldType: 'number' },
-    { fieldKey: 'field04', fieldLabel: '是否启用', fieldType: 'boolean' },
-    { fieldKey: 'field05', fieldLabel: '备注' }
   ],
   'report-template-download': [
     { fieldKey: 'field01', fieldLabel: '模板类型' },

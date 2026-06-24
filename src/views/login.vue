@@ -79,8 +79,8 @@ const { t } = useI18n();
 
 const loginForm = ref<LoginData>({
   tenantId: '000000',
-  username: 'admin',
-  password: 'admin123',
+  username: '',
+  password: '',
   rememberMe: false,
   code: '',
   uuid: ''
@@ -108,7 +108,6 @@ const supportLinks = {
 const LOGIN_STORAGE_KEYS = {
   tenantId: 'vendorLoginTenantId',
   username: 'vendorLoginUsername',
-  password: 'vendorLoginPassword',
   rememberMe: 'vendorLoginRememberMe',
   autoLogin: 'vendorLoginAutoLogin'
 } as const;
@@ -139,14 +138,13 @@ watch(
 const getLoginData = () => {
   const rememberMe = localStorage.getItem(LOGIN_STORAGE_KEYS.rememberMe) === 'true';
   const savedUsername = localStorage.getItem(LOGIN_STORAGE_KEYS.username);
-  const savedPassword = localStorage.getItem(LOGIN_STORAGE_KEYS.password);
   const savedTenantId = localStorage.getItem(LOGIN_STORAGE_KEYS.tenantId);
 
   loginForm.value = {
     ...loginForm.value,
     tenantId: savedTenantId || loginForm.value.tenantId,
     username: rememberMe && savedUsername ? savedUsername : loginForm.value.username,
-    password: rememberMe && savedPassword ? savedPassword : loginForm.value.password,
+    password: '',
     rememberMe
   } as LoginData;
   autoLogin.value = rememberMe && localStorage.getItem(LOGIN_STORAGE_KEYS.autoLogin) === 'true';
@@ -158,7 +156,6 @@ const syncLoginPreference = () => {
   if (!loginForm.value.rememberMe) {
     localStorage.removeItem(LOGIN_STORAGE_KEYS.tenantId);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.username);
-    localStorage.removeItem(LOGIN_STORAGE_KEYS.password);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.rememberMe);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.autoLogin);
     return;
@@ -166,7 +163,6 @@ const syncLoginPreference = () => {
 
   localStorage.setItem(LOGIN_STORAGE_KEYS.tenantId, String(loginForm.value.tenantId || '000000'));
   localStorage.setItem(LOGIN_STORAGE_KEYS.username, String(loginForm.value.username || ''));
-  localStorage.setItem(LOGIN_STORAGE_KEYS.password, String(loginForm.value.password || ''));
   localStorage.setItem(LOGIN_STORAGE_KEYS.rememberMe, 'true');
 };
 

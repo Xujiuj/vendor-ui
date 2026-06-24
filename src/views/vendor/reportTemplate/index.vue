@@ -1,8 +1,9 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head">
       <div>
         <h1>模板管理</h1>
+        <p>上传、发布和管理报表模板文件。模板发布后可配置分发范围供企业端同步下载。</p>
       </div>
     </div>
 

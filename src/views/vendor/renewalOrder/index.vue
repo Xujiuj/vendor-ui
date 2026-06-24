@@ -1,8 +1,9 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head">
       <div>
         <h1>续费订单</h1>
+        <p>管理企业客户的 License 续费订单，支持支付回调、自动签发、人工绑定和签发重试。</p>
       </div>
     </div>
 

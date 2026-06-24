@@ -1,8 +1,9 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head">
       <div>
         <h1>客户档案</h1>
+        <p>查看企业客户基本信息。客户数据由在线购买自动创建，此处仅提供查询。</p>
       </div>
     </div>
 
@@ -25,7 +26,6 @@
           <el-select v-model="queryParams.customerStatus" placeholder="请选择客户状态" clearable>
             <el-option label="启用" value="active" />
             <el-option label="停用" value="disabled" />
-            <el-option label="停用" value="inactive" />
           </el-select>
         </div>
           <div class="search-actions">

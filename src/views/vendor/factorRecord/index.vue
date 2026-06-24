@@ -3,6 +3,7 @@
     <div class="page-head factor-record-head">
       <div>
         <h1>因子明细</h1>
+        <p>管理因子版本下的排放因子明细记录。仅 draft 和 retired 状态的版本允许编辑因子明细。</p>
       </div>
     </div>
 
@@ -187,10 +188,8 @@ interface DefaultField {
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
 const factorTableOptions = [
-  { label: '201 EF排放因子维度表', value: '201ef' },
   { label: '202 EF电力因子维度表', value: '202ef' },
   { label: '203 EF电力因子版本对应', value: '203ef' },
-  { label: '204 EF燃料因子计算', value: '204ef' },
   { label: '205 EF电力因子口径维度', value: '205ef' },
   { label: '206 温室气体维度', value: '206' }
 ];
@@ -213,30 +212,6 @@ const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, 
 }, {});
 
 const defaultFields: Record<string, DefaultField[]> = {
-  '201ef': [
-    { fieldKey: 'factorKey', fieldLabel: 'SK_排放因子', fieldWidth: 160, requiredFlag: true },
-    { fieldKey: 'emissionSourceName', fieldLabel: '排放源', fieldWidth: 170 },
-    { fieldKey: 'emissionSourceNameEn', fieldLabel: '排放源_EN', fieldWidth: 170 },
-    { fieldKey: 'fuelMaterialCategory', fieldLabel: '燃料/物质类别', fieldWidth: 170 },
-    { fieldKey: 'sourceUnit', fieldLabel: '排放源单位', fieldWidth: 140 },
-    { fieldKey: 'co2', fieldLabel: 'CO2', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'ch4', fieldLabel: 'CH4', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'n2o', fieldLabel: 'N2O', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'hfcs', fieldLabel: 'HFCs', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'pfcs', fieldLabel: 'PFCs', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'sf6', fieldLabel: 'SF6', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'nf3', fieldLabel: 'NF3', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'applicableScope', fieldLabel: '适用范围', fieldWidth: 160 },
-    { fieldKey: 'factorSource', fieldLabel: '因子来源', fieldWidth: 180 },
-    { fieldKey: 'gwpCh4', fieldLabel: 'GWP_CH4', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'gwpN2o', fieldLabel: 'GWP_N2O', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'gwpHfcs', fieldLabel: 'GWP_HFCs', fieldType: 'number', fieldWidth: 130 },
-    { fieldKey: 'gwpPfcs', fieldLabel: 'GWP_PFCs', fieldType: 'number', fieldWidth: 130 },
-    { fieldKey: 'gwpSf6', fieldLabel: 'GWP_SF6', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'gwpNf3', fieldLabel: 'GWP_NF3', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'factorGwp', fieldLabel: '因子GWP', fieldType: 'number', fieldWidth: 120 },
-    { fieldKey: 'factorUnit', fieldLabel: '因子单位', fieldWidth: 130 }
-  ],
   '202ef': [
     { fieldKey: 'versionProvinceCode', fieldLabel: 'PK_因子版本省份代码', fieldWidth: 190, requiredFlag: true },
     { fieldKey: 'factorVersion', fieldLabel: '因子版本', fieldWidth: 140 },
@@ -252,21 +227,6 @@ const defaultFields: Record<string, DefaultField[]> = {
   '203ef': [
     { fieldKey: 'factorKey', fieldLabel: '年份', fieldWidth: 120, requiredFlag: true },
     { fieldKey: 'factorVersion', fieldLabel: '对应因子版本', fieldWidth: 180 }
-  ],
-  '204ef': [
-    { fieldKey: 'fuelLevel1', fieldLabel: '一类', fieldWidth: 140 },
-    { fieldKey: 'fuelLevel2', fieldLabel: '二类', fieldWidth: 140 },
-    { fieldKey: 'fuelLevel3', fieldLabel: '三类', fieldWidth: 140 },
-    { fieldKey: 'fuelLevel4', fieldLabel: '四类', fieldWidth: 140 },
-    { fieldKey: 'lowerHeatValue', fieldLabel: '低位发热量 (TJ/10^8 Nm3)', fieldType: 'number', fieldWidth: 220 },
-    { fieldKey: 'lowerHeatValueCv', fieldLabel: '低位发热量变异系数（%）', fieldType: 'number', fieldWidth: 210 },
-    { fieldKey: 'co2Factor', fieldLabel: '因子 (tCO2/TJ)', fieldType: 'number', fieldWidth: 170 },
-    { fieldKey: 'co2FactorCv', fieldLabel: '因子变异系数（%）', fieldType: 'number', fieldWidth: 180 },
-    { fieldKey: 'gwpValue', fieldLabel: 'GWP', fieldType: 'number', fieldWidth: 110 },
-    { fieldKey: 'convertedFactor', fieldLabel: '因子（转换）', fieldType: 'number', fieldWidth: 150 },
-    { fieldKey: 'factorUnit', fieldLabel: '因子单位', fieldWidth: 150 },
-    { fieldKey: 'factorSource', fieldLabel: '因子来源', fieldWidth: 180 },
-    { fieldKey: 'remark', fieldLabel: '备注', fieldWidth: 180 }
   ],
   '205ef': [
     { fieldKey: 'factorKey', fieldLabel: '因子口径Key', fieldWidth: 160, requiredFlag: true },
@@ -294,7 +254,7 @@ const queryParams = reactive<VendorTableFieldQuery>({
   pageNum: 1,
   pageSize: 10,
   tableGroup: 'factor',
-  tableCode: '201ef',
+  tableCode: '202ef',
   fieldKey: undefined,
   fieldLabel: undefined,
   fieldType: undefined,
@@ -305,7 +265,7 @@ const queryParams = reactive<VendorTableFieldQuery>({
 const form = reactive<VendorTableFieldForm>({
   id: undefined,
   tableGroup: 'factor',
-  tableCode: '201ef',
+  tableCode: '202ef',
   fieldKey: '',
   fieldLabel: '',
   fieldType: 'text',
@@ -324,7 +284,7 @@ const rules: FormRules<VendorTableFieldForm> = {
   fieldType: [{ required: true, message: '字段类型不能为空', trigger: 'change' }]
 };
 
-const activeDefaultFields = computed(() => defaultFields[queryParams.tableCode || '201ef'] ?? []);
+const activeDefaultFields = computed(() => defaultFields[queryParams.tableCode || '202ef'] ?? []);
 const formatFactorTableLabel = (code?: string) => (code ? factorTableLabelMap[code] || code : '-');
 const formatFieldType = (type?: string) => (type ? fieldTypeLabelMap[type] || type : '-');
 
@@ -332,7 +292,7 @@ const resetForm = () => {
   Object.assign(form, {
     id: undefined,
     tableGroup: 'factor',
-    tableCode: queryParams.tableCode || '201ef',
+    tableCode: queryParams.tableCode || '202ef',
     fieldKey: '',
     fieldLabel: '',
     fieldType: 'text',
@@ -441,7 +401,7 @@ const handleDelete = async (row?: VendorTableFieldVO) => {
 };
 
 const initializeDefaultFields = async () => {
-  const tableCode = queryParams.tableCode || '201ef';
+  const tableCode = queryParams.tableCode || '202ef';
   const existingRes = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'factor', tableCode, params: {} });
   const existingKeys = new Set(readRows<VendorTableFieldVO>(existingRes).map((item) => item.fieldKey));
   const fieldsToCreate = activeDefaultFields.value.filter((field) => !existingKeys.has(field.fieldKey));

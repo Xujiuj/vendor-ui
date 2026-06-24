@@ -1,8 +1,9 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head announcement-head">
       <div>
         <h1>公告管理</h1>
+        <p>发布和管理面向企业端的系统公告。公告通过开放接口推送到企业端工作台。</p>
       </div>
     </div>
 
@@ -125,7 +126,7 @@
         <el-descriptions-item label="创建时间">{{ formatDateTime(detailRecord.createTime) }}</el-descriptions-item>
         <el-descriptions-item label="备注">{{ formatText(detailRecord.remark) }}</el-descriptions-item>
       </el-descriptions>
-      <div v-if="detailRecord" class="notice-content" v-html="detailRecord.noticeContent || '暂无公告内容'"></div>
+      <div v-if="detailRecord" class="notice-content" v-html="sanitizeHtml(detailRecord.noticeContent) || '暂无公告内容'"></div>
     </el-drawer>
   </div>
 </template>
@@ -136,6 +137,14 @@ import { addAnnouncement, deleteAnnouncement, getAnnouncement, listAnnouncement,
 import type { AnnouncementForm, AnnouncementQuery, AnnouncementVO } from '@/api/vendor/announcement/types';
 import { useAutoQuery } from '@/hooks/useAutoQuery';
 import { formatDateTime, formatText, readRows, readTotal } from '../shared';
+
+const sanitizeHtml = (html: string): string => {
+  if (!html) return '';
+  return html
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/\bon\w+\s*=\s*(['"])[^'"]*\1/gi, '')
+    .replace(/javascript\s*:/gi, '');
+};
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const { sys_notice_status, sys_notice_type } = toRefs<any>(proxy?.useDict('sys_notice_status', 'sys_notice_type'));

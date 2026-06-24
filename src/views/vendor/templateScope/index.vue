@@ -1,8 +1,9 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head">
       <div>
         <h1>模板开放范围</h1>
+        <p>配置报表模板的分发范围，指定哪些客户或套餐可以同步下载已发布的模板。</p>
       </div>
     </div>
 

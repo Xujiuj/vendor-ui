@@ -1,8 +1,9 @@
-﻿<template>
+<template>
   <div class="page-panel">
     <div class="page-head">
       <div>
         <h1>因子开放范围</h1>
+        <p>配置客户可同步的因子版本范围，按客户、套餐、版本和 License 维度控制授权。</p>
       </div>
     </div>
 
