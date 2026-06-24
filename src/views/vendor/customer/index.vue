@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h1>客户档案</h1>
-        <p>查看企业客户基本信息。客户数据由在线购买自动创建，此处仅提供查询。</p>
+        <p>维护厂商端企业客户基础信息，用于 License 签发、模板分发和开放范围配置。</p>
       </div>
     </div>
 
@@ -28,17 +28,28 @@
             <el-option label="停用" value="disabled" />
           </el-select>
         </div>
-          <div class="search-actions">
-            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
-          </div>
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
-      <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+      <div v-show="!showSearch" class="search-bar search-bar-collapsed">
         <div class="search-actions">
           <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
         </div>
       </div>
 
-      <el-table v-loading="loading" :data="customerList" border>
+      <div class="toolbar">
+        <div class="btns">
+          <el-button v-hasPermi="['vendor:customer:add']" type="primary" plain icon="Plus" @click="handleAdd">新增</el-button>
+          <el-button v-hasPermi="['vendor:customer:remove']" type="danger" plain icon="Delete" :disabled="multiple" @click="handleDelete()">
+            删除
+          </el-button>
+        </div>
+        <span v-if="ids.length > 0" class="select-count">已选 {{ ids.length }} 项</span>
+      </div>
+
+      <el-table v-loading="loading" :data="customerList" border @selection-change="handleSelectionChange">
+        <el-table-column type="selection" width="48" align="center" />
         <el-table-column label="客户编码" align="center" prop="customerCode" min-width="150" :show-overflow-tooltip="true" />
         <el-table-column label="客户名称" align="center" prop="customerName" min-width="180" :show-overflow-tooltip="true" />
         <el-table-column label="联系人" align="center" prop="contactName" width="140" :show-overflow-tooltip="true" />
@@ -54,9 +65,13 @@
             {{ formatDateTime(row.createTime) }}
           </template>
         </el-table-column>
-        <el-table-column label="操作" align="center" width="90" fixed="right">
+        <el-table-column label="操作" align="center" width="190" fixed="right">
           <template #default="{ row }">
-            <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
+            <div class="table-actions">
+              <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
+              <el-button v-hasPermi="['vendor:customer:edit']" link type="primary" icon="Edit" @click="handleUpdate(row)">编辑</el-button>
+              <el-button v-hasPermi="['vendor:customer:remove']" link type="danger" icon="Delete" @click="handleDelete(row)">删除</el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -69,6 +84,39 @@
         @pagination="refreshList"
       />
     </div>
+
+    <el-drawer v-model="formDrawer.visible" :title="formDrawer.title" size="560px" append-to-body>
+      <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
+        <el-form-item label="客户编码" prop="customerCode">
+          <el-input v-model="form.customerCode" placeholder="请输入客户编码" maxlength="64" />
+        </el-form-item>
+        <el-form-item label="客户名称" prop="customerName">
+          <el-input v-model="form.customerName" placeholder="请输入客户名称" maxlength="255" />
+        </el-form-item>
+        <el-form-item label="联系人" prop="contactName">
+          <el-input v-model="form.contactName" placeholder="请输入联系人" maxlength="128" />
+        </el-form-item>
+        <el-form-item label="联系邮箱" prop="contactEmail">
+          <el-input v-model="form.contactEmail" placeholder="请输入联系邮箱" maxlength="255" />
+        </el-form-item>
+        <el-form-item label="联系电话" prop="contactPhone">
+          <el-input v-model="form.contactPhone" placeholder="请输入联系电话" maxlength="64" />
+        </el-form-item>
+        <el-form-item label="客户状态" prop="customerStatus">
+          <el-select v-model="form.customerStatus" placeholder="请选择客户状态">
+            <el-option label="启用" value="active" />
+            <el-option label="停用" value="disabled" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="备注" prop="remark">
+          <el-input v-model="form.remark" type="textarea" :rows="4" maxlength="500" show-word-limit />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="formDrawer.visible = false">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="submitForm">确定</el-button>
+      </template>
+    </el-drawer>
 
     <el-drawer v-model="detailDrawer.visible" title="客户档案详情" size="560px" append-to-body>
       <el-descriptions v-if="detailRecord" :column="1" border>
@@ -87,16 +135,26 @@
 </template>
 
 <script setup name="VendorCustomer" lang="ts">
-import { listCustomer } from '@/api/vendor/customer';
-import type { CustomerQuery, CustomerVO } from '@/api/vendor/customer/types';
+import { type FormInstance, type FormRules } from 'element-plus';
+import { addCustomer, deleteCustomer, getCustomer, listCustomer, updateCustomer } from '@/api/vendor/customer';
+import type { CustomerForm, CustomerQuery, CustomerVO } from '@/api/vendor/customer/types';
 import { useAutoQuery } from '@/hooks/useAutoQuery';
 import { formatDateTime, formatText, readRows, readTotal } from '../shared';
 
+const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 const loading = ref(false);
+const submitLoading = ref(false);
 const showSearch = ref(true);
 const total = ref(0);
 const customerList = ref<CustomerVO[]>([]);
 const detailRecord = ref<CustomerVO>();
+const ids = ref<Array<string | number>>([]);
+const multiple = ref(true);
+const formRef = ref<FormInstance>();
+const formDrawer = reactive({
+  visible: false,
+  title: ''
+});
 const detailDrawer = reactive({
   visible: false
 });
@@ -110,6 +168,24 @@ const queryParams = reactive<CustomerQuery>({
   customerStatus: undefined,
   params: {}
 });
+
+const form = reactive<CustomerForm>({
+  id: undefined,
+  customerCode: '',
+  customerName: '',
+  contactName: undefined,
+  contactEmail: undefined,
+  contactPhone: undefined,
+  customerStatus: 'active',
+  remark: undefined
+});
+
+const rules: FormRules<CustomerForm> = {
+  customerCode: [{ required: true, message: '客户编码不能为空', trigger: 'blur' }],
+  customerName: [{ required: true, message: '客户名称不能为空', trigger: 'blur' }],
+  customerStatus: [{ required: true, message: '客户状态不能为空', trigger: 'change' }],
+  contactEmail: [{ type: 'email', message: '联系邮箱格式不正确', trigger: 'blur' }]
+};
 
 const getList = async () => {
   loading.value = true;
@@ -150,6 +226,88 @@ const openDetail = (row: CustomerVO) => {
   detailDrawer.visible = true;
 };
 
+const resetForm = () => {
+  Object.assign(form, {
+    id: undefined,
+    customerCode: '',
+    customerName: '',
+    contactName: undefined,
+    contactEmail: undefined,
+    contactPhone: undefined,
+    customerStatus: 'active',
+    remark: undefined
+  });
+  formRef.value?.clearValidate();
+};
+
+const handleSelectionChange = (selection: CustomerVO[]) => {
+  ids.value = selection.map((item) => item.id);
+  multiple.value = !selection.length;
+};
+
+const handleAdd = () => {
+  resetForm();
+  formDrawer.title = '新增客户档案';
+  formDrawer.visible = true;
+};
+
+const handleUpdate = async (row: CustomerVO) => {
+  resetForm();
+  try {
+    const res = await getCustomer(row.id);
+    const data = res.data ?? row;
+    Object.assign(form, {
+      id: data.id,
+      customerCode: data.customerCode,
+      customerName: data.customerName,
+      contactName: data.contactName,
+      contactEmail: data.contactEmail,
+      contactPhone: data.contactPhone,
+      customerStatus: data.customerStatus,
+      remark: data.remark
+    });
+    formDrawer.title = '编辑客户档案';
+    formDrawer.visible = true;
+  } catch {
+    // Global request interceptor already shows the error.
+  }
+};
+
+const submitForm = async () => {
+  const valid = await formRef.value?.validate().catch(() => false);
+  if (!valid) return;
+  submitLoading.value = true;
+  try {
+    if (form.id) {
+      await updateCustomer(form);
+      proxy?.$modal.msgSuccess('客户档案已更新');
+    } else {
+      await addCustomer(form);
+      proxy?.$modal.msgSuccess('客户档案已新增');
+    }
+    formDrawer.visible = false;
+    await getList();
+  } finally {
+    submitLoading.value = false;
+  }
+};
+
+const handleDelete = async (row?: CustomerVO) => {
+  try {
+    const deleteIds = row?.id || ids.value;
+    if (!row && multiple.value) {
+      return;
+    }
+    const message = row ? `确认删除客户档案“${row.customerName}”？` : `确认删除选中的 ${ids.value.length} 个客户档案？`;
+    await proxy?.$modal.confirm(message);
+    await deleteCustomer(deleteIds);
+    proxy?.$modal.msgSuccess('删除成功');
+    await getList();
+  } catch {
+    // User cancelled or global request interceptor already shows the error.
+  }
+};
+
 const formatCustomerStatus = (status?: string) => {
   const statusMap: Record<string, string> = {
     active: '启用',
@@ -183,8 +341,22 @@ useAutoQuery(queryParams, () => handleQuery());
 <style scoped lang="scss">
 .toolbar {
   display: flex;
-  justify-content: flex-end;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 12px;
+}
+
+.btns,
+.table-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.select-count {
+  color: var(--el-text-color-secondary);
+  font-size: 13px;
 }
 </style>

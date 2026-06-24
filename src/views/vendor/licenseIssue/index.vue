@@ -6,45 +6,44 @@
         <p>为客户签发、下载和追踪 License 授权记录。</p>
       </div>
     </section>
+
     <div v-show="showSearch" class="search-bar wide">
       <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px" class="license-search">
-          <el-form-item label="License ID" prop="licenseId">
-            <el-input v-model="queryParams.licenseId" placeholder="请输入 License ID" clearable @keyup.enter="handleQuery" />
-          </el-form-item>
-          <el-form-item label="客户" prop="customerId">
-            <el-select
-              v-model="queryParams.customerId"
-              placeholder="请选择客户"
-              clearable
-              filterable
-              remote
-              :remote-method="searchCustomers"
-              :loading="customerLoading"
-            >
-              <el-option v-for="customer in customerOptions" :key="customer.id" :label="formatCustomerLabel(customer)" :value="customer.id" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="套餐" prop="packageId">
-            <el-select v-model="queryParams.packageId" placeholder="请选择套餐" clearable>
-              <el-option v-for="item in packageOptions" :key="item.packageId" :label="item.packageName" :value="item.packageId" />
-            </el-select>
-          </el-form-item>
-          <el-form-item label="设备指纹" prop="installId">
-            <el-input v-model="queryParams.installId" placeholder="请输入设备指纹" clearable @keyup.enter="handleQuery" />
-          </el-form-item>
-          <el-form-item label="签发状态" prop="issueStatus">
-            <el-select v-model="queryParams.issueStatus" placeholder="请选择状态" clearable>
-              <el-option label="签发成功" value="SUCCESS" />
-              <el-option label="签发失败" value="FAILED" />
-              <el-option label="已撤销" value="REVOKED" />
-            </el-select>
-          </el-form-item>
+        <el-form-item label="License ID" prop="licenseId">
+          <el-input v-model="queryParams.licenseId" placeholder="请输入 License ID" clearable @keyup.enter="handleQuery" />
+        </el-form-item>
+        <el-form-item label="客户" prop="customerId">
+          <el-select
+            v-model="queryParams.customerId"
+            placeholder="请选择客户"
+            clearable
+            filterable
+            remote
+            :remote-method="searchCustomers"
+            :loading="customerLoading"
+          >
+            <el-option v-for="customer in customerOptions" :key="customer.id" :label="formatCustomerLabel(customer)" :value="customer.id" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="套餐" prop="packageId">
+          <el-select v-model="queryParams.packageId" placeholder="请选择套餐" clearable>
+            <el-option v-for="item in packageOptions" :key="item.packageId" :label="item.packageName" :value="item.packageId" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="签发状态" prop="issueStatus">
+          <el-select v-model="queryParams.issueStatus" placeholder="请选择状态" clearable>
+            <el-option label="签发成功" value="SUCCESS" />
+            <el-option label="签发失败" value="FAILED" />
+            <el-option label="已撤销" value="REVOKED" />
+          </el-select>
+        </el-form-item>
         <div class="search-actions">
           <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="getList"></right-toolbar>
         </div>
       </el-form>
     </div>
-    <div class="search-bar search-bar-collapsed" v-show="!showSearch">
+
+    <div v-show="!showSearch" class="search-bar search-bar-collapsed">
       <div class="search-actions">
         <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="getList"></right-toolbar>
       </div>
@@ -69,28 +68,16 @@
             {{ formatPackage(row) }}
           </template>
         </el-table-column>
-        <el-table-column label="设备指纹" align="center" prop="installId" min-width="170" :show-overflow-tooltip="true" />
-        <el-table-column label="签发类型" align="center" prop="issueType" width="110" />
         <el-table-column label="签发状态" align="center" prop="issueStatus" width="120">
           <template #default="{ row }">
             <el-tag :type="statusTagType(row.issueStatus)">{{ formatIssueStatus(row.issueStatus) }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column label="有效期起" align="center" prop="validFrom" width="150">
-          <template #default="{ row }">
-            {{ formatDate(row.validFrom) }}
-          </template>
+          <template #default="{ row }">{{ formatDate(row.validFrom) }}</template>
         </el-table-column>
         <el-table-column label="有效期止" align="center" prop="validTo" width="150">
-          <template #default="{ row }">
-            {{ formatDate(row.validTo) }}
-          </template>
-        </el-table-column>
-        <el-table-column label="签发人" align="center" prop="issuedBy" width="130" :show-overflow-tooltip="true" />
-        <el-table-column label="签发时间" align="center" prop="issuedTime" width="160">
-          <template #default="{ row }">
-            {{ formatDate(row.issuedTime) }}
-          </template>
+          <template #default="{ row }">{{ formatDate(row.validTo) }}</template>
         </el-table-column>
         <el-table-column label="操作" align="center" width="150" fixed="right">
           <template #default="{ row }">
@@ -105,12 +92,13 @@
 
     <el-drawer v-model="issueDrawer.visible" title="签发 License" size="640px" append-to-body>
       <el-alert
-        title="客户编码和客户名称来自供应商客户主数据，签发请求只发送客户 ID 和允许的授权字段。"
+        title="签发时仅选择客户、有效期和套餐，设备指纹由企业激活回填，功能与模板授权由套餐推导。"
         type="info"
         show-icon
         :closable="false"
         class="mb12"
       />
+
       <el-form ref="issueFormRef" :model="issueForm" :rules="issueRules" label-width="120px">
         <el-form-item label="客户" prop="customerId">
           <el-select
@@ -136,12 +124,7 @@
           </el-select>
           <div v-if="selectedCustomer" class="form-tip">{{ selectedCustomer.customerCode }} / {{ selectedCustomer.customerName }}</div>
         </el-form-item>
-        <el-form-item label="签名密钥 ID" prop="keyId">
-          <el-input v-model="issueForm.keyId" placeholder="请输入后端允许使用的签名密钥 ID" />
-        </el-form-item>
-        <el-form-item label="设备指纹" prop="installId">
-          <el-input v-model="issueForm.installId" placeholder="请输入 installId" />
-        </el-form-item>
+
         <el-form-item label="有效期" required>
           <el-row :gutter="10" class="w-full">
             <el-col :span="12">
@@ -156,8 +139,9 @@
             </el-col>
           </el-row>
         </el-form-item>
+
         <el-form-item label="套餐" prop="packageId">
-          <el-select v-model="issueForm.packageId" placeholder="请选择套餐" class="w-full" filterable>
+          <el-select v-model="issueForm.packageId" placeholder="请选择套餐" class="w-full" filterable @change="handlePackageChange">
             <el-option
               v-for="item in packageOptions"
               :key="item.packageId"
@@ -167,43 +151,32 @@
             />
           </el-select>
         </el-form-item>
+
         <el-form-item label="功能" prop="features">
-          <el-select
-            v-model="issueForm.features"
-            placeholder="请输入或选择功能代码"
-            multiple
-            filterable
-            allow-create
-            default-first-option
-            class="w-full"
-          >
-            <el-option v-for="feature in featureOptions" :key="feature" :label="feature" :value="feature" />
-          </el-select>
+          <div class="feature-tags">
+            <el-tag v-for="feature in issueForm.features" :key="feature" type="info">{{ feature }}</el-tag>
+          </div>
+          <div v-if="!issueForm.features.length" class="form-tip">请选择套餐后自动带出功能。</div>
         </el-form-item>
-        <el-form-item label="签发类型" prop="issueType">
-          <el-select v-model="issueForm.issueType" placeholder="请选择签发类型" class="w-full">
-            <el-option label="新签发" value="NEW" />
-            <el-option label="续期" value="RENEWAL" />
-            <el-option label="补发" value="REISSUE" />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="签发人" prop="issuedBy">
-          <el-input v-model="issueForm.issuedBy" placeholder="请输入签发人" />
-        </el-form-item>
+
         <el-form-item label="模板授权" prop="templateEntitlements">
           <el-select
             v-model="issueForm.templateEntitlements"
-            placeholder="请输入模板授权代码"
+            placeholder="请选择模板"
             multiple
             filterable
-            allow-create
-            default-first-option
+            collapse-tags
+            collapse-tags-tooltip
             class="w-full"
-          />
+          >
+            <el-option v-for="template in templateOptions" :key="template.id" :label="templateLabel(template)" :value="template.templateCode" />
+          </el-select>
+          <div v-if="!templateOptions.length" class="form-tip">模板库暂无可用模板，请先发布模板。</div>
         </el-form-item>
       </el-form>
 
       <el-alert v-if="issueError" :title="issueError" type="error" show-icon :closable="false" class="mb12" />
+
       <el-card v-if="issuedResult" shadow="never" class="issue-result">
         <template #header>签发结果</template>
         <el-descriptions :column="1" border>
@@ -212,6 +185,9 @@
           <el-descriptions-item label="有效期"
             >{{ formatDate(issuedResult.validFrom) }} 至 {{ formatDate(issuedResult.validTo) }}</el-descriptions-item
           >
+          <el-descriptions-item label="套餐">{{ formatPackage(issuedResult) }}</el-descriptions-item>
+          <el-descriptions-item label="功能">{{ formatFeatures(issuedResult.featureCodes) }}</el-descriptions-item>
+          <el-descriptions-item label="模板授权">{{ formatFeatures(issuedResult.templateEntitlements) }}</el-descriptions-item>
           <el-descriptions-item label="下载文件">{{ issuedResult.download?.fileName || buildLicenseFileName(issuedResult) }}</el-descriptions-item>
         </el-descriptions>
         <el-button class="mt12" type="primary" icon="Download" @click="downloadIssuedLicense(issuedResult)">下载 .lic</el-button>
@@ -229,13 +205,12 @@
       <el-descriptions v-if="detailRecord" :column="1" border>
         <el-descriptions-item label="License ID">{{ detailRecord.licenseId || detailRecord.id }}</el-descriptions-item>
         <el-descriptions-item label="客户">{{ customerNameMap.get(detailRecord.customerId) || detailRecord.customerId || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="签名密钥 ID">{{ detailRecord.keyId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="套餐">{{ formatPackage(detailRecord) }}</el-descriptions-item>
         <el-descriptions-item label="功能">{{ formatFeatures(detailRecord.featureCodes) }}</el-descriptions-item>
+        <el-descriptions-item label="模板授权">{{ formatFeatures(detailRecord.templateEntitlements) }}</el-descriptions-item>
         <el-descriptions-item label="设备指纹">{{ detailRecord.installId || '-' }}</el-descriptions-item>
         <el-descriptions-item label="状态">{{ formatIssueStatus(detailRecord.issueStatus) }}</el-descriptions-item>
         <el-descriptions-item label="有效期">{{ formatDate(detailRecord.validFrom) }} 至 {{ formatDate(detailRecord.validTo) }}</el-descriptions-item>
-        <el-descriptions-item label="签发人">{{ detailRecord.issuedBy || '-' }}</el-descriptions-item>
         <el-descriptions-item label="签发时间">{{ formatDate(detailRecord.issuedTime) }}</el-descriptions-item>
       </el-descriptions>
     </el-drawer>
@@ -246,24 +221,28 @@
 import { listCustomer } from '@/api/vendor/customer';
 import type { CustomerVO } from '@/api/vendor/customer/types';
 import { getLicenseIssue, issueLicense, listLicenseIssue } from '@/api/vendor/licenseIssue';
-import type { LicenseIssueCommand, LicenseIssueQuery, LicenseIssueResult, LicenseIssueVO } from '@/api/vendor/licenseIssue/types';
+import type {
+  LicenseIssueCommand,
+  LicenseIssueQuery,
+  LicenseIssueResult,
+  LicenseIssueVO,
+  LicenseTemplateEntitlement
+} from '@/api/vendor/licenseIssue/types';
 import { selectTenantPackage } from '@/api/system/tenantPackage';
 import type { TenantPkgVO } from '@/api/system/tenantPackage/types';
+import { listReportTemplate } from '@/api/vendor/reportTemplate';
+import type { ReportTemplateVO } from '@/api/vendor/reportTemplate/types';
 import { parseTime } from '@/utils/ruoyi';
 import type { AxiosError } from 'axios';
-
 import { useAutoQuery } from '@/hooks/useAutoQuery';
+
 interface IssueForm {
   customerId?: string | number;
   packageId?: string | number;
-  keyId: string;
-  installId: string;
   validFrom: string;
   validTo: string;
   edition?: string;
   features: string[];
-  issueType: string;
-  issuedBy: string;
   templateEntitlements: string[];
 }
 
@@ -283,6 +262,7 @@ const total = ref(0);
 const licenseList = ref<LicenseIssueVO[]>([]);
 const customerOptions = ref<CustomerVO[]>([]);
 const packageOptions = ref<TenantPkgVO[]>([]);
+const templateOptions = ref<ReportTemplateVO[]>([]);
 const issuedResult = ref<LicenseIssueResult>();
 const issueError = ref('');
 const detailRecord = ref<LicenseIssueVO>();
@@ -290,15 +270,8 @@ const detailRecord = ref<LicenseIssueVO>();
 const queryFormRef = ref<ElFormInstance>();
 const issueFormRef = ref<ElFormInstance>();
 
-const issueDrawer = reactive<DialogOption>({
-  visible: false,
-  title: '签发 License'
-});
-
-const detailDrawer = reactive<DialogOption>({
-  visible: false,
-  title: 'License 详情'
-});
+const issueDrawer = reactive<DialogOption>({ visible: false, title: '签发 License' });
+const detailDrawer = reactive<DialogOption>({ visible: false, title: 'License 详情' });
 
 const queryParams = reactive<LicenseIssueQuery>({
   pageNum: 1,
@@ -307,47 +280,27 @@ const queryParams = reactive<LicenseIssueQuery>({
   customerId: undefined,
   packageId: undefined,
   edition: undefined,
-  installId: undefined,
   issueStatus: undefined
 });
 
 const defaultIssueForm = (): IssueForm => ({
   customerId: undefined,
   packageId: undefined,
-  keyId: '',
-  installId: '',
   validFrom: '',
   validTo: '',
   edition: undefined,
   features: [],
-  issueType: 'NEW',
-  issuedBy: 'vendor-operator',
   templateEntitlements: []
 });
 
 const issueForm = reactive<IssueForm>(defaultIssueForm());
 
-const featureOptions = [
-  'carbon-data',
-  'factor-library',
-  'factor-sync',
-  'factor-confirm',
-  'report-template',
-  'report-template-download',
-  'report-gate',
-  'power-bi'
-];
-
 const issueRules: Record<string, any> = {
   customerId: [{ required: true, message: '请选择供应商客户', trigger: 'change' }],
-  keyId: [{ required: true, message: '请输入签名密钥 ID', trigger: 'blur' }],
-  installId: [{ required: true, message: '请输入设备指纹', trigger: 'blur' }],
   packageId: [{ required: true, message: '请选择套餐', trigger: 'change' }],
   validFrom: [{ required: true, message: '请选择有效期开始日期', trigger: 'change' }],
   validTo: [{ required: true, message: '请选择有效期结束日期', trigger: 'change' }],
-  features: [{ required: true, type: 'array', min: 1, message: '请至少选择一个功能', trigger: 'change' }],
-  issueType: [{ required: true, message: '请选择签发类型', trigger: 'change' }],
-  issuedBy: [{ required: true, message: '请输入签发人', trigger: 'blur' }]
+  templateEntitlements: [{ required: true, type: 'array', min: 1, message: '请至少选择一个模板', trigger: 'change' }]
 };
 
 const customerNameMap = computed(() => {
@@ -361,50 +314,38 @@ const customerNameMap = computed(() => {
 const selectedCustomer = computed(() => customerOptions.value.find((customer) => customer.id === issueForm.customerId));
 const selectedPackage = computed(() => packageOptions.value.find((item) => item.packageId === issueForm.packageId));
 
-const normalizeRows = <T,>(res: ListResponse<T>): T[] => {
-  if (Array.isArray(res.rows)) {
-    return res.rows;
-  }
-  if (Array.isArray(res.data)) {
-    return res.data;
-  }
+function normalizeRows<T>(res: ListResponse<T>): T[] {
+  if (Array.isArray(res.rows)) return res.rows;
+  if (Array.isArray(res.data)) return res.data;
   return [];
-};
+}
 
-const normalizeTotal = <T,>(res: ListResponse<T>, fallback: T[]) => {
+function normalizeTotal<T>(res: ListResponse<T>, fallback: T[]) {
   return typeof res.total === 'number' ? res.total : fallback.length;
-};
+}
 
-const formatCustomerLabel = (customer: CustomerVO) => {
+function formatCustomerLabel(customer: CustomerVO) {
   return `${customer.customerCode} - ${customer.customerName}`;
-};
+}
 
-const formatPackage = (record?: { packageId?: string | number; packageName?: string; edition?: string }) => {
-  if (!record) {
-    return '-';
-  }
-  if (record.packageName) {
-    return record.packageName;
-  }
+function formatPackage(record?: { packageId?: string | number; packageName?: string; edition?: string }) {
+  if (!record) return '-';
+  if (record.packageName) return record.packageName;
   if (record.packageId !== undefined && record.packageId !== null) {
     return packageOptions.value.find((item) => item.packageId === record.packageId)?.packageName || String(record.packageId);
   }
   return record.edition || '-';
-};
+}
 
-const isInactiveCustomer = (customer?: CustomerVO) => {
-  if (!customer) {
-    return false;
-  }
-  const status = String(customer.customerStatus ?? '').toLowerCase();
-  return ['1', 'inactive', 'disabled', 'disable', '停用', '禁用'].includes(status);
-};
+function templateLabel(template: ReportTemplateVO) {
+  return `${template.templateName || template.templateCode || template.id}`;
+}
 
-const formatDate = (value?: string) => {
+function formatDate(value?: string) {
   return value ? parseTime(value, '{y}-{m}-{d}') : '-';
-};
+}
 
-const formatIssueStatus = (status?: string) => {
+function formatIssueStatus(status?: string) {
   const normalized = String(status || '').toUpperCase();
   const statusMap: Record<string, string> = {
     SUCCESS: '签发成功',
@@ -414,61 +355,52 @@ const formatIssueStatus = (status?: string) => {
     PENDING: '处理中'
   };
   return statusMap[normalized] || status || '-';
-};
+}
 
-const statusTagType = (status?: string) => {
+function statusTagType(status?: string) {
   const normalized = String(status || '').toUpperCase();
-  if (['SUCCESS', 'ISSUED'].includes(normalized)) {
-    return 'success';
-  }
-  if (normalized === 'FAILED') {
-    return 'danger';
-  }
-  if (normalized === 'REVOKED') {
-    return 'info';
-  }
+  if (['SUCCESS', 'ISSUED'].includes(normalized)) return 'success';
+  if (normalized === 'FAILED') return 'danger';
+  if (normalized === 'REVOKED') return 'info';
   return 'warning';
-};
+}
 
-const formatFeatures = (features?: string[] | string) => {
-  if (Array.isArray(features)) {
-    return features.join(', ');
-  }
+function formatFeatures(features?: string[] | string) {
+  if (Array.isArray(features)) return features.join(', ');
   return features || '-';
-};
+}
 
-const mapIssueError = (error: unknown) => {
+function mapIssueError(error: unknown) {
   const axiosError = error as AxiosError<{ msg?: string; message?: string; code?: string | number }>;
   const raw = [axiosError.response?.data?.msg, axiosError.response?.data?.message, axiosError.message].filter(Boolean).join(' ').toLowerCase();
-
   if (/(inactive|disabled|disable|customer.*status|客户.*(停用|禁用|未启用|无效)|停用|禁用)/i.test(raw)) {
     return '客户已停用或未启用，不能签发 License。';
   }
   if (/(duplicate|already|exists|重复|已存在|重复签发)/i.test(raw)) {
-    return '该客户和设备已存在有效 License，请检查后再补发或续期。';
+    return '该客户和套餐已存在有效 License，请检查后再补发或续期。';
   }
   return 'license issue failed';
-};
+}
 
-const buildLicenseFileName = (result: LicenseIssueResult) => {
+function buildLicenseFileName(result: LicenseIssueResult) {
   const baseName = result.download?.fileName || result.licenseId || result.id || 'license';
   return String(baseName).endsWith('.lic') ? String(baseName) : `${baseName}.lic`;
-};
+}
 
-const canDownload = (record: LicenseIssueResult) => {
+function canDownload(record: LicenseIssueResult) {
   return Boolean(record.licensePayload || record.download?.downloadUrl);
-};
+}
 
-const isSafeDownloadUrl = (url: string) => {
+function isSafeDownloadUrl(url: string) {
   try {
     const parsedUrl = new URL(url, window.location.origin);
     return ['http:', 'https:'].includes(parsedUrl.protocol);
   } catch {
     return false;
   }
-};
+}
 
-const downloadText = (content: string, fileName: string, contentType?: string) => {
+function downloadText(content: string, fileName: string, contentType?: string) {
   const blob = new Blob([content], { type: contentType || 'application/octet-stream' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -479,9 +411,9 @@ const downloadText = (content: string, fileName: string, contentType?: string) =
   anchor.click();
   document.body.removeChild(anchor);
   URL.revokeObjectURL(url);
-};
+}
 
-const downloadIssuedLicense = (result: LicenseIssueResult) => {
+function downloadIssuedLicense(result: LicenseIssueResult) {
   if (result.licensePayload) {
     downloadText(result.licensePayload, buildLicenseFileName(result), result.download?.contentType);
     return;
@@ -504,9 +436,9 @@ const downloadIssuedLicense = (result: LicenseIssueResult) => {
   }
 
   proxy?.$modal.msgWarning('当前签发结果没有可下载的 .lic 内容。');
-};
+}
 
-const searchCustomers = async (keyword?: string) => {
+async function searchCustomers(keyword?: string) {
   customerLoading.value = true;
   try {
     const res = (await listCustomer({
@@ -519,25 +451,78 @@ const searchCustomers = async (keyword?: string) => {
   } finally {
     customerLoading.value = false;
   }
-};
+}
 
-const loadPackages = async () => {
+async function loadTemplates() {
+  const res = (await listReportTemplate({ pageNum: 1, pageSize: 500, publishStatus: '1', params: {} })) as unknown as ListResponse<ReportTemplateVO>;
+  templateOptions.value = normalizeRows(res).filter((item) => item.publishStatus === '1');
+}
+
+function getPackageFeatures(packageId?: string | number) {
+  const item = packageOptions.value.find((entry) => entry.packageId === packageId);
+  return String(item?.licenseFeatureCodes || '')
+    .split(/[,;\s]+/)
+    .map((code) => code.trim())
+    .filter(Boolean);
+}
+
+function getPackageTemplates(packageId?: string | number) {
+  const item = packageOptions.value.find((entry) => entry.packageId === packageId);
+  const raw = String(item?.licenseTemplateEntitlements || '');
+  if (!raw.trim()) {
+    return [];
+  }
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed
+        .map((entry) => {
+          if (typeof entry === 'string') return entry;
+          if (entry && typeof entry === 'object') {
+            return String(entry.templateCode || entry.id || entry.templateId || '');
+          }
+          return '';
+        })
+        .filter(Boolean);
+    }
+  } catch {
+    // fall through to delimiter split
+  }
+  return raw
+    .split(/[,;\s]+/)
+    .map((code) => code.trim())
+    .filter(Boolean);
+}
+
+function buildTemplateEntitlements(templateCodes: string[]): LicenseTemplateEntitlement[] {
+  return templateCodes.map((code) => {
+    const template = templateOptions.value.find((item) => item.templateCode === code || String(item.id) === code);
+    return {
+      templateCode: template?.templateCode || code,
+      templateVersion: template?.templateVersion,
+      scope: 'download'
+    };
+  });
+}
+
+async function loadPackages() {
   const res = (await selectTenantPackage()) as unknown as { data?: TenantPkgVO[] } | TenantPkgVO[];
   const rows = Array.isArray(res) ? res : res.data || [];
   packageOptions.value = rows.filter((item) => item.status !== '1');
   if (!issueForm.packageId && packageOptions.value.length > 0) {
     issueForm.packageId = packageOptions.value[0].packageId;
+    handlePackageChange(issueForm.packageId);
   }
-};
+}
 
-const hydrateCustomersForRows = async (rows: LicenseIssueVO[]) => {
+async function hydrateCustomersForRows(rows: LicenseIssueVO[]) {
   const missingCustomer = rows.find((row) => row.customerId && !customerNameMap.value.has(row.customerId));
   if (missingCustomer) {
     await searchCustomers();
   }
-};
+}
 
-const getList = async () => {
+async function getList() {
   loading.value = true;
   try {
     const res = (await listLicenseIssue(queryParams)) as unknown as ListResponse<LicenseIssueVO>;
@@ -548,29 +533,29 @@ const getList = async () => {
   } finally {
     loading.value = false;
   }
-};
+}
 
-const handleQuery = () => {
+function handleQuery() {
   queryParams.pageNum = 1;
   getList();
-};
+}
 
-const resetQuery = () => {
+function resetQuery() {
   queryFormRef.value?.resetFields();
   queryParams.pageNum = 1;
   queryParams.pageSize = 10;
   queryParams.packageId = undefined;
   getList();
-};
+}
 
-const resetIssueForm = () => {
+function resetIssueForm() {
   Object.assign(issueForm, defaultIssueForm());
   issueError.value = '';
   issuedResult.value = undefined;
   issueFormRef.value?.resetFields();
-};
+}
 
-const openIssueDrawer = async () => {
+async function openIssueDrawer() {
   resetIssueForm();
   issueDrawer.visible = true;
   if (!customerOptions.value.length) {
@@ -579,41 +564,46 @@ const openIssueDrawer = async () => {
   if (!packageOptions.value.length) {
     await loadPackages();
   }
-};
+  if (!templateOptions.value.length) {
+    await loadTemplates();
+  }
+}
 
-const closeIssueDrawer = () => {
+function closeIssueDrawer() {
   issueDrawer.visible = false;
   resetIssueForm();
-};
+}
 
-const handleIssueCustomerChange = () => {
+function handleIssueCustomerChange() {
   issueError.value = '';
   if (isInactiveCustomer(selectedCustomer.value)) {
     issueError.value = '客户已停用或未启用，不能签发 License。';
   }
-};
+}
 
-const buildIssueCommand = (): LicenseIssueCommand => ({
-  customerId: issueForm.customerId as string | number,
-  keyId: issueForm.keyId,
-  installId: issueForm.installId,
-  validity: {
-    validFrom: issueForm.validFrom,
-    validTo: issueForm.validTo
-  },
-  packageId: issueForm.packageId as string | number,
-  edition: selectedPackage.value?.packageName || issueForm.edition,
-  features: issueForm.features,
-  issueType: issueForm.issueType,
-  issuedBy: issueForm.issuedBy,
-  templateEntitlements: issueForm.templateEntitlements
-});
+function handlePackageChange(packageId?: string | number) {
+  const selected = packageOptions.value.find((item) => item.packageId === packageId);
+  issueForm.features = getPackageFeatures(selected?.packageId);
+  issueForm.templateEntitlements = getPackageTemplates(selected?.packageId);
+}
 
-const submitIssue = () => {
+function buildIssueCommand(): LicenseIssueCommand {
+  return {
+    customerId: issueForm.customerId as string | number,
+    packageId: issueForm.packageId as string | number,
+    validity: {
+      validFrom: issueForm.validFrom,
+      validTo: issueForm.validTo
+    },
+    edition: selectedPackage.value?.packageName || issueForm.edition,
+    features: issueForm.features,
+    templateEntitlements: buildTemplateEntitlements(issueForm.templateEntitlements)
+  };
+}
+
+function submitIssue() {
   issueFormRef.value?.validate(async (valid: boolean) => {
-    if (!valid) {
-      return;
-    }
+    if (!valid) return;
     if (isInactiveCustomer(selectedCustomer.value)) {
       issueError.value = '客户已停用或未启用，不能签发 License。';
       return;
@@ -632,9 +622,9 @@ const submitIssue = () => {
       issuing.value = false;
     }
   });
-};
+}
 
-const openDetail = async (row: LicenseIssueVO) => {
+async function openDetail(row: LicenseIssueVO) {
   const id = row.id || row.licenseId;
   if (!id) {
     detailRecord.value = row;
@@ -643,10 +633,16 @@ const openDetail = async (row: LicenseIssueVO) => {
     detailRecord.value = res.data || res;
   }
   detailDrawer.visible = true;
-};
+}
+
+function isInactiveCustomer(customer?: CustomerVO) {
+  if (!customer) return false;
+  const status = String(customer.customerStatus ?? '').toLowerCase();
+  return ['1', 'inactive', 'disabled', 'disable', '停用', '禁用'].includes(status);
+}
 
 onMounted(async () => {
-  await Promise.all([searchCustomers(), loadPackages()]);
+  await Promise.all([searchCustomers(), loadPackages(), loadTemplates()]);
   await getList();
 });
 
@@ -672,6 +668,12 @@ useAutoQuery(queryParams, () => handleQuery());
 .vendor-license-issue .license-search :deep(.el-date-editor) {
   width: 100%;
   min-width: 220px;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .mb12 {

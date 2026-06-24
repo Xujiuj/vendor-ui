@@ -70,6 +70,7 @@ export interface FactorRecordForm {
   gwpValue?: number | string;
   convertedFactor?: number | string;
   sourceRef?: string;
+  customFields?: string;
   enabledFlag?: boolean;
   remark?: string;
 }
@@ -129,6 +130,7 @@ export interface FactorRecordVO extends BaseEntity {
   gwpValue?: number | string;
   convertedFactor?: number | string;
   sourceRef?: string;
+  customFields?: string;
   enabledFlag?: boolean;
   createTime?: string;
   updateTime?: string;

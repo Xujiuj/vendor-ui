@@ -38,9 +38,9 @@
             <el-option label="停用" value="disabled" />
           </el-select>
         </div>
-          <div class="search-actions">
-            <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
-          </div>
+        <div class="search-actions">
+          <right-toolbar v-model:showSearch="showSearch" :gutter="0" @query-table="refreshList" />
+        </div>
       </div>
       <div class="search-bar search-bar-collapsed" v-show="!showSearch">
         <div class="search-actions">
@@ -114,7 +114,15 @@
     <el-drawer v-model="formDrawer.visible" :title="formDrawer.title" size="560px" append-to-body>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="100px">
         <el-form-item label="报表模板" prop="templateId">
-          <el-select v-model="form.templateId" placeholder="请选择报表模板" class="w-full" filterable>
+          <el-select
+            v-model="form.templateId"
+            placeholder="请选择报表模板"
+            class="w-full"
+            filterable
+            :multiple="!form.id"
+            collapse-tags
+            collapse-tags-tooltip
+          >
             <el-option v-for="item in templateOptions" :key="item.id" :label="templateLabel(item)" :value="item.id" />
           </el-select>
         </el-form-item>
@@ -198,7 +206,11 @@ const queryParams = reactive<TemplateScopeQuery>({
   params: {}
 });
 
-const form = reactive<TemplateScopeForm>({
+type TemplateScopeFormState = Omit<TemplateScopeForm, 'templateId'> & {
+  templateId?: string | number | Array<string | number>;
+};
+
+const form = reactive<TemplateScopeFormState>({
   id: undefined,
   templateId: undefined,
   customerId: undefined,
@@ -208,7 +220,7 @@ const form = reactive<TemplateScopeForm>({
   scopeStatus: 'enabled'
 });
 
-const rules: FormRules<TemplateScopeForm> = {
+const rules: FormRules<TemplateScopeFormState> = {
   templateId: [{ required: true, message: '报表模板不能为空', trigger: 'change' }],
   scopeStatus: [{ required: true, message: '状态不能为空', trigger: 'change' }]
 };
@@ -318,6 +330,7 @@ const handleSelectionChange = (selection: TemplateScopeVO[]) => {
 
 const handleAdd = () => {
   resetForm();
+  form.templateId = [];
   formDrawer.title = '新增模板开放范围';
   formDrawer.visible = true;
 };
@@ -344,20 +357,31 @@ const submitForm = async () => {
   if (!valid) return;
   submitLoading.value = true;
   try {
-    const payload: TemplateScopeForm = {
+    const basePayload: Omit<TemplateScopeForm, 'templateId'> = {
       id: form.id,
-      templateId: form.templateId,
       customerId: form.customerId,
       packageId: form.packageId,
       edition: undefined,
       licenseId: form.licenseId?.trim() || undefined,
       scopeStatus: form.scopeStatus
     };
-    if (payload.id) {
+    if (basePayload.id) {
+      const payload: TemplateScopeForm = {
+        ...basePayload,
+        templateId: Array.isArray(form.templateId) ? form.templateId[0] : form.templateId
+      };
       await updateTemplateScope(payload);
       proxy?.$modal.msgSuccess('模板开放范围已更新');
     } else {
-      await addTemplateScope(payload);
+      const templateIds = Array.isArray(form.templateId) ? form.templateId : form.templateId === undefined ? [] : [form.templateId];
+      await Promise.all(
+        templateIds.map((templateId) =>
+          addTemplateScope({
+            ...basePayload,
+            templateId
+          })
+        )
+      );
       proxy?.$modal.msgSuccess('模板开放范围已新增');
     }
     formDrawer.visible = false;

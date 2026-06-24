@@ -38,14 +38,10 @@ export const issueLicense = (data: LicenseIssueCommand): Promise<ApiResponse<Lic
   const payload = {
     customerId: data.customerId,
     packageId: data.packageId,
-    keyId: data.keyId,
-    installId: data.installId,
     validFrom: data.validity?.validFrom,
     validTo: data.validity?.validTo,
     edition: data.edition,
     features: data.features,
-    issueType: data.issueType,
-    issuedBy: data.issuedBy,
     templateEntitlements: data.templateEntitlements
   };
 

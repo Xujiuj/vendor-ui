@@ -82,3 +82,14 @@ export interface CustomerVO extends BaseEntity {
    */
   [key: string]: any;
 }
+
+export interface CustomerForm {
+  id?: string | number;
+  customerCode?: string;
+  customerName?: string;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  customerStatus?: string;
+  remark?: string;
+}

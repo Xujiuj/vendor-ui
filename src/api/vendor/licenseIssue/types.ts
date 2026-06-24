@@ -28,11 +28,6 @@ export interface LicenseIssueQuery extends PageQuery {
   packageName?: string;
 
   /**
-   * Signing key identifier.
-   */
-  keyId?: string;
-
-  /**
    * Signing algorithm.
    */
   algorithm?: string;
@@ -58,19 +53,14 @@ export interface LicenseIssueQuery extends PageQuery {
   installId?: string;
 
   /**
+   * Template entitlement snapshot.
+   */
+  templateEntitlements?: string[] | string;
+
+  /**
    * Issue status.
    */
   issueStatus?: string;
-
-  /**
-   * Issue type.
-   */
-  issueType?: string;
-
-  /**
-   * Issuer user.
-   */
-  issuedBy?: string;
 
   /**
    * Extended query params.
@@ -95,14 +85,19 @@ export interface LicenseIssueValidity {
 export interface LicenseIssueCommand {
   customerId: string | number;
   packageId: string | number;
-  keyId: string;
-  installId: string;
   validity: LicenseIssueValidity;
   edition?: string;
   features: string[];
-  issueType?: string;
-  issuedBy: string;
-  templateEntitlements: string[];
+  templateEntitlements: LicenseTemplateEntitlement[];
+}
+
+/**
+ * Template entitlement embedded in the signed license payload.
+ */
+export interface LicenseTemplateEntitlement {
+  templateCode: string;
+  templateVersion?: string;
+  scope?: string;
 }
 
 /**
@@ -124,15 +119,13 @@ export interface LicenseIssueResult {
   customerId?: string | number;
   packageId?: string | number;
   packageName?: string;
-  keyId?: string;
   installId?: string;
   validFrom?: string;
   validTo?: string;
   edition?: string;
   featureCodes?: string[] | string;
+  templateEntitlements?: string[] | string;
   issueStatus?: string;
-  issueType?: string;
-  issuedBy?: string;
   issuedTime?: string;
   licensePayload?: string;
   download?: LicenseIssueDownloadMetadata;
