@@ -31,7 +31,7 @@
             </el-table-column>
             <el-table-column v-if="dim.showParent" label="上级编码" align="center" prop="parentCode" min-width="120" :show-overflow-tooltip="true" />
             <el-table-column
-              v-for="field in dim.extraFields"
+              v-for="field in currentDataFields"
               :key="field.key"
               :label="field.label"
               align="center"
@@ -84,8 +84,9 @@
 
           <el-table v-loading="fieldLoading" :data="fieldList" border @selection-change="handleFieldSelectionChange">
             <el-table-column type="selection" width="48" align="center" />
-            <el-table-column label="字段编码" align="center" prop="fieldKey" min-width="150" :show-overflow-tooltip="true" />
-            <el-table-column label="字段名称" align="center" prop="fieldLabel" min-width="220" :show-overflow-tooltip="true" />
+            <el-table-column label="数据库字段名" align="center" prop="fieldKey" min-width="160" :show-overflow-tooltip="true" />
+            <el-table-column label="字段名称 / Comment" align="center" prop="fieldLabel" min-width="220" :show-overflow-tooltip="true" />
+            <el-table-column label="数据库类型" align="center" prop="columnType" min-width="150" :show-overflow-tooltip="true" />
             <el-table-column label="字段类型" align="center" prop="fieldType" width="110">
               <template #default="{ row }">{{ formatFieldType(row.fieldType) }}</template>
             </el-table-column>
@@ -131,7 +132,7 @@
         <el-form-item v-if="currentDim.showParent" label="上级编码" prop="parentCode">
           <el-input v-model="dataForm.parentCode" placeholder="请输入上级编码" maxlength="128" />
         </el-form-item>
-        <el-form-item v-for="field in currentDim.extraFields" :key="field.key" :label="field.label">
+        <el-form-item v-for="field in currentDataFields" :key="field.key" :label="field.label">
           <el-input-number v-if="field.type === 'number'" v-model="dataForm[field.key]" :precision="field.precision ?? 0" class="w-full" />
           <el-date-picker v-else-if="field.type === 'date'" v-model="dataForm[field.key]" type="date" value-format="YYYY-MM-DD" class="w-full" />
           <el-switch
@@ -170,15 +171,25 @@
     <el-drawer v-model="fieldDrawer.visible" :title="fieldDrawer.title" size="620px" append-to-body>
       <el-form ref="fieldFormRef" :model="fieldForm" :rules="fieldRules" label-width="120px">
         <el-form-item label="字段编码" prop="fieldKey">
-          <el-input v-model="fieldForm.fieldKey" placeholder="请输入字段编码，如 division_code" maxlength="128" />
+          <el-input v-model="fieldForm.fieldKey" placeholder="数据库真实字段名，如 custom_level" maxlength="63" :disabled="Boolean(fieldForm.id)" />
         </el-form-item>
         <el-form-item label="字段名称" prop="fieldLabel">
           <el-input v-model="fieldForm.fieldLabel" placeholder="请输入字段名称" maxlength="255" />
         </el-form-item>
         <el-form-item label="字段类型" prop="fieldType">
-          <el-select v-model="fieldForm.fieldType" placeholder="请选择字段类型" class="w-full">
+          <el-select v-model="fieldForm.fieldType" placeholder="请选择字段类型" class="w-full" :disabled="Boolean(fieldForm.id)">
             <el-option v-for="item in fieldTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
           </el-select>
+        </el-form-item>
+        <el-form-item v-if="fieldForm.fieldType === 'select'" label="选项" prop="fieldOptions">
+          <div class="option-editor">
+            <div v-for="(option, index) in fieldOptionRows" :key="index" class="option-row">
+              <el-input v-model="option.label" placeholder="显示名称" maxlength="64" />
+              <el-input v-model="option.value" placeholder="存储值" maxlength="64" />
+              <el-button link type="danger" icon="Delete" @click="removeFieldOption(index)">删除</el-button>
+            </div>
+            <el-button type="primary" plain icon="Plus" @click="addFieldOption">新增选项</el-button>
+          </div>
         </el-form-item>
         <el-form-item label="是否必填" prop="requiredFlag">
           <el-switch v-model="fieldForm.requiredFlag" active-text="是" inactive-text="否" />
@@ -206,7 +217,7 @@
 
 <script setup name="VendorDimension" lang="ts">
 import type { FormInstance, FormRules } from 'element-plus';
-import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue';
+import { computed, getCurrentInstance, onMounted, reactive, ref, watch } from 'vue';
 import { addVendorTableField, deleteVendorTableField, getVendorTableField, listVendorTableField, updateVendorTableField } from '@/api/vendor/tableField';
 import type { VendorTableFieldForm, VendorTableFieldVO } from '@/api/vendor/tableField/types';
 import { addDimensionData, deleteDimensionData, getDimensionData, listDimensionData, updateDimensionData } from '@/api/vendor/dimensionData';
@@ -227,6 +238,11 @@ interface ExtraField {
   falseValue?: string | number | boolean;
   options?: Array<{ label: string; value: string | number | boolean }>;
   width?: number;
+}
+
+interface FieldOption {
+  label: string;
+  value: string | number | boolean;
 }
 
 interface DimensionTab {
@@ -364,9 +380,23 @@ const fieldTypeOptions = [
   { label: '文本', value: 'text' },
   { label: '数值', value: 'number' },
   { label: '日期', value: 'date' },
+  { label: '日期时间', value: 'datetime' },
   { label: '选项', value: 'select' },
   { label: '是/否', value: 'boolean' }
 ];
+
+const systemDataFields = new Set([
+  'id',
+  'sortOrder',
+  'status',
+  'createDept',
+  'createBy',
+  'createTime',
+  'updateBy',
+  'updateTime',
+  'remark',
+  'dimensionCode'
+]);
 
 const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, item) => {
   map[item.value] = item.label;
@@ -377,6 +407,10 @@ const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, 
 
 const activeTab = ref('admin-division');
 const currentDim = computed(() => dimensionTabs.find((d) => d.code === activeTab.value) ?? dimensionTabs[0]);
+const currentDataFields = computed<ExtraField[]>(() => {
+  const fields = dataFieldMap.value[currentDim.value.code];
+  return fields?.length ? fields : currentDim.value.extraFields;
+});
 
 // Data tab state
 const dataLoading = ref(false);
@@ -397,6 +431,7 @@ const dataForm = reactive<Record<string, any>>({
   status: '0',
   remark: ''
 });
+const dataFieldMap = ref<Record<string, ExtraField[]>>({});
 
 const dataRules: FormRules = {
   recordCode: [{ required: true, message: '编码不能为空', trigger: 'blur' }],
@@ -409,6 +444,37 @@ const normalizeBooleanValue = (value: unknown, field: ExtraField) => {
   if (value === true || value === 1 || value === '1' || value === 'Y') return field.trueValue ?? true;
   if (value === false || value === 0 || value === '0' || value === 'N') return field.falseValue ?? false;
   return field.falseValue ?? false;
+};
+
+const parseFieldOptions = (value?: string): FieldOption[] => {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => ({
+        label: String(item?.label ?? item?.value ?? ''),
+        value: item?.value ?? item?.label ?? ''
+      }))
+      .filter((item) => item.label && item.value !== '');
+  } catch {
+    return [];
+  }
+};
+
+const toExtraField = (field: VendorTableFieldVO): ExtraField | undefined => {
+  const key = field.fieldKey;
+  if (!key || systemDataFields.has(key) || key === currentDim.value.codeKey || key === currentDim.value.nameKey || key === 'parentCode') {
+    return undefined;
+  }
+  return {
+    key,
+    label: field.fieldLabel || field.columnComment || key,
+    type: (field.fieldType as ExtraField['type']) || 'text',
+    precision: field.fieldPrecision,
+    options: parseFieldOptions(field.fieldOptions),
+    width: field.fieldWidth ?? 140
+  };
 };
 
 const formatDimensionField = (row: DimensionDataRecord, field: ExtraField) => {
@@ -437,7 +503,8 @@ const syncRecordFields = (target: Record<string, any>, dim: DimensionTab) => {
     target.description = target.description ?? target.remark ?? '';
   }
 
-  for (const field of dim.extraFields) {
+  const dynamicFields = dataFieldMap.value[dim.code] ?? dim.extraFields;
+  for (const field of dynamicFields) {
     if (field.type === 'boolean') {
       target[field.key] = normalizeBooleanValue(target[field.key], field);
     }
@@ -454,7 +521,8 @@ const normalizeDataForm = (source?: Record<string, any>) => {
     merged.recordName = merged.baseYear ?? merged.recordName ?? '';
     merged.isCurrent = merged.isCurrent ?? 1;
   }
-  for (const field of dim.extraFields) {
+  const dynamicFields = dataFieldMap.value[dim.code] ?? dim.extraFields;
+  for (const field of dynamicFields) {
     if (field.type === 'boolean') {
       merged[field.key] = normalizeBooleanValue(merged[field.key], field);
     }
@@ -483,11 +551,32 @@ const fieldForm = reactive<VendorTableFieldForm>({
   status: '0',
   remark: undefined
 });
+const fieldOptionRows = ref<FieldOption[]>([]);
 
 const fieldRules: FormRules<VendorTableFieldForm> = {
-  fieldKey: [{ required: true, message: '字段编码不能为空', trigger: 'blur' }],
+  fieldKey: [
+    { required: true, message: '字段编码不能为空', trigger: 'blur' },
+    { pattern: /^[a-z][a-z0-9_]{1,62}$/, message: '仅支持小写字母、数字、下划线，且以字母开头', trigger: 'blur' }
+  ],
   fieldLabel: [{ required: true, message: '字段名称不能为空', trigger: 'blur' }],
-  fieldType: [{ required: true, message: '字段类型不能为空', trigger: 'change' }]
+  fieldType: [{ required: true, message: '字段类型不能为空', trigger: 'change' }],
+  fieldOptions: [
+    {
+      validator: (_rule, _value, callback) => {
+        if (fieldForm.fieldType !== 'select') {
+          callback();
+          return;
+        }
+        const validOptions = normalizedFieldOptions();
+        if (!validOptions.length) {
+          callback(new Error('选项字段必须填写选项'));
+          return;
+        }
+        callback();
+      },
+      trigger: 'change'
+    }
+  ]
 };
 
 // ==================== Data Tab Logic ====================
@@ -499,8 +588,19 @@ const handleTabChange = (tab: string | number) => {
   } else {
     dataQuery.dimensionCode = tab as string;
     dataQuery.pageNum = 1;
-    loadDataList();
+    loadDataFieldsAndList(tab as string);
   }
+};
+
+const loadDataFields = async (dimensionCode = currentDim.value.code) => {
+  const res = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'dimension', tableCode: dimensionCode, params: {} });
+  const fields = readRows<VendorTableFieldVO>(res).map(toExtraField).filter((field): field is ExtraField => Boolean(field));
+  dataFieldMap.value = { ...dataFieldMap.value, [dimensionCode]: fields };
+};
+
+const loadDataFieldsAndList = async (dimensionCode = currentDim.value.code) => {
+  await loadDataFields(dimensionCode);
+  await loadDataList();
 };
 
 const loadDataList = async () => {
@@ -532,7 +632,7 @@ const resetDataForm = () => {
   dataForm[currentDim.value.codeKey] = '';
   dataForm[currentDim.value.nameKey] = '';
   // Clear extra fields
-  for (const field of currentDim.value.extraFields) {
+  for (const field of currentDataFields.value) {
     dataForm[field.key] = field.type === 'boolean' ? (field.falseValue ?? false) : undefined;
   }
   if (currentDim.value.code === 'base-year') {
@@ -602,6 +702,10 @@ const loadFieldList = async () => {
   try {
     const res = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'dimension', tableCode: fieldTableCode.value, params: {} });
     fieldList.value = readRows<VendorTableFieldVO>(res);
+    dataFieldMap.value = {
+      ...dataFieldMap.value,
+      [fieldTableCode.value]: fieldList.value.map(toExtraField).filter((field): field is ExtraField => Boolean(field))
+    };
   } finally {
     fieldLoading.value = false;
   }
@@ -625,6 +729,7 @@ const resetFieldForm = () => {
     status: '0',
     remark: undefined
   });
+  fieldOptionRows.value = [];
   fieldFormRef.value?.clearValidate();
 };
 
@@ -636,11 +741,22 @@ const handleFieldAdd = () => {
 
 const handleFieldEdit = async (row: VendorTableFieldVO) => {
   resetFieldForm();
+  if (!row.id) {
+    Object.assign(fieldForm, row);
+    fieldForm.tableGroup = 'dimension';
+    fieldForm.tableCode = fieldTableCode.value;
+    fieldForm.status = fieldForm.status || '0';
+    fieldOptionRows.value = parseFieldOptions(fieldForm.fieldOptions);
+    fieldDrawer.title = '编辑字段定义';
+    fieldDrawer.visible = true;
+    return;
+  }
   try {
     const res = await getVendorTableField(row.id);
     Object.assign(fieldForm, res.data ?? row);
     fieldForm.tableGroup = 'dimension';
     fieldForm.status = fieldForm.status || '0';
+    fieldOptionRows.value = parseFieldOptions(fieldForm.fieldOptions);
     fieldDrawer.title = '编辑字段定义';
     fieldDrawer.visible = true;
   } catch {
@@ -648,12 +764,33 @@ const handleFieldEdit = async (row: VendorTableFieldVO) => {
   }
 };
 
+const normalizedFieldOptions = () =>
+  fieldOptionRows.value
+    .map((option) => ({
+      label: String(option.label ?? '').trim(),
+      value: String(option.value ?? '').trim()
+    }))
+    .filter((option) => option.label && option.value);
+
+const addFieldOption = () => {
+  fieldOptionRows.value.push({ label: '', value: '' });
+};
+
+const removeFieldOption = (index: number) => {
+  fieldOptionRows.value.splice(index, 1);
+};
+
 const submitFieldForm = async () => {
   const valid = await fieldFormRef.value?.validate().catch(() => false);
   if (!valid) return;
   fieldSubmitLoading.value = true;
   try {
-    const payload = { ...fieldForm, tableGroup: 'dimension', tableCode: fieldTableCode.value };
+    const payload = {
+      ...fieldForm,
+      tableGroup: 'dimension',
+      tableCode: fieldTableCode.value,
+      fieldOptions: fieldForm.fieldType === 'select' ? JSON.stringify(normalizedFieldOptions()) : undefined
+    };
     if (payload.id) {
       await updateVendorTableField(payload);
       proxy?.$modal.msgSuccess('字段已更新');
@@ -683,10 +820,19 @@ const handleFieldDelete = async (row?: VendorTableFieldVO) => {
 
 const formatFieldType = (type?: string) => (type ? fieldTypeLabelMap[type] || type : '-');
 
+watch(
+  () => fieldForm.fieldType,
+  (fieldType) => {
+    if (fieldType === 'select' && fieldOptionRows.value.length === 0) {
+      addFieldOption();
+    }
+  }
+);
+
 // ==================== Init ====================
 
 onMounted(() => {
-  void loadDataList();
+  void loadDataFieldsAndList();
 });
 
 useAutoQuery(dataQuery, () => {
@@ -716,5 +862,19 @@ useAutoQuery(dataQuery, () => {
 
 .w-full {
   width: 100%;
+}
+
+.option-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.option-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 56px;
+  gap: 8px;
+  align-items: center;
 }
 </style>

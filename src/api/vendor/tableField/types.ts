@@ -18,6 +18,7 @@ export interface VendorTableFieldForm {
   fieldType: string;
   fieldPrecision?: number;
   fieldWidth?: number;
+  fieldOptions?: string;
   requiredFlag?: boolean;
   sortOrder?: number;
   status?: string;
@@ -33,9 +34,17 @@ export interface VendorTableFieldVO extends BaseEntity {
   fieldType: string;
   fieldPrecision?: number;
   fieldWidth?: number;
+  fieldOptions?: string;
   requiredFlag?: boolean;
   sortOrder?: number;
   status?: string;
   remark?: string;
+  physicalTableName?: string;
+  columnName?: string;
+  columnType?: string;
+  dataType?: string;
+  columnComment?: string;
+  nullable?: boolean;
+  generatedColumn?: boolean;
   [key: string]: any;
 }
