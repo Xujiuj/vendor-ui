@@ -84,9 +84,8 @@
 
           <el-table v-loading="fieldLoading" :data="fieldList" border @selection-change="handleFieldSelectionChange">
             <el-table-column type="selection" width="48" align="center" />
-            <el-table-column label="数据库字段名" align="center" prop="fieldKey" min-width="160" :show-overflow-tooltip="true" />
-            <el-table-column label="字段名称 / Comment" align="center" prop="fieldLabel" min-width="220" :show-overflow-tooltip="true" />
-            <el-table-column label="数据库类型" align="center" prop="columnType" min-width="150" :show-overflow-tooltip="true" />
+            <el-table-column label="字段名" align="center" prop="fieldKey" min-width="160" :show-overflow-tooltip="true" />
+            <el-table-column label="显示名" align="center" prop="fieldLabel" min-width="220" :show-overflow-tooltip="true" />
             <el-table-column label="字段类型" align="center" prop="fieldType" width="110">
               <template #default="{ row }">{{ formatFieldType(row.fieldType) }}</template>
             </el-table-column>
@@ -170,11 +169,11 @@
     <!-- 字段编辑抽屉 -->
     <el-drawer v-model="fieldDrawer.visible" :title="fieldDrawer.title" size="620px" append-to-body>
       <el-form ref="fieldFormRef" :model="fieldForm" :rules="fieldRules" label-width="120px">
-        <el-form-item label="字段编码" prop="fieldKey">
-          <el-input v-model="fieldForm.fieldKey" placeholder="数据库真实字段名，如 custom_level" maxlength="63" :disabled="Boolean(fieldForm.id)" />
+        <el-form-item label="字段名" prop="fieldKey">
+          <el-input v-model="fieldForm.fieldKey" placeholder="请输入字段名，如 custom_level" maxlength="63" :disabled="Boolean(fieldForm.id)" />
         </el-form-item>
-        <el-form-item label="字段名称" prop="fieldLabel">
-          <el-input v-model="fieldForm.fieldLabel" placeholder="请输入字段名称" maxlength="255" />
+        <el-form-item label="显示名" prop="fieldLabel">
+          <el-input v-model="fieldForm.fieldLabel" placeholder="请输入显示名" maxlength="255" />
         </el-form-item>
         <el-form-item label="字段类型" prop="fieldType">
           <el-select v-model="fieldForm.fieldType" placeholder="请选择字段类型" class="w-full" :disabled="Boolean(fieldForm.id)">
@@ -202,9 +201,6 @@
             <el-radio value="0">启用</el-radio>
             <el-radio value="1">停用</el-radio>
           </el-radio-group>
-        </el-form-item>
-        <el-form-item label="备注" prop="remark">
-          <el-input v-model="fieldForm.remark" type="textarea" :rows="3" maxlength="500" show-word-limit />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -400,6 +396,11 @@ const systemDataFields = new Set([
 
 const toCamelCase = (value: string) => value.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
 
+const configuredFieldLabel = (field: VendorTableFieldVO) => {
+  const label = String(field.fieldLabel ?? '').trim();
+  return label && label !== field.fieldKey && label !== field.columnName ? label : '';
+};
+
 const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, item) => {
   map[item.value] = item.label;
   return map;
@@ -469,13 +470,19 @@ const toExtraField = (field: VendorTableFieldVO): ExtraField | undefined => {
   if (!key || systemDataFields.has(key) || key === currentDim.value.codeKey || key === currentDim.value.nameKey || key === 'parentCode') {
     return undefined;
   }
+  const builtInField = currentDim.value.extraFields.find((item) => item.key === key);
+  const label = configuredFieldLabel(field);
+  if (!builtInField && !label) {
+    return undefined;
+  }
   return {
+    ...builtInField,
     key,
-    label: field.fieldLabel || field.columnComment || key,
-    type: (field.fieldType as ExtraField['type']) || 'text',
-    precision: field.fieldPrecision,
+    label: builtInField?.label || label,
+    type: (field.fieldType as ExtraField['type']) || builtInField?.type || 'text',
+    precision: field.fieldPrecision ?? builtInField?.precision,
     options: parseFieldOptions(field.fieldOptions),
-    width: field.fieldWidth ?? 140
+    width: field.fieldWidth ?? builtInField?.width ?? 140
   };
 };
 
