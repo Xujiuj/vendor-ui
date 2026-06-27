@@ -398,6 +398,8 @@ const systemDataFields = new Set([
   'dimensionCode'
 ]);
 
+const toCamelCase = (value: string) => value.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+
 const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, item) => {
   map[item.value] = item.label;
   return map;
@@ -463,7 +465,7 @@ const parseFieldOptions = (value?: string): FieldOption[] => {
 };
 
 const toExtraField = (field: VendorTableFieldVO): ExtraField | undefined => {
-  const key = field.fieldKey;
+  const key = toCamelCase(field.fieldKey);
   if (!key || systemDataFields.has(key) || key === currentDim.value.codeKey || key === currentDim.value.nameKey || key === 'parentCode') {
     return undefined;
   }
