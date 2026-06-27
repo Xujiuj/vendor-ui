@@ -47,7 +47,7 @@
         <el-table-column label="套餐名称" align="center" prop="packageName" />
         <el-table-column label="套餐等级" align="center" width="110">
           <template #default="{ row }">
-            {{ formatEditionLevel(readPackagePolicy(row.remark)?.editionLevel || inferEditionLevel(row.packageName)) }}
+            {{ formatEditionLevel(readPackagePolicy(row.remark)?.editionLevel) }}
           </template>
         </el-table-column>
         <el-table-column label="功能权限" align="center" min-width="210">
@@ -184,24 +184,14 @@
           </el-form-item>
         </template>
         <el-form-item label="套餐等级">
-          <el-select v-model="packagePolicy.editionLevel" class="w-full" placeholder="请选择套餐等级">
-            <el-option v-for="option in editionLevelOptions" :key="option.value" :label="option.label" :value="option.value" />
-          </el-select>
+          <el-input v-model="packagePolicy.editionLevel" class="w-full" placeholder="请输入自定义套餐等级" maxlength="64" />
         </el-form-item>
-        <el-form-item label="等级继承权限">
-          <div class="effective-features">
-            <el-tag v-for="feature in inheritedFeatureCodes" :key="feature" type="info">
-              {{ formatFeature(feature) }}
-            </el-tag>
-          </div>
-        </el-form-item>
-        <el-form-item label="额外权限">
-          <el-checkbox-group v-if="additionalFeatureOptions.length" v-model="packagePolicy.directFeatures" class="feature-checks">
-            <el-checkbox v-for="option in additionalFeatureOptions" :key="option.value" :label="option.value">
+        <el-form-item label="功能权限">
+          <el-checkbox-group v-model="packagePolicy.directFeatures" class="feature-checks">
+            <el-checkbox v-for="option in directFeatureOptions" :key="option.value" :label="option.value">
               {{ option.label }}
             </el-checkbox>
           </el-checkbox-group>
-          <span v-else class="form-tip">当前等级已包含全部功能</span>
         </el-form-item>
         <el-form-item label="实际权限">
           <div class="effective-features">
@@ -282,31 +272,11 @@ const visibilityCategories = [
   { label: '报表模板数据', code: 'report_template' }
 ];
 
-const editionLevelOptions = [
-  { label: '标准版', value: 'standard', includes: ['capture'] },
-  { label: '专业版', value: 'professional', includes: ['capture', 'factor-sync', 'template-sync'] },
-  { label: '集团版', value: 'group', includes: ['capture', 'factor-sync', 'template-sync', 'report-gate', 'premium-support'] }
-];
-
-const editionLevelAliases: Record<string, string> = {
-  basic: 'standard',
-  pro: 'professional',
-  enterprise: 'group',
-  ultimate: 'group'
-};
-
-const packageNameEditionMap: Record<string, string> = {
-  标准版: 'standard',
-  基础版: 'standard',
-  专业版: 'professional',
-  集团版: 'group',
-  旗舰版: 'group'
-};
-
 const directFeatureOptions = [
   { label: '数据填报', value: 'capture' },
   { label: '因子同步', value: 'factor-sync' },
-  { label: '模板同步', value: 'template-sync' },
+  { label: '报表模板同步', value: 'report-template-sync' },
+  { label: '报表模板下载', value: 'report-template-download' },
   { label: '报表门禁', value: 'report-gate' },
   { label: '高级服务', value: 'premium-support' }
 ];
@@ -324,7 +294,7 @@ const dataVisibility = reactive({
 });
 
 const packagePolicy = reactive({
-  editionLevel: 'standard',
+  editionLevel: '',
   directFeatures: [] as string[]
 });
 
@@ -390,7 +360,7 @@ const resetDataVisibility = () => {
 };
 
 const resetPackagePolicy = () => {
-  packagePolicy.editionLevel = 'standard';
+  packagePolicy.editionLevel = '';
   packagePolicy.directFeatures = [];
 };
 
@@ -399,25 +369,16 @@ const normalizeFeatureCodes = (value?: string | string[]) => {
   return Array.from(new Set(raw.map((item) => item.trim()).filter(Boolean)));
 };
 
-const normalizeEditionLevel = (level?: string) => (level ? editionLevelAliases[level] || level : 'standard');
-const inferEditionLevel = (packageName?: string) => (packageName ? packageNameEditionMap[packageName] : undefined);
-const inheritedFeaturesForLevel = (level?: string) => editionLevelOptions.find((option) => option.value === normalizeEditionLevel(level))?.includes || [];
-const inheritedFeatureCodes = computed(() => inheritedFeaturesForLevel(packagePolicy.editionLevel));
-const additionalFeatureOptions = computed(() => directFeatureOptions.filter((option) => !inheritedFeatureCodes.value.includes(option.value)));
-
-const effectiveFeatureCodes = computed(() =>
-  Array.from(new Set([...inheritedFeatureCodes.value, ...packagePolicy.directFeatures]))
-);
+const normalizeEditionLevel = (level?: string) => level?.trim() || '';
+const effectiveFeatureCodes = computed(() => normalizeFeatureCodes(packagePolicy.directFeatures));
 
 const isSameFeatureCodes = (left: string[], right: string[]) => left.length === right.length && left.every((item, index) => item === right[index]);
 
 const syncPackageFeatureCodes = () => {
-  const inherited = inheritedFeatureCodes.value;
-  const directFeatures = normalizeFeatureCodes(packagePolicy.directFeatures).filter((feature) => !inherited.includes(feature));
-  if (!isSameFeatureCodes(packagePolicy.directFeatures, directFeatures)) {
-    packagePolicy.directFeatures = directFeatures;
+  const featureCodes = normalizeFeatureCodes(packagePolicy.directFeatures);
+  if (!isSameFeatureCodes(packagePolicy.directFeatures, featureCodes)) {
+    packagePolicy.directFeatures = featureCodes;
   }
-  const featureCodes = Array.from(new Set([...inherited, ...directFeatures]));
   form.value.licenseFeatureCodes = featureCodes.join(',');
 };
 
@@ -457,7 +418,7 @@ const buildRemarkWithDataVisibility = (remark?: string) => {
 };
 
 const formatVisibilityScope = (scope?: string) => visibilityScopeOptions.find((option) => option.value === scope)?.label || '-';
-const formatEditionLevel = (level?: string) => editionLevelOptions.find((option) => option.value === normalizeEditionLevel(level))?.label || '-';
+const formatEditionLevel = (level?: string) => normalizeEditionLevel(level) || '-';
 const formatFeature = (feature: string) => directFeatureOptions.find((option) => option.value === feature)?.label || feature;
 
 const formatPrice = (row: TenantPkgVO) => {
@@ -521,7 +482,7 @@ const buildPackagePolicyPayload = (): PackagePolicyPayload => ({
 const parsePackagePolicyFromRemark = (remark?: string) => {
   resetPackagePolicy();
   const parsed = readPackagePolicy(remark);
-  const editionLevel = parsed?.editionLevel || inferEditionLevel(form.value.packageName);
+  const editionLevel = parsed?.editionLevel;
   if (editionLevel) {
     packagePolicy.editionLevel = normalizeEditionLevel(editionLevel);
   }
@@ -542,7 +503,7 @@ const readEffectiveFeatures = (row: TenantPkgVO) => {
   if (licenseFeatures.length) {
     return licenseFeatures;
   }
-  return normalizeFeatureCodes(inheritedFeaturesForLevel(inferEditionLevel(row.packageName)));
+  return [];
 };
 
 function validateLicenseKeyId(_rule: unknown, value: string | undefined, callback: (error?: Error) => void) {

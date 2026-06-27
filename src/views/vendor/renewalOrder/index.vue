@@ -162,9 +162,7 @@
           <el-input v-model="form.installId" placeholder="请输入安装标识" maxlength="128" />
         </el-form-item>
         <el-form-item label="续费版本" prop="requestedEdition">
-          <el-select v-model="form.requestedEdition" placeholder="请选择续费版本" class="w-full" clearable filterable>
-            <el-option v-for="option in editionOptions" :key="option.value" :label="option.label" :value="option.value" />
-          </el-select>
+          <el-input v-model="form.requestedEdition" placeholder="请输入续费版本/套餐等级" maxlength="64" />
         </el-form-item>
         <el-form-item label="续费周期" prop="renewalPeriod">
           <el-select v-model="form.renewalPeriod" placeholder="请选择续费周期" class="w-full" clearable>
@@ -317,13 +315,6 @@ const callbackDrawer = reactive({ visible: false });
 const manualBindDrawer = reactive({ visible: false });
 const detailDrawer = reactive({ visible: false });
 const amountValue = ref<number>(0);
-
-const editionOptions = [
-  { label: '基础版', value: 'BASIC' },
-  { label: '专业版', value: 'PRO' },
-  { label: '集团版', value: 'GROUP' },
-  { label: '旗舰版', value: 'ENTERPRISE' }
-];
 
 const renewalPeriodOptions = [
   { label: '1 个月', value: '1m' },
