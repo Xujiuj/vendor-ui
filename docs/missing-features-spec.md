@@ -103,7 +103,7 @@ Requirements:
 - Upload/manage `.pbix` template metadata.
 - Publish/disable template versions.
 - Distribute templates to customers, editions, or License entitlements.
-- Do not connect to enterprise SQL Server or vendor database for enterprise business data preview.
+- Do not connect to enterprise-local databases or vendor databases for enterprise business data preview.
 
 ### VU-5: Renewal / Payment Operations
 

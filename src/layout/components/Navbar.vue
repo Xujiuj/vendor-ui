@@ -34,7 +34,7 @@
         </el-tooltip>
         <!-- 消息 -->
         <el-tooltip :content="proxy.$t('navbar.message')" effect="dark" placement="bottom">
-          <div style="display:flex;align-items:center">
+          <div style="display: flex; align-items: center">
             <el-popover placement="bottom" trigger="click" transition="el-zoom-in-top" :width="300" :persistent="false">
               <template #reference>
                 <el-badge :value="newNotice > 0 ? newNotice : ''" :max="99">
@@ -98,8 +98,8 @@ import router from '@/router';
 import { CaretBottom } from '@element-plus/icons-vue';
 import { ElMessageBoxOptions } from 'element-plus/es/components/message-box/src/message-box.type';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
-import Logo from "@/layout/components/Sidebar/Logo.vue";
-import TopBar from './TopBar'
+import Logo from '@/layout/components/Sidebar/Logo.vue';
+import TopBar from './TopBar';
 
 const appStore = useAppStore();
 const userStore = useUserStore();
@@ -275,7 +275,6 @@ watch(
     margin-left: 8px;
   }
 
-
   .errLog-container {
     display: inline-block;
     vertical-align: top;
@@ -303,7 +302,9 @@ watch(
 
       &.hover-effect {
         cursor: pointer;
-        transition: background 0.2s ease, color 0.2s ease;
+        transition:
+          background 0.2s ease,
+          color 0.2s ease;
 
         &:hover {
           background: var(--el-fill-color-light);

@@ -27,7 +27,6 @@ import { AppMain, Navbar, Settings, TagsView } from './components';
 import { useAppStore } from '@/store/modules/app';
 import { useSettingsStore } from '@/store/modules/settings';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
-import { initWebSocket } from '@/utils/websocket';
 import { initSSE } from '@/utils/sse';
 import { useWindowSize } from '@/utils/vueuse-lite';
 
@@ -78,11 +77,6 @@ onMounted(() => {
   nextTick(() => {
     navbarRef.value?.initTenantList();
   });
-});
-
-onMounted(() => {
-  const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  initWebSocket(protocol + window.location.host + import.meta.env.VITE_APP_BASE_API + '/resource/websocket');
 });
 
 onMounted(() => {
@@ -137,7 +131,7 @@ const setLayout = () => {
   width: calc(100% - #{$base-sidebar-width});
   transition: width 0.28s;
   background: $fixed-header-bg;
-  box-shadow: 0 2px 8px rgba(0, 21, 41, 0.10);
+  box-shadow: 0 2px 8px rgba(0, 21, 41, 0.1);
 }
 
 .hideSidebar .fixed-header {

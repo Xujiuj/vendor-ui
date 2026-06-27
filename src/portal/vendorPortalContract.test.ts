@@ -27,7 +27,7 @@ describe('vendor dynamic router guard', () => {
         component: 'Layout',
         meta: { title: '厂商运营', icon: 'guide' },
         children: [
-          { path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'], meta: { title: '客户档案' } },
+          { path: 'customer', component: 'vendor/customer/index', permissions: ['vendor:customer:list'], meta: { title: '客户档案' } },
           { path: 'license', component: 'vendor/licenseIssue/index', permissions: ['vendor:licenseIssue:list'], meta: { title: 'License 授权管理' } },
           { path: 'legacy-license', component: 'system/license/index', permissions: ['system:license:list'], meta: { title: 'License 授权管理' } },
           {
@@ -54,12 +54,6 @@ describe('vendor dynamic router guard', () => {
             component: 'vendor/factorVersion/index',
             permissions: ['vendor:factorVersion:list'],
             meta: { title: '因子版本' }
-          },
-          {
-            path: 'factor-record',
-            component: 'vendor/factorRecord/index',
-            permissions: ['vendor:factorRecord:list'],
-            meta: { title: '因子明细' }
           },
           {
             path: 'factor-scope',
@@ -176,7 +170,7 @@ describe('vendor dynamic router guard', () => {
     expect(titlesOf(vendorMenu.children)).toEqual(['客户档案', 'License 授权管理', '续费订单']);
     expect(JSON.stringify(vendorMenu)).not.toContain('system/license/index');
     const dataMenu = filtered.find((route) => route.path === '/data-management') as any;
-    expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子明细', '因子开放范围', '模板库', '模板分发', '维表管理', '公告管理']);
+    expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子开放范围', '模板库', '模板分发', '维表管理', '公告管理']);
     expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '角色管理', '分配用户', '分配角色', '套餐管理', '部门管理', '岗位管理', '公告配置']);
     expect(titlesOf(systemMenu.children).length).toBeGreaterThan(0);
     expect(titlesOf(monitorMenu.children)).toEqual(['操作日志', '登录日志']);
@@ -195,7 +189,7 @@ describe('vendor dynamic router guard', () => {
   it('recognizes vendor allowed routes from stable route identities', () => {
     expect(isVendorAllowedRoute({ path: '/vendor', component: 'Layout', meta: { title: '???' } } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: '/data-management', component: 'Layout', meta: { title: '数据管理' } } as any)).toBe(true);
-    expect(isVendorAllowedRoute({ path: 'customer', component: 'system/tenant/index', permissions: ['vendor:customer:list'] } as any)).toBe(true);
+    expect(isVendorAllowedRoute({ path: 'customer', component: 'vendor/customer/index', permissions: ['vendor:customer:list'] } as any)).toBe(true);
     expect(isVendorAllowedRoute({ path: 'role', component: 'system/role/index', permissions: ['system:role:list'] } as any)).toBe(true);
     expect(
       isVendorAllowedRoute({ path: 'role-auth/user/:roleId', component: 'system/role/authUser', permissions: ['system:role:edit'] } as any)
@@ -217,6 +211,9 @@ describe('vendor dynamic router guard', () => {
     expect(
       isVendorAllowedRoute({ path: 'factor-scope', component: 'vendor/factorScope/index', permissions: ['vendor:factorCustomerScope:add'] } as any)
     ).toBe(true);
+    expect(
+      isVendorAllowedRoute({ path: 'factor-record', component: 'vendor/factorRecord/index', permissions: ['vendor:factorRecord:list'] } as any)
+    ).toBe(false);
     expect(
       isVendorAllowedRoute({ path: 'factor-scope', component: 'vendor/factorScope/index', permissions: ['vendor:factorCustomerScope:edit'] } as any)
     ).toBe(true);
@@ -240,7 +237,7 @@ describe('vendor dynamic router guard', () => {
         meta: { title: '数据管理' },
         children: [{ path: 'dimension', component: 'vendor/dimension/index' }]
       },
-      { path: '/vendor', component: 'Layout', meta: { title: '厂商运营' }, children: [{ path: 'customer', component: 'system/tenant/index' }] },
+      { path: '/vendor', component: 'Layout', meta: { title: '厂商运营' }, children: [{ path: 'customer', component: 'vendor/customer/index' }] },
       { path: '/index', component: 'Layout', meta: { title: '首页' } }
     ] as any);
 

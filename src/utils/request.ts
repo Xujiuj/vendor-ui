@@ -40,7 +40,7 @@ service.interceptors.request.use(
 
     const isToken = config.headers?.isToken === false;
     const isRepeatSubmit = config.headers?.repeatSubmit === false;
-    const isEncrypt = config.headers?.isEncrypt === 'true';
+    const isEncrypt = config.headers?.isEncrypt === true || config.headers?.isEncrypt === 'true';
 
     if (getToken() && !isToken) {
       config.headers['Authorization'] = 'Bearer ' + getToken();

@@ -11,7 +11,7 @@ Fix the remaining online SSE risk for the vendor portal. After login, the browse
 ## Commands
 - Vendor UI unit tests: `npm run test:unit`
 - Vendor UI build: `npm run build:prod`
-- Vendor backend package, if backend changes: `mvn -pl ruoyi-admin -am package -DskipTests`
+- Vendor backend package, if backend changes: `mvn -Pprod -pl ruoyi-admin -am package -DskipTests`
 - Online probe: browser `EventSource('/vendor/prod-api/resource/sse?...')` must open without MIME or 502 errors
 
 ## Project Structure
