@@ -23,8 +23,12 @@
 
           <el-table v-loading="dataLoading" :data="dataList" border @selection-change="handleDataSelectionChange">
             <el-table-column type="selection" width="48" align="center" />
-            <el-table-column :label="dim.codeLabel" align="center" prop="recordCode" min-width="150" :show-overflow-tooltip="true" />
-            <el-table-column :label="dim.nameLabel" align="center" prop="recordName" min-width="200" :show-overflow-tooltip="true" />
+            <el-table-column :label="dim.codeLabel" align="center" min-width="150" :show-overflow-tooltip="true">
+              <template #default="{ row }">{{ formatDimensionValue(row, dim.codeKey) }}</template>
+            </el-table-column>
+            <el-table-column :label="dim.nameLabel" align="center" min-width="200" :show-overflow-tooltip="true">
+              <template #default="{ row }">{{ formatDimensionValue(row, dim.nameKey) }}</template>
+            </el-table-column>
             <el-table-column v-if="dim.showParent" label="上级编码" align="center" prop="parentCode" min-width="120" :show-overflow-tooltip="true" />
             <el-table-column
               v-for="field in dim.extraFields"
@@ -34,7 +38,9 @@
               :prop="field.key"
               :min-width="field.width ?? 140"
               :show-overflow-tooltip="true"
-            />
+            >
+              <template #default="{ row }">{{ formatDimensionField(row, field) }}</template>
+            </el-table-column>
             <el-table-column label="排序" align="center" prop="sortOrder" width="80" />
             <el-table-column label="状态" align="center" prop="status" width="80">
               <template #default="{ row }">
@@ -69,7 +75,7 @@
                 <el-option v-for="item in dimensionTabs" :key="item.code" :label="item.label" :value="item.code" />
               </el-select>
               <el-button v-hasPermi="['vendor:dimension:add']" type="primary" plain icon="Plus" @click="handleFieldAdd">新增字段</el-button>
-              <el-button v-hasPermi="['vendor:dimension:add']" plain icon="DocumentAdd" @click="initializeDefaultFields">初始化样例字段</el-button>
+              <el-button v-hasPermi="['vendor:dimension:add']" plain icon="DocumentAdd" @click="initializeDefaultFields">按 Source(A) 初始化字段</el-button>
               <el-button v-hasPermi="['vendor:dimension:remove']" type="danger" plain icon="Delete" :disabled="fieldMultiple" @click="handleFieldDelete()">
                 删除
               </el-button>
@@ -112,8 +118,16 @@
         <el-form-item :label="currentDim.codeLabel" prop="recordCode">
           <el-input v-model="dataForm.recordCode" :placeholder="`请输入${currentDim.codeLabel}`" maxlength="128" />
         </el-form-item>
-        <el-form-item :label="currentDim.nameLabel" prop="recordName">
-          <el-input v-model="dataForm.recordName" :placeholder="`请输入${currentDim.nameLabel}`" maxlength="255" />
+        <el-form-item v-if="currentDim.nameKey !== currentDim.codeKey" :label="currentDim.nameLabel" prop="recordName">
+          <el-input-number
+            v-if="currentDim.nameType === 'number'"
+            v-model="dataForm.recordName"
+            :precision="currentDim.namePrecision ?? 0"
+            :min="currentDim.nameMin"
+            :max="currentDim.nameMax"
+            class="w-full"
+          />
+          <el-input v-else v-model="dataForm.recordName" :placeholder="`请输入${currentDim.nameLabel}`" maxlength="255" />
         </el-form-item>
         <el-form-item v-if="currentDim.showParent" label="上级编码" prop="parentCode">
           <el-input v-model="dataForm.parentCode" placeholder="请输入上级编码" maxlength="128" />
@@ -121,6 +135,17 @@
         <el-form-item v-for="field in currentDim.extraFields" :key="field.key" :label="field.label">
           <el-input-number v-if="field.type === 'number'" v-model="dataForm[field.key]" :precision="field.precision ?? 0" class="w-full" />
           <el-date-picker v-else-if="field.type === 'date'" v-model="dataForm[field.key]" type="date" value-format="YYYY-MM-DD" class="w-full" />
+          <el-switch
+            v-else-if="field.type === 'boolean'"
+            v-model="dataForm[field.key]"
+            :active-value="field.trueValue ?? true"
+            :inactive-value="field.falseValue ?? false"
+            active-text="是"
+            inactive-text="否"
+          />
+          <el-select v-else-if="field.type === 'select'" v-model="dataForm[field.key]" :placeholder="`请选择${field.label}`" class="w-full" clearable>
+            <el-option v-for="option in field.options" :key="option.value" :label="option.label" :value="option.value" />
+          </el-select>
           <el-input v-else v-model="dataForm[field.key]" :placeholder="`请输入${field.label}`" />
         </el-form-item>
         <el-form-item label="排序" prop="sortOrder">
@@ -184,10 +209,11 @@
 import type { FormInstance, FormRules } from 'element-plus';
 import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue';
 import { addVendorTableField, deleteVendorTableField, getVendorTableField, listVendorTableField, updateVendorTableField } from '@/api/vendor/tableField';
-import type { VendorTableFieldForm, VendorTableFieldQuery, VendorTableFieldVO } from '@/api/vendor/tableField/types';
+import type { VendorTableFieldForm, VendorTableFieldVO } from '@/api/vendor/tableField/types';
 import { addDimensionData, deleteDimensionData, getDimensionData, listDimensionData, updateDimensionData } from '@/api/vendor/dimensionData';
+import type { DimensionDataRecord } from '@/api/vendor/dimensionData';
 import { useAutoQuery } from '@/hooks/useAutoQuery';
-import { formatText, readRows, readTotal } from '../shared';
+import { formatText, readRows } from '../shared';
 
 const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 
@@ -196,25 +222,45 @@ const { proxy } = getCurrentInstance() as ComponentInternalInstance;
 interface ExtraField {
   key: string;
   label: string;
-  type?: 'text' | 'number' | 'date';
+  type?: 'text' | 'number' | 'date' | 'boolean' | 'select';
   precision?: number;
+  trueValue?: string | number | boolean;
+  falseValue?: string | number | boolean;
+  options?: Array<{ label: string; value: string | number | boolean }>;
   width?: number;
 }
 
 interface DimensionTab {
   code: string;
   label: string;
+  codeKey: string;
   codeLabel: string;
+  nameKey: string;
   nameLabel: string;
+  nameType?: 'text' | 'number';
+  namePrecision?: number;
+  nameMin?: number;
+  nameMax?: number;
   showParent?: boolean;
   extraFields: ExtraField[];
+}
+
+interface DefaultFieldDefinition {
+  fieldKey: string;
+  fieldLabel: string;
+  fieldType: string;
+  fieldPrecision?: number;
+  fieldWidth?: number;
+  requiredFlag: boolean;
 }
 
 const dimensionTabs: DimensionTab[] = [
   {
     code: 'admin-division',
     label: '101 行政区划',
+    codeKey: 'divisionCode',
     codeLabel: '行政区划代码',
+    nameKey: 'divisionName',
     nameLabel: '行政区划名称',
     showParent: true,
     extraFields: [
@@ -224,44 +270,76 @@ const dimensionTabs: DimensionTab[] = [
   {
     code: 'emission-source-category',
     label: '103 排放源分类',
+    codeKey: 'categoryCode',
     codeLabel: '分类编码',
+    nameKey: 'categoryName',
     nameLabel: '分类名称',
     showParent: true,
     extraFields: [
+      { key: 'businessKey', label: '业务Key', width: 140 },
       { key: 'categoryNameEn', label: '英文名称', width: 160 },
       { key: 'ghgScope', label: 'GHG范围', width: 120 },
       { key: 'ghgScopeCategory', label: 'GHG范围分类', width: 180 },
       { key: 'isoCategory', label: 'ISO分类', width: 120 },
-      { key: 'gbScopeCategory', label: '国标范围分类', width: 160 }
+      { key: 'isoCategoryEn', label: 'ISO英文分类', width: 140 },
+      { key: 'isoCategoryDescription', label: 'ISO分类说明', width: 220 },
+      { key: 'gbScopeCategory', label: '国标范围分类', width: 160 },
+      { key: 'gbSubcategory', label: '国标子分类', width: 160 },
+      { key: 'effectiveDate', label: '生效日期', type: 'date', width: 120 },
+      { key: 'expireDate', label: '失效日期', type: 'date', width: 120 },
+      {
+        key: 'currentFlag',
+        label: '当前版本',
+        type: 'select',
+        options: [
+          { label: '是', value: 'Y' },
+          { label: '否', value: 'N' }
+        ],
+        width: 100
+      },
+      { key: 'versionNo', label: '版本号', width: 100 },
+      { key: 'standardCategory', label: '标准分类', width: 160 }
     ]
   },
   {
     code: 'base-year',
     label: '106 基准年',
-    codeLabel: '工厂代码',
-    nameLabel: '工厂名称',
+    codeKey: 'baseYearKey',
+    codeLabel: '基准年Key',
+    nameKey: 'baseYear',
+    nameLabel: '基准年',
+    nameType: 'number',
+    namePrecision: 0,
+    nameMin: 1900,
+    nameMax: 9999,
     extraFields: [
-      { key: 'baseYear', label: '基准年', type: 'number', precision: 0, width: 100 },
-      { key: 'isCurrent', label: '是否当前', width: 90 }
+      { key: 'isCurrent', label: '当前基准年', type: 'boolean', trueValue: 1, falseValue: 0, width: 110 },
+      { key: 'description', label: '说明', width: 220 }
     ]
   },
   {
     code: 'ef-electricity-factor',
     label: '202 电力因子',
+    codeKey: 'divisionCode',
     codeLabel: '行政区划代码',
+    nameKey: 'divisionName',
     nameLabel: '行政区划名称',
     extraFields: [
       { key: 'factorVersion', label: '因子版本', width: 120 },
       { key: 'regionName', label: '区域名称', width: 120 },
       { key: 'provinceFactor', label: '省级因子', type: 'number', precision: 10, width: 120 },
       { key: 'regionFactor', label: '区域因子', type: 'number', precision: 10, width: 120 },
-      { key: 'nationalFactor', label: '全国因子', type: 'number', precision: 10, width: 120 }
+      { key: 'nationalFactor', label: '全国因子', type: 'number', precision: 10, width: 120 },
+      { key: 'nonFossilExcludedFactor', label: '扣除非化石因子', type: 'number', precision: 10, width: 150 },
+      { key: 'nationalFossilPowerFactor', label: '全国火电因子', type: 'number', precision: 10, width: 140 }
     ]
   },
   {
     code: 'ef-electricity-version',
     label: '203 电力因子版本',
+    codeKey: 'factorVersion',
     codeLabel: '因子版本',
+    nameKey: 'factorVersion',
     nameLabel: '因子版本',
     extraFields: [
       { key: 'effectiveYear', label: '生效年份', type: 'number', precision: 0, width: 100 }
@@ -270,14 +348,18 @@ const dimensionTabs: DimensionTab[] = [
   {
     code: 'ef-electricity-scope',
     label: '205 电力因子口径',
+    codeKey: 'scopeKey',
     codeLabel: '口径编码',
+    nameKey: 'scopeName',
     nameLabel: '口径名称',
     extraFields: []
   },
   {
     code: 'greenhouse-gas',
     label: '206 温室气体',
+    codeKey: 'gasCode',
     codeLabel: '气体编码',
+    nameKey: 'gasName',
     nameLabel: '气体名称',
     extraFields: [
       { key: 'gasNameEn', label: '英文名称', width: 140 },
@@ -309,7 +391,7 @@ const currentDim = computed(() => dimensionTabs.find((d) => d.code === activeTab
 // Data tab state
 const dataLoading = ref(false);
 const dataSubmitLoading = ref(false);
-const dataList = ref<any[]>([]);
+const dataList = ref<DimensionDataRecord[]>([]);
 const dataTotal = ref(0);
 const dataIds = ref<Array<string | number>>([]);
 const dataMultiple = ref(true);
@@ -330,6 +412,74 @@ const dataRules: FormRules = {
   recordCode: [{ required: true, message: '编码不能为空', trigger: 'blur' }],
   recordName: [{ required: true, message: '名称不能为空', trigger: 'blur' }]
 };
+
+const formatDimensionValue = (row: DimensionDataRecord, key: string) => formatText(row[key] ?? row.recordCode ?? row.recordName);
+
+const normalizeBooleanValue = (value: unknown, field: ExtraField) => {
+  if (value === true || value === 1 || value === '1' || value === 'Y') return field.trueValue ?? true;
+  if (value === false || value === 0 || value === '0' || value === 'N') return field.falseValue ?? false;
+  return field.falseValue ?? false;
+};
+
+const formatDimensionField = (row: DimensionDataRecord, field: ExtraField) => {
+  const value = row[field.key];
+  if (field.type === 'boolean') {
+    const trueValue = field.trueValue ?? true;
+    const falseValue = field.falseValue ?? false;
+    if (value === trueValue || value === true || value === 1 || value === '1' || value === 'Y') return '是';
+    if (value === falseValue || value === false || value === 0 || value === '0' || value === 'N') return '否';
+  }
+  if (field.type === 'select' && field.options?.length) {
+    return field.options.find((option) => option.value === value)?.label ?? formatText(value);
+  }
+  return formatText(value);
+};
+
+const syncRecordFields = (target: Record<string, any>, dim: DimensionTab) => {
+  target.recordCode = target.recordCode ?? target[dim.codeKey] ?? '';
+  target.recordName = target.recordName ?? target[dim.nameKey] ?? target[dim.codeKey] ?? '';
+  target[dim.codeKey] = target.recordCode;
+  target[dim.nameKey] = target.recordName;
+
+  if (dim.code === 'base-year') {
+    target.baseYearKey = target.recordCode;
+    target.baseYear = Number(target.recordName);
+    target.description = target.description ?? target.remark ?? '';
+  }
+
+  for (const field of dim.extraFields) {
+    if (field.type === 'boolean') {
+      target[field.key] = normalizeBooleanValue(target[field.key], field);
+    }
+  }
+};
+
+const normalizeDataForm = (source?: Record<string, any>) => {
+  const dim = currentDim.value;
+  const merged = { ...(source ?? {}) };
+  merged.recordCode = merged.recordCode ?? merged[dim.codeKey] ?? '';
+  merged.recordName = merged.recordName ?? merged[dim.nameKey] ?? merged.recordCode ?? '';
+  if (dim.code === 'base-year') {
+    merged.recordCode = merged.baseYearKey ?? merged.recordCode ?? '';
+    merged.recordName = merged.baseYear ?? merged.recordName ?? '';
+    merged.isCurrent = merged.isCurrent ?? 1;
+  }
+  for (const field of dim.extraFields) {
+    if (field.type === 'boolean') {
+      merged[field.key] = normalizeBooleanValue(merged[field.key], field);
+    }
+  }
+  Object.assign(dataForm, merged);
+};
+
+const toFieldDefinition = (field: ExtraField): DefaultFieldDefinition => ({
+  fieldKey: field.key,
+  fieldLabel: field.label,
+  fieldType: field.type || 'text',
+  fieldPrecision: field.type === 'number' ? (field.precision ?? 10) : undefined,
+  fieldWidth: field.width,
+  requiredFlag: false
+});
 
 // Field tab state
 const fieldTableCode = ref('admin-division');
@@ -376,14 +526,14 @@ const loadDataList = async () => {
   dataLoading.value = true;
   try {
     const res = await listDimensionData(dataQuery);
-    dataList.value = (res as any).rows ?? (res as any).data ?? [];
+    dataList.value = readRows<DimensionDataRecord>(res);
     dataTotal.value = (res as any).total ?? dataList.value.length;
   } finally {
     dataLoading.value = false;
   }
 };
 
-const handleDataSelectionChange = (selection: any[]) => {
+const handleDataSelectionChange = (selection: DimensionDataRecord[]) => {
   dataIds.value = selection.map((item) => item.id);
   dataMultiple.value = !selection.length;
 };
@@ -398,9 +548,14 @@ const resetDataForm = () => {
     status: '0',
     remark: ''
   });
+  dataForm[currentDim.value.codeKey] = '';
+  dataForm[currentDim.value.nameKey] = '';
   // Clear extra fields
   for (const field of currentDim.value.extraFields) {
-    dataForm[field.key] = undefined;
+    dataForm[field.key] = field.type === 'boolean' ? (field.falseValue ?? false) : undefined;
+  }
+  if (currentDim.value.code === 'base-year') {
+    dataForm.isCurrent = 1;
   }
   dataFormRef.value?.clearValidate();
 };
@@ -411,11 +566,11 @@ const handleDataAdd = () => {
   dataDrawer.visible = true;
 };
 
-const handleDataEdit = async (row: any) => {
+const handleDataEdit = async (row: DimensionDataRecord) => {
   resetDataForm();
   try {
     const res = await getDimensionData(activeTab.value, row.id);
-    Object.assign(dataForm, res.data ?? row);
+    normalizeDataForm(res.data ?? row);
     dataForm.status = dataForm.status || '0';
     dataDrawer.title = `编辑${currentDim.value.label}`;
     dataDrawer.visible = true;
@@ -430,6 +585,7 @@ const submitDataForm = async () => {
   dataSubmitLoading.value = true;
   try {
     const payload = { ...dataForm };
+    syncRecordFields(payload, currentDim.value);
     if (payload.id) {
       await updateDimensionData(activeTab.value, payload);
       proxy?.$modal.msgSuccess('更新成功');
@@ -444,7 +600,7 @@ const submitDataForm = async () => {
   }
 };
 
-const handleDataDelete = async (row?: any) => {
+const handleDataDelete = async (row?: DimensionDataRecord) => {
   try {
     const deleteIds = row?.id || dataIds.value;
     const message = row ? `确认删除"${row.recordName || row.recordCode}"？` : `确认删除选中的 ${dataIds.value.length} 条记录？`;
@@ -551,18 +707,21 @@ const initializeDefaultFields = async () => {
   const existingRes = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'dimension', tableCode, params: {} });
   const existingKeys = new Set(readRows<VendorTableFieldVO>(existingRes).map((item) => item.fieldKey));
 
-  // Build default fields from dimension definition
-  const defaults = [
-    { fieldKey: 'record_code', fieldLabel: dim.codeLabel, requiredFlag: true },
-    { fieldKey: 'record_name', fieldLabel: dim.nameLabel, requiredFlag: true },
-    ...dim.extraFields.map((f) => ({
-      fieldKey: f.key,
-      fieldLabel: f.label,
-      fieldType: f.type || 'text',
-      fieldPrecision: f.type === 'number' ? (f.precision ?? 10) : undefined,
-      fieldWidth: f.width,
-      requiredFlag: false
-    }))
+  const defaults: DefaultFieldDefinition[] = [
+    { fieldKey: dim.codeKey, fieldLabel: dim.codeLabel, fieldType: 'text', requiredFlag: true },
+    ...(dim.nameKey === dim.codeKey
+      ? []
+      : [
+          {
+            fieldKey: dim.nameKey,
+            fieldLabel: dim.nameLabel,
+            fieldType: dim.nameType || 'text',
+            fieldPrecision: dim.nameType === 'number' ? (dim.namePrecision ?? 0) : undefined,
+            requiredFlag: true
+          }
+        ]),
+    ...(dim.showParent ? [{ fieldKey: 'parentCode', fieldLabel: '上级编码', fieldType: 'text', requiredFlag: false }] : []),
+    ...dim.extraFields.map(toFieldDefinition)
   ];
 
   const fieldsToCreate = defaults.filter((f) => !existingKeys.has(f.fieldKey));
@@ -579,13 +738,13 @@ const initializeDefaultFields = async () => {
         tableCode,
         fieldKey: field.fieldKey,
         fieldLabel: field.fieldLabel,
-        fieldType: (field as any).fieldType || 'text',
-        fieldPrecision: (field as any).fieldPrecision,
-        fieldWidth: (field as any).fieldWidth,
+        fieldType: field.fieldType || 'text',
+        fieldPrecision: field.fieldPrecision,
+        fieldWidth: field.fieldWidth,
         requiredFlag: field.requiredFlag === true,
         sortOrder: fieldList.value.length + index + 1,
         status: '0',
-        remark: '按维度定义初始化'
+        remark: '按 Source(A) 维表定义初始化'
       });
     }
     proxy?.$modal.msgSuccess('字段初始化完成');

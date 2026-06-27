@@ -10,17 +10,72 @@ export interface DimensionDataQuery {
   pageSize?: number;
 }
 
+export type DimensionCode =
+  | 'admin-division'
+  | 'emission-source-category'
+  | 'base-year'
+  | 'ef-electricity-factor'
+  | 'ef-electricity-version'
+  | 'ef-electricity-scope'
+  | 'greenhouse-gas';
+
 export interface DimensionDataRecord {
   id: number;
-  dimensionCode: string;
+  dimensionCode: DimensionCode | string;
   recordCode: string;
-  recordName: string;
+  recordName: string | number;
   parentCode?: string;
   sortOrder: number;
   status: string;
   createTime: string;
   updateTime: string;
   remark?: string;
+
+  divisionCode?: string;
+  divisionName?: string;
+  levelType?: string;
+
+  categoryCode?: string;
+  businessKey?: string;
+  categoryName?: string;
+  categoryNameEn?: string;
+  ghgScope?: string;
+  ghgScopeCategory?: string;
+  isoCategory?: string;
+  isoCategoryEn?: string;
+  isoCategoryDescription?: string;
+  gbScopeCategory?: string;
+  gbSubcategory?: string;
+  effectiveDate?: string;
+  expireDate?: string;
+  currentFlag?: 'Y' | 'N' | string;
+  versionNo?: string;
+  standardCategory?: string;
+
+  baseYearKey?: string;
+  baseYear?: number;
+  isCurrent?: boolean | number;
+  description?: string;
+
+  factorVersion?: string;
+  effectiveYear?: number;
+  regionName?: string;
+  provinceFactor?: number;
+  regionFactor?: number;
+  nationalFactor?: number;
+  nonFossilExcludedFactor?: number;
+  nationalFossilPowerFactor?: number;
+
+  scopeKey?: string;
+  scopeName?: string;
+
+  gasCode?: string;
+  gasName?: string;
+  gasNameEn?: string;
+  gwpValue?: number;
+  gwpVersion?: string;
+  chemicalFormula?: string;
+
   [key: string]: any;
 }
 
