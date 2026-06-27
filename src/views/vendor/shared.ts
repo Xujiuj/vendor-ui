@@ -33,6 +33,12 @@ export const formatText = (value?: string | number | boolean): string => {
   if (value === undefined || value === null || value === '') {
     return '-';
   }
+  if (typeof value === 'number') {
+    return Number.isFinite(value) ? String(value) : '-';
+  }
+  if (typeof value === 'string' && /^-?\d+\.\d+$/.test(value.trim())) {
+    return value.trim().replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '');
+  }
   return String(value);
 };
 

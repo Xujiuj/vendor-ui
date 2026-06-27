@@ -75,7 +75,6 @@
                 <el-option v-for="item in dimensionTabs" :key="item.code" :label="item.label" :value="item.code" />
               </el-select>
               <el-button v-hasPermi="['vendor:dimension:add']" type="primary" plain icon="Plus" @click="handleFieldAdd">新增字段</el-button>
-              <el-button v-hasPermi="['vendor:dimension:add']" plain icon="DocumentAdd" @click="initializeDefaultFields">按 Source(A) 初始化字段</el-button>
               <el-button v-hasPermi="['vendor:dimension:remove']" type="danger" plain icon="Delete" :disabled="fieldMultiple" @click="handleFieldDelete()">
                 删除
               </el-button>
@@ -243,15 +242,6 @@ interface DimensionTab {
   nameMax?: number;
   showParent?: boolean;
   extraFields: ExtraField[];
-}
-
-interface DefaultFieldDefinition {
-  fieldKey: string;
-  fieldLabel: string;
-  fieldType: string;
-  fieldPrecision?: number;
-  fieldWidth?: number;
-  requiredFlag: boolean;
 }
 
 const dimensionTabs: DimensionTab[] = [
@@ -472,15 +462,6 @@ const normalizeDataForm = (source?: Record<string, any>) => {
   Object.assign(dataForm, merged);
 };
 
-const toFieldDefinition = (field: ExtraField): DefaultFieldDefinition => ({
-  fieldKey: field.key,
-  fieldLabel: field.label,
-  fieldType: field.type || 'text',
-  fieldPrecision: field.type === 'number' ? (field.precision ?? 10) : undefined,
-  fieldWidth: field.width,
-  requiredFlag: false
-});
-
 // Field tab state
 const fieldTableCode = ref('admin-division');
 const fieldLoading = ref(false);
@@ -603,7 +584,8 @@ const submitDataForm = async () => {
 const handleDataDelete = async (row?: DimensionDataRecord) => {
   try {
     const deleteIds = row?.id || dataIds.value;
-    const message = row ? `确认删除"${row.recordName || row.recordCode}"？` : `确认删除选中的 ${dataIds.value.length} 条记录？`;
+    const recordLabel = row ? `${formatDimensionValue(row, currentDim.value.codeKey)} ${formatDimensionValue(row, currentDim.value.nameKey)}`.trim() : '';
+    const message = row ? `确认删除"${recordLabel}"？` : `确认删除选中的 ${dataIds.value.length} 条记录？`;
     await proxy?.$modal.confirm(message);
     await deleteDimensionData(activeTab.value, String(deleteIds));
     proxy?.$modal.msgSuccess('删除成功');
@@ -696,61 +678,6 @@ const handleFieldDelete = async (row?: VendorTableFieldVO) => {
     await loadFieldList();
   } catch {
     // cancelled or error
-  }
-};
-
-const initializeDefaultFields = async () => {
-  const tableCode = fieldTableCode.value;
-  const dim = dimensionTabs.find((d) => d.code === tableCode);
-  if (!dim) return;
-
-  const existingRes = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'dimension', tableCode, params: {} });
-  const existingKeys = new Set(readRows<VendorTableFieldVO>(existingRes).map((item) => item.fieldKey));
-
-  const defaults: DefaultFieldDefinition[] = [
-    { fieldKey: dim.codeKey, fieldLabel: dim.codeLabel, fieldType: 'text', requiredFlag: true },
-    ...(dim.nameKey === dim.codeKey
-      ? []
-      : [
-          {
-            fieldKey: dim.nameKey,
-            fieldLabel: dim.nameLabel,
-            fieldType: dim.nameType || 'text',
-            fieldPrecision: dim.nameType === 'number' ? (dim.namePrecision ?? 0) : undefined,
-            requiredFlag: true
-          }
-        ]),
-    ...(dim.showParent ? [{ fieldKey: 'parentCode', fieldLabel: '上级编码', fieldType: 'text', requiredFlag: false }] : []),
-    ...dim.extraFields.map(toFieldDefinition)
-  ];
-
-  const fieldsToCreate = defaults.filter((f) => !existingKeys.has(f.fieldKey));
-  if (!fieldsToCreate.length) {
-    proxy?.$modal.msgWarning('当前维表字段已初始化');
-    return;
-  }
-  await proxy?.$modal.confirm(`确认按维度定义初始化 ${fieldsToCreate.length} 个字段？`);
-  fieldSubmitLoading.value = true;
-  try {
-    for (const [index, field] of fieldsToCreate.entries()) {
-      await addVendorTableField({
-        tableGroup: 'dimension',
-        tableCode,
-        fieldKey: field.fieldKey,
-        fieldLabel: field.fieldLabel,
-        fieldType: field.fieldType || 'text',
-        fieldPrecision: field.fieldPrecision,
-        fieldWidth: field.fieldWidth,
-        requiredFlag: field.requiredFlag === true,
-        sortOrder: fieldList.value.length + index + 1,
-        status: '0',
-        remark: '按 Source(A) 维表定义初始化'
-      });
-    }
-    proxy?.$modal.msgSuccess('字段初始化完成');
-    await loadFieldList();
-  } finally {
-    fieldSubmitLoading.value = false;
   }
 };
 

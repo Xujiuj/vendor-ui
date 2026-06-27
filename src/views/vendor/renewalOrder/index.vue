@@ -809,7 +809,7 @@ const formatAmount = (amount?: number | string) => {
     return '-';
   }
   const value = Number(amount);
-  return Number.isFinite(value) ? value.toFixed(2) : String(amount);
+  return Number.isFinite(value) ? formatText(value) : formatText(amount);
 };
 
 onMounted(async () => {
