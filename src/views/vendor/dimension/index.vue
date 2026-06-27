@@ -26,7 +26,7 @@
             <el-table-column :label="dim.codeLabel" align="center" min-width="150" :show-overflow-tooltip="true">
               <template #default="{ row }">{{ formatDimensionValue(row, dim.codeKey) }}</template>
             </el-table-column>
-            <el-table-column :label="dim.nameLabel" align="center" min-width="200" :show-overflow-tooltip="true">
+            <el-table-column v-if="dim.nameKey !== dim.codeKey" :label="dim.nameLabel" align="center" min-width="200" :show-overflow-tooltip="true">
               <template #default="{ row }">{{ formatDimensionValue(row, dim.nameKey) }}</template>
             </el-table-column>
             <el-table-column v-if="dim.showParent" label="上级编码" align="center" prop="parentCode" min-width="120" :show-overflow-tooltip="true" />
@@ -340,9 +340,9 @@ const dimensionTabs: DimensionTab[] = [
     code: 'ef-electricity-version',
     label: '203 电力因子版本',
     codeKey: 'factorVersion',
-    codeLabel: '因子版本',
+    codeLabel: '版本号',
     nameKey: 'factorVersion',
-    nameLabel: '因子版本',
+    nameLabel: '版本号',
     extraFields: [
       { key: 'effectiveYear', label: '生效年份', type: 'number', precision: 0, width: 100 }
     ]
