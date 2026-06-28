@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h1>维表管理</h1>
-        <p>管理厂商侧基础维度数据和字段定义。数据通过 License 同步到企业端，字段定义控制企业端录入行为。</p>
+        <p>管理厂商侧基础维度数据。数据通过 License 同步到企业端。</p>
       </div>
     </div>
 
@@ -65,50 +65,6 @@
           />
         </div>
       </el-tab-pane>
-
-      <!-- 字段定义 Tab -->
-      <el-tab-pane label="字段定义" name="__fields__">
-        <div class="panel">
-          <div class="toolbar">
-            <div class="btns">
-              <el-select v-model="fieldTableCode" placeholder="选择维表类型" class="field-type-select" @change="loadFieldList">
-                <el-option v-for="item in dimensionTabs" :key="item.code" :label="item.label" :value="item.code" />
-              </el-select>
-              <el-button v-hasPermi="['vendor:dimension:add']" type="primary" plain icon="Plus" @click="handleFieldAdd">新增字段</el-button>
-              <el-button v-hasPermi="['vendor:dimension:remove']" type="danger" plain icon="Delete" :disabled="fieldMultiple" @click="handleFieldDelete()">
-                删除
-              </el-button>
-            </div>
-            <span v-if="fieldIds.length > 0" class="select-count">已选 {{ fieldIds.length }} 项</span>
-          </div>
-
-          <el-table v-loading="fieldLoading" :data="fieldList" border @selection-change="handleFieldSelectionChange">
-            <el-table-column type="selection" width="48" align="center" />
-            <el-table-column label="字段名" align="center" prop="fieldKey" min-width="160" :show-overflow-tooltip="true" />
-            <el-table-column label="显示名" align="center" prop="fieldLabel" min-width="220" :show-overflow-tooltip="true" />
-            <el-table-column label="字段类型" align="center" prop="fieldType" width="110">
-              <template #default="{ row }">{{ formatFieldType(row.fieldType) }}</template>
-            </el-table-column>
-            <el-table-column label="必填" align="center" prop="requiredFlag" width="80">
-              <template #default="{ row }">
-                <el-tag :type="row.requiredFlag ? 'danger' : 'info'" size="small">{{ row.requiredFlag ? '是' : '否' }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="排序" align="center" prop="sortOrder" width="80" />
-            <el-table-column label="状态" align="center" prop="status" width="80">
-              <template #default="{ row }">
-                <el-tag :type="row.status === '0' ? 'success' : 'info'" size="small">{{ row.status === '0' ? '启用' : '停用' }}</el-tag>
-              </template>
-            </el-table-column>
-            <el-table-column label="操作" align="center" width="150" fixed="right">
-              <template #default="{ row }">
-                <el-button v-hasPermi="['vendor:dimension:edit']" link type="primary" icon="Edit" @click="handleFieldEdit(row)">编辑</el-button>
-                <el-button v-hasPermi="['vendor:dimension:remove']" link type="danger" icon="Delete" @click="handleFieldDelete(row)">删除</el-button>
-              </template>
-            </el-table-column>
-          </el-table>
-        </div>
-      </el-tab-pane>
     </el-tabs>
 
     <!-- 数据编辑抽屉 -->
@@ -165,57 +121,12 @@
         <el-button type="primary" :loading="dataSubmitLoading" @click="submitDataForm">确定</el-button>
       </template>
     </el-drawer>
-
-    <!-- 字段编辑抽屉 -->
-    <el-drawer v-model="fieldDrawer.visible" :title="fieldDrawer.title" size="620px" append-to-body>
-      <el-form ref="fieldFormRef" :model="fieldForm" :rules="fieldRules" label-width="120px">
-        <el-form-item label="字段名" prop="fieldKey">
-          <el-input v-model="fieldForm.fieldKey" placeholder="请输入字段名，如 custom_level" maxlength="63" :disabled="Boolean(fieldForm.id)" />
-        </el-form-item>
-        <el-form-item label="显示名" prop="fieldLabel">
-          <el-input v-model="fieldForm.fieldLabel" placeholder="请输入显示名" maxlength="255" />
-        </el-form-item>
-        <el-form-item label="字段类型" prop="fieldType">
-          <el-select v-model="fieldForm.fieldType" placeholder="请选择字段类型" class="w-full" :disabled="Boolean(fieldForm.id)">
-            <el-option v-for="item in fieldTypeOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
-        </el-form-item>
-        <el-form-item v-if="fieldForm.fieldType === 'select'" label="选项" prop="fieldOptions">
-          <div class="option-editor">
-            <div v-for="(option, index) in fieldOptionRows" :key="index" class="option-row">
-              <el-input v-model="option.label" placeholder="显示名称" maxlength="64" />
-              <el-input v-model="option.value" placeholder="存储值" maxlength="64" />
-              <el-button link type="danger" icon="Delete" @click="removeFieldOption(index)">删除</el-button>
-            </div>
-            <el-button type="primary" plain icon="Plus" @click="addFieldOption">新增选项</el-button>
-          </div>
-        </el-form-item>
-        <el-form-item label="是否必填" prop="requiredFlag">
-          <el-switch v-model="fieldForm.requiredFlag" active-text="是" inactive-text="否" />
-        </el-form-item>
-        <el-form-item label="排序" prop="sortOrder">
-          <el-input-number v-model="fieldForm.sortOrder" :min="0" :max="9999" :precision="0" class="w-full" />
-        </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="fieldForm.status">
-            <el-radio value="0">启用</el-radio>
-            <el-radio value="1">停用</el-radio>
-          </el-radio-group>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="fieldDrawer.visible = false">取消</el-button>
-        <el-button type="primary" :loading="fieldSubmitLoading" @click="submitFieldForm">确定</el-button>
-      </template>
-    </el-drawer>
   </div>
 </template>
 
 <script setup name="VendorDimension" lang="ts">
 import type { FormInstance, FormRules } from 'element-plus';
-import { computed, getCurrentInstance, onMounted, reactive, ref, watch } from 'vue';
-import { addVendorTableField, deleteVendorTableField, getVendorTableField, listVendorTableField, updateVendorTableField } from '@/api/vendor/tableField';
-import type { VendorTableFieldForm, VendorTableFieldVO } from '@/api/vendor/tableField/types';
+import { computed, getCurrentInstance, onMounted, reactive, ref } from 'vue';
 import { addDimensionData, deleteDimensionData, getDimensionData, listDimensionData, updateDimensionData } from '@/api/vendor/dimensionData';
 import type { DimensionDataRecord } from '@/api/vendor/dimensionData';
 import { useAutoQuery } from '@/hooks/useAutoQuery';
@@ -234,11 +145,6 @@ interface ExtraField {
   falseValue?: string | number | boolean;
   options?: Array<{ label: string; value: string | number | boolean }>;
   width?: number;
-}
-
-interface FieldOption {
-  label: string;
-  value: string | number | boolean;
 }
 
 interface DimensionTab {
@@ -372,48 +278,11 @@ const dimensionTabs: DimensionTab[] = [
   }
 ];
 
-const fieldTypeOptions = [
-  { label: '文本', value: 'text' },
-  { label: '数值', value: 'number' },
-  { label: '日期', value: 'date' },
-  { label: '日期时间', value: 'datetime' },
-  { label: '选项', value: 'select' },
-  { label: '是/否', value: 'boolean' }
-];
-
-const systemDataFields = new Set([
-  'id',
-  'sortOrder',
-  'status',
-  'createDept',
-  'createBy',
-  'createTime',
-  'updateBy',
-  'updateTime',
-  'remark',
-  'dimensionCode'
-]);
-
-const toCamelCase = (value: string) => value.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
-
-const configuredFieldLabel = (field: VendorTableFieldVO) => {
-  const label = String(field.fieldLabel ?? '').trim();
-  return label && label !== field.fieldKey && label !== field.columnName ? label : '';
-};
-
-const fieldTypeLabelMap = fieldTypeOptions.reduce<Record<string, string>>((map, item) => {
-  map[item.value] = item.label;
-  return map;
-}, {});
-
 // ==================== State ====================
 
 const activeTab = ref('admin-division');
 const currentDim = computed(() => dimensionTabs.find((d) => d.code === activeTab.value) ?? dimensionTabs[0]);
-const currentDataFields = computed<ExtraField[]>(() => {
-  const fields = dataFieldMap.value[currentDim.value.code];
-  return fields?.length ? fields : currentDim.value.extraFields;
-});
+const currentDataFields = computed<ExtraField[]>(() => currentDim.value.extraFields);
 
 // Data tab state
 const dataLoading = ref(false);
@@ -434,8 +303,6 @@ const dataForm = reactive<Record<string, any>>({
   status: '0',
   remark: ''
 });
-const dataFieldMap = ref<Record<string, ExtraField[]>>({});
-
 const dataRules: FormRules = {
   recordCode: [{ required: true, message: '编码不能为空', trigger: 'blur' }],
   recordName: [{ required: true, message: '名称不能为空', trigger: 'blur' }]
@@ -447,43 +314,6 @@ const normalizeBooleanValue = (value: unknown, field: ExtraField) => {
   if (value === true || value === 1 || value === '1' || value === 'Y') return field.trueValue ?? true;
   if (value === false || value === 0 || value === '0' || value === 'N') return field.falseValue ?? false;
   return field.falseValue ?? false;
-};
-
-const parseFieldOptions = (value?: string): FieldOption[] => {
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value);
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((item) => ({
-        label: String(item?.label ?? item?.value ?? ''),
-        value: item?.value ?? item?.label ?? ''
-      }))
-      .filter((item) => item.label && item.value !== '');
-  } catch {
-    return [];
-  }
-};
-
-const toExtraField = (field: VendorTableFieldVO): ExtraField | undefined => {
-  const key = toCamelCase(field.fieldKey);
-  if (!key || systemDataFields.has(key) || key === currentDim.value.codeKey || key === currentDim.value.nameKey || key === 'parentCode') {
-    return undefined;
-  }
-  const builtInField = currentDim.value.extraFields.find((item) => item.key === key);
-  const label = configuredFieldLabel(field);
-  if (!builtInField && !label) {
-    return undefined;
-  }
-  return {
-    ...builtInField,
-    key,
-    label: builtInField?.label || label,
-    type: (field.fieldType as ExtraField['type']) || builtInField?.type || 'text',
-    precision: field.fieldPrecision ?? builtInField?.precision,
-    options: parseFieldOptions(field.fieldOptions),
-    width: field.fieldWidth ?? builtInField?.width ?? 140
-  };
 };
 
 const formatDimensionField = (row: DimensionDataRecord, field: ExtraField) => {
@@ -512,8 +342,7 @@ const syncRecordFields = (target: Record<string, any>, dim: DimensionTab) => {
     target.description = target.description ?? target.remark ?? '';
   }
 
-  const dynamicFields = dataFieldMap.value[dim.code] ?? dim.extraFields;
-  for (const field of dynamicFields) {
+  for (const field of dim.extraFields) {
     if (field.type === 'boolean') {
       target[field.key] = normalizeBooleanValue(target[field.key], field);
     }
@@ -530,8 +359,7 @@ const normalizeDataForm = (source?: Record<string, any>) => {
     merged.recordName = merged.baseYear ?? merged.recordName ?? '';
     merged.isCurrent = merged.isCurrent ?? 1;
   }
-  const dynamicFields = dataFieldMap.value[dim.code] ?? dim.extraFields;
-  for (const field of dynamicFields) {
+  for (const field of dim.extraFields) {
     if (field.type === 'boolean') {
       merged[field.key] = normalizeBooleanValue(merged[field.key], field);
     }
@@ -539,77 +367,12 @@ const normalizeDataForm = (source?: Record<string, any>) => {
   Object.assign(dataForm, merged);
 };
 
-// Field tab state
-const fieldTableCode = ref('admin-division');
-const fieldLoading = ref(false);
-const fieldSubmitLoading = ref(false);
-const fieldList = ref<VendorTableFieldVO[]>([]);
-const fieldIds = ref<Array<string | number>>([]);
-const fieldMultiple = ref(true);
-const fieldFormRef = ref<FormInstance>();
-const fieldDrawer = reactive({ visible: false, title: '' });
-const fieldForm = reactive<VendorTableFieldForm>({
-  id: undefined,
-  tableGroup: 'dimension',
-  tableCode: 'admin-division',
-  fieldKey: '',
-  fieldLabel: '',
-  fieldType: 'text',
-  requiredFlag: false,
-  sortOrder: 0,
-  status: '0',
-  remark: undefined
-});
-const fieldOptionRows = ref<FieldOption[]>([]);
-
-const fieldRules: FormRules<VendorTableFieldForm> = {
-  fieldKey: [
-    { required: true, message: '字段编码不能为空', trigger: 'blur' },
-    { pattern: /^[a-z][a-z0-9_]{1,62}$/, message: '仅支持小写字母、数字、下划线，且以字母开头', trigger: 'blur' }
-  ],
-  fieldLabel: [{ required: true, message: '字段名称不能为空', trigger: 'blur' }],
-  fieldType: [{ required: true, message: '字段类型不能为空', trigger: 'change' }],
-  fieldOptions: [
-    {
-      validator: (_rule, _value, callback) => {
-        if (fieldForm.fieldType !== 'select') {
-          callback();
-          return;
-        }
-        const validOptions = normalizedFieldOptions();
-        if (!validOptions.length) {
-          callback(new Error('选项字段必须填写选项'));
-          return;
-        }
-        callback();
-      },
-      trigger: 'change'
-    }
-  ]
-};
-
 // ==================== Data Tab Logic ====================
 
 const handleTabChange = (tab: string | number) => {
-  if (tab === '__fields__') {
-    fieldTableCode.value = activeTab.value === '__fields__' ? 'admin-division' : activeTab.value;
-    loadFieldList();
-  } else {
-    dataQuery.dimensionCode = tab as string;
-    dataQuery.pageNum = 1;
-    loadDataFieldsAndList(tab as string);
-  }
-};
-
-const loadDataFields = async (dimensionCode = currentDim.value.code) => {
-  const res = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'dimension', tableCode: dimensionCode, params: {} });
-  const fields = readRows<VendorTableFieldVO>(res).map(toExtraField).filter((field): field is ExtraField => Boolean(field));
-  dataFieldMap.value = { ...dataFieldMap.value, [dimensionCode]: fields };
-};
-
-const loadDataFieldsAndList = async (dimensionCode = currentDim.value.code) => {
-  await loadDataFields(dimensionCode);
-  await loadDataList();
+  dataQuery.dimensionCode = tab as string;
+  dataQuery.pageNum = 1;
+  loadDataList();
 };
 
 const loadDataList = async () => {
@@ -704,144 +467,10 @@ const handleDataDelete = async (row?: DimensionDataRecord) => {
   }
 };
 
-// ==================== Field Tab Logic ====================
-
-const loadFieldList = async () => {
-  fieldLoading.value = true;
-  try {
-    const res = await listVendorTableField({ pageNum: 1, pageSize: 500, tableGroup: 'dimension', tableCode: fieldTableCode.value, params: {} });
-    fieldList.value = readRows<VendorTableFieldVO>(res);
-    dataFieldMap.value = {
-      ...dataFieldMap.value,
-      [fieldTableCode.value]: fieldList.value.map(toExtraField).filter((field): field is ExtraField => Boolean(field))
-    };
-  } finally {
-    fieldLoading.value = false;
-  }
-};
-
-const handleFieldSelectionChange = (selection: VendorTableFieldVO[]) => {
-  fieldIds.value = selection.map((item) => item.id);
-  fieldMultiple.value = !selection.length;
-};
-
-const resetFieldForm = () => {
-  Object.assign(fieldForm, {
-    id: undefined,
-    tableGroup: 'dimension',
-    tableCode: fieldTableCode.value,
-    fieldKey: '',
-    fieldLabel: '',
-    fieldType: 'text',
-    requiredFlag: false,
-    sortOrder: fieldList.value.length + 1,
-    status: '0',
-    remark: undefined
-  });
-  fieldOptionRows.value = [];
-  fieldFormRef.value?.clearValidate();
-};
-
-const handleFieldAdd = () => {
-  resetFieldForm();
-  fieldDrawer.title = '新增字段定义';
-  fieldDrawer.visible = true;
-};
-
-const handleFieldEdit = async (row: VendorTableFieldVO) => {
-  resetFieldForm();
-  if (!row.id) {
-    Object.assign(fieldForm, row);
-    fieldForm.tableGroup = 'dimension';
-    fieldForm.tableCode = fieldTableCode.value;
-    fieldForm.status = fieldForm.status || '0';
-    fieldOptionRows.value = parseFieldOptions(fieldForm.fieldOptions);
-    fieldDrawer.title = '编辑字段定义';
-    fieldDrawer.visible = true;
-    return;
-  }
-  try {
-    const res = await getVendorTableField(row.id);
-    Object.assign(fieldForm, res.data ?? row);
-    fieldForm.tableGroup = 'dimension';
-    fieldForm.status = fieldForm.status || '0';
-    fieldOptionRows.value = parseFieldOptions(fieldForm.fieldOptions);
-    fieldDrawer.title = '编辑字段定义';
-    fieldDrawer.visible = true;
-  } catch {
-    // handled by interceptor
-  }
-};
-
-const normalizedFieldOptions = () =>
-  fieldOptionRows.value
-    .map((option) => ({
-      label: String(option.label ?? '').trim(),
-      value: String(option.value ?? '').trim()
-    }))
-    .filter((option) => option.label && option.value);
-
-const addFieldOption = () => {
-  fieldOptionRows.value.push({ label: '', value: '' });
-};
-
-const removeFieldOption = (index: number) => {
-  fieldOptionRows.value.splice(index, 1);
-};
-
-const submitFieldForm = async () => {
-  const valid = await fieldFormRef.value?.validate().catch(() => false);
-  if (!valid) return;
-  fieldSubmitLoading.value = true;
-  try {
-    const payload = {
-      ...fieldForm,
-      tableGroup: 'dimension',
-      tableCode: fieldTableCode.value,
-      fieldOptions: fieldForm.fieldType === 'select' ? JSON.stringify(normalizedFieldOptions()) : undefined
-    };
-    if (payload.id) {
-      await updateVendorTableField(payload);
-      proxy?.$modal.msgSuccess('字段已更新');
-    } else {
-      await addVendorTableField(payload);
-      proxy?.$modal.msgSuccess('字段已新增');
-    }
-    fieldDrawer.visible = false;
-    await loadFieldList();
-  } finally {
-    fieldSubmitLoading.value = false;
-  }
-};
-
-const handleFieldDelete = async (row?: VendorTableFieldVO) => {
-  try {
-    const deleteIds = row?.id || fieldIds.value;
-    const message = row ? `确认删除字段"${row.fieldLabel}"？` : `确认删除选中的 ${fieldIds.value.length} 个字段？`;
-    await proxy?.$modal.confirm(message);
-    await deleteVendorTableField(deleteIds);
-    proxy?.$modal.msgSuccess('删除成功');
-    await loadFieldList();
-  } catch {
-    // cancelled or error
-  }
-};
-
-const formatFieldType = (type?: string) => (type ? fieldTypeLabelMap[type] || type : '-');
-
-watch(
-  () => fieldForm.fieldType,
-  (fieldType) => {
-    if (fieldType === 'select' && fieldOptionRows.value.length === 0) {
-      addFieldOption();
-    }
-  }
-);
-
 // ==================== Init ====================
 
 onMounted(() => {
-  void loadDataFieldsAndList();
+  void loadDataList();
 });
 
 useAutoQuery(dataQuery, () => {
@@ -865,25 +494,7 @@ useAutoQuery(dataQuery, () => {
   margin-bottom: 12px;
 }
 
-.field-type-select {
-  width: 200px;
-}
-
 .w-full {
   width: 100%;
-}
-
-.option-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  width: 100%;
-}
-
-.option-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 56px;
-  gap: 8px;
-  align-items: center;
 }
 </style>
