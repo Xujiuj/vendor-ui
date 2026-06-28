@@ -64,6 +64,13 @@ export const freezeFactorVersion = (id: string | number): Promise<ApiResponse> =
   });
 };
 
+export const unfreezeFactorVersion = (id: string | number): Promise<ApiResponse> => {
+  return request({
+    url: `${FACTOR_VERSION_BASE_URL}/${id}/unfreeze`,
+    method: 'post'
+  });
+};
+
 export const retireFactorVersion = (id: string | number): Promise<ApiResponse> => {
   return request({
     url: `${FACTOR_VERSION_BASE_URL}/${id}/retire`,

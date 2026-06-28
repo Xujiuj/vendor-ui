@@ -75,7 +75,7 @@
           </template>
         </el-table-column>
         <el-table-column label="备注" align="center" prop="remark" min-width="180" :show-overflow-tooltip="true" />
-        <el-table-column label="操作" align="center" width="260" fixed="right">
+        <el-table-column label="操作" align="center" width="320" fixed="right">
           <template #default="{ row }">
             <div class="table-actions">
               <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
@@ -91,7 +91,7 @@
               </el-button>
               <el-button
                 v-if="canPublish(row)"
-                v-hasPermi="['vendor:factorVersion:edit']"
+                v-hasPermi="['vendor:factorVersion:publish']"
                 link
                 type="primary"
                 icon="Promotion"
@@ -102,7 +102,7 @@
               </el-button>
               <el-button
                 v-if="canFreeze(row)"
-                v-hasPermi="['vendor:factorVersion:edit']"
+                v-hasPermi="['vendor:factorVersion:freeze']"
                 link
                 type="warning"
                 icon="CircleClose"
@@ -112,8 +112,19 @@
                 冻结
               </el-button>
               <el-button
+                v-if="canUnfreeze(row)"
+                v-hasPermi="['vendor:factorVersion:freeze']"
+                link
+                type="success"
+                icon="Refresh"
+                :disabled="actioningId === row.id"
+                @click="handleUnfreeze(row)"
+              >
+                解冻
+              </el-button>
+              <el-button
                 v-if="canRetire(row)"
-                v-hasPermi="['vendor:factorVersion:edit']"
+                v-hasPermi="['vendor:factorVersion:retire']"
                 link
                 type="danger"
                 icon="Delete"
@@ -124,7 +135,7 @@
               </el-button>
               <el-button
                 v-if="canRestore(row)"
-                v-hasPermi="['vendor:factorVersion:edit']"
+                v-hasPermi="['vendor:factorVersion:restore']"
                 link
                 type="success"
                 icon="RefreshLeft"
@@ -166,6 +177,20 @@
         <el-form-item label="版本名称" prop="versionName">
           <el-input v-model="form.versionName" placeholder="请输入版本名称" maxlength="128" />
         </el-form-item>
+        <el-form-item v-if="form.id" label="发布状态" prop="publishStatus">
+          <el-select v-model="form.publishStatus" placeholder="请选择发布状态" class="w-full" @change="handleFormPublishStatusChange">
+            <el-option label="草稿" value="draft" />
+            <el-option label="已发布" value="published" />
+            <el-option label="已冻结" value="frozen" />
+            <el-option label="已退役" value="retired" />
+          </el-select>
+        </el-form-item>
+        <el-form-item v-if="form.id" label="冻结标记" prop="frozenFlag">
+          <el-select v-model="form.frozenFlag" placeholder="请选择冻结标记" class="w-full" @change="handleFormFrozenFlagChange">
+            <el-option label="未冻结" :value="false" />
+            <el-option label="已冻结" :value="true" />
+          </el-select>
+        </el-form-item>
         <el-form-item label="备注" prop="remark">
           <el-input v-model="form.remark" type="textarea" :rows="4" maxlength="500" show-word-limit />
         </el-form-item>
@@ -202,6 +227,7 @@ import {
   publishFactorVersion,
   restoreFactorVersion,
   retireFactorVersion,
+  unfreezeFactorVersion,
   updateFactorVersion
 } from '@/api/vendor/factorVersion';
 import type { FactorVersionForm, FactorVersionQuery, FactorVersionVO } from '@/api/vendor/factorVersion/types';
@@ -241,6 +267,8 @@ const form = reactive<FactorVersionForm>({
   id: undefined,
   versionCode: '',
   versionName: '',
+  publishStatus: 'draft',
+  frozenFlag: false,
   remark: undefined
 });
 
@@ -293,6 +321,8 @@ const resetForm = () => {
     id: undefined,
     versionCode: '',
     versionName: '',
+    publishStatus: 'draft',
+    frozenFlag: false,
     remark: undefined
   });
   formRef.value?.clearValidate();
@@ -311,6 +341,7 @@ const canFreeze = (row: FactorVersionVO) => {
   const status = normalizePublishStatus(row.publishStatus);
   return status === 'PUBLISHED' && !isFrozen(row.frozenFlag);
 };
+const canUnfreeze = (row: FactorVersionVO) => normalizePublishStatus(row.publishStatus) === 'FROZEN' || isFrozen(row.frozenFlag);
 const canRetire = (row: FactorVersionVO) => {
   const status = normalizePublishStatus(row.publishStatus);
   return status === 'PUBLISHED' || status === 'FROZEN' || isFrozen(row.frozenFlag);
@@ -336,6 +367,8 @@ const handleUpdate = async (row: FactorVersionVO) => {
       id: data.id,
       versionCode: data.versionCode,
       versionName: data.versionName,
+      publishStatus: data.publishStatus || 'draft',
+      frozenFlag: isFrozen(data.frozenFlag),
       remark: data.remark
     });
     formDrawer.title = '编辑因子版本';
@@ -377,6 +410,18 @@ const handleDelete = async (row?: FactorVersionVO) => {
     await getList();
   } catch {
     // User cancelled or global request interceptor already shows the error.
+  }
+};
+
+const handleFormPublishStatusChange = (status?: string) => {
+  form.frozenFlag = normalizePublishStatus(status) === 'FROZEN';
+};
+
+const handleFormFrozenFlagChange = (value?: number | boolean) => {
+  if (isFrozen(value)) {
+    form.publishStatus = 'frozen';
+  } else if (normalizePublishStatus(form.publishStatus) === 'FROZEN') {
+    form.publishStatus = 'published';
   }
 };
 
@@ -444,6 +489,13 @@ const handleFreeze = async (row: FactorVersionVO) => {
     return;
   }
   await runPublishStatusAction(row, 'frozen', true, freezeFactorVersion, '因子版本已冻结');
+};
+
+const handleUnfreeze = async (row: FactorVersionVO) => {
+  if (!canUnfreeze(row)) {
+    return;
+  }
+  await runPublishStatusAction(row, 'published', false, unfreezeFactorVersion, '因子版本已解冻');
 };
 
 const handleRetire = async (row: FactorVersionVO) => {
