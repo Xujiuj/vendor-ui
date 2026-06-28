@@ -47,9 +47,6 @@
               <router-link to="/user/profile">
                 <el-dropdown-item>{{ proxy.$t('navbar.personalCenter') }}</el-dropdown-item>
               </router-link>
-              <el-dropdown-item v-if="settingsStore.showSettings" command="setLayout">
-                <span>{{ proxy.$t('navbar.layoutSetting') }}</span>
-              </el-dropdown-item>
               <el-dropdown-item divided command="logout">
                 <span>{{ proxy.$t('navbar.logout') }}</span>
               </el-dropdown-item>
@@ -114,13 +111,8 @@ const logout = async () => {
   });
 };
 
-const emits = defineEmits(['setLayout']);
-const setLayout = () => {
-  emits('setLayout');
-};
 // 定义Command方法对象 通过key直接调用方法
 const commandMap: { [key: string]: any } = {
-  setLayout,
   logout
 };
 const handleCommand = (command: string) => {

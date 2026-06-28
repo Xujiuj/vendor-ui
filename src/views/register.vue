@@ -3,7 +3,6 @@
     <el-form ref="registerRef" :model="registerForm" :rules="registerRules" class="register-form">
       <div class="title-box">
         <h3 class="title">{{ title }}</h3>
-        <lang-select />
       </div>
       <el-form-item prop="username">
         <el-input v-model="registerForm.username" type="text" size="large" auto-complete="off" :placeholder="proxy.$t('register.username')">
@@ -167,17 +166,10 @@ onMounted(() => {
 }
 
 .title-box {
-  display: flex;
-
   .title {
     margin: 0px auto 30px auto;
     text-align: center;
     color: #707070;
-  }
-
-  :deep(.lang-select--style) {
-    line-height: 0;
-    color: #7483a3;
   }
 }
 
