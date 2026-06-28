@@ -12,7 +12,7 @@
         <settings ref="settingRef" />
       </el-scrollbar> -->
       <div :class="{ 'fixed-header': fixedHeader }">
-        <navbar ref="navbarRef" @set-layout="setLayout" />
+        <navbar @set-layout="setLayout" />
         <tags-view v-if="needTagsView" />
       </div>
       <app-main />
@@ -70,14 +70,7 @@ watchEffect(() => {
   }
 });
 
-const navbarRef = ref<InstanceType<typeof Navbar>>();
 const settingRef = ref<InstanceType<typeof Settings>>();
-
-onMounted(() => {
-  nextTick(() => {
-    navbarRef.value?.initTenantList();
-  });
-});
 
 onMounted(() => {
   initSSE(import.meta.env.VITE_APP_BASE_API + '/resource/sse');

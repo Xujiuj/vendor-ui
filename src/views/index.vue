@@ -115,8 +115,20 @@ const reminders = ref<VendorOverviewReminder[]>([]);
 const todos = ref<VendorOverviewTodo[]>([]);
 
 const seriesColors = ['#1f8f6a', '#1677ff', '#f59e0b', '#7c3aed', '#ef4444'];
+const legacyEditionNames: Record<string, string> = {
+  standard: '标准版',
+  professional: '专业版',
+  pro: '专业版',
+  enterprise: '集团版',
+  group: '集团版'
+};
 
 const displayValue = (value?: number | string) => (value === undefined || value === null || value === '' ? '--' : value);
+const displayPackageSeriesName = (name?: string) => {
+  const normalized = String(name || '').trim();
+  if (!normalized) return '未指定套餐';
+  return legacyEditionNames[normalized.toLowerCase()] || normalized;
+};
 
 const loadOverview = async () => {
   loading.value = true;
@@ -138,13 +150,14 @@ const applyOverview = (overview?: VendorOverviewVO) => {
 
   const series = overview?.authorizationChart?.series ?? [];
   productVersions.value = series.map((item, index) => ({
-    name: item.name,
+    name: displayPackageSeriesName(item.name),
     color: seriesColors[index % seriesColors.length]
   }));
   monthlyAuthorizations.value = (overview?.authorizationChart?.months ?? []).map((month, monthIndex) => ({
     month,
     values: series.map((item, seriesIndex) => ({
       ...item,
+      name: displayPackageSeriesName(item.name),
       value: item.values?.[monthIndex] ?? 0,
       color: seriesColors[seriesIndex % seriesColors.length]
     }))
