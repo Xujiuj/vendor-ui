@@ -83,6 +83,7 @@
           <template #default="{ row }">
             <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
             <el-button v-if="canDownload(row)" link type="primary" icon="Download" @click="downloadIssuedLicense(row)">下载</el-button>
+            <el-button v-hasPermi="['vendor:licenseIssue:remove']" link type="danger" icon="Delete" @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -212,7 +213,7 @@
 <script setup name="License" lang="ts">
 import { listCustomer } from '@/api/vendor/customer';
 import type { CustomerVO } from '@/api/vendor/customer/types';
-import { getLicenseIssue, issueLicense, listLicenseIssue } from '@/api/vendor/licenseIssue';
+import { deleteLicenseIssue, getLicenseIssue, issueLicense, listLicenseIssue } from '@/api/vendor/licenseIssue';
 import type {
   LicenseIssueCommand,
   LicenseIssueQuery,
@@ -626,6 +627,19 @@ async function openDetail(row: LicenseIssueVO) {
     detailRecord.value = res.data || res;
   }
   detailDrawer.visible = true;
+}
+
+async function handleDelete(row: LicenseIssueVO) {
+  const deleteId = row.id;
+  if (!deleteId) return;
+  try {
+    await proxy?.$modal.confirm(`确认删除授权记录“${row.licenseId || deleteId}”？`);
+    await deleteLicenseIssue(deleteId);
+    proxy?.$modal.msgSuccess('删除成功');
+    await getList();
+  } catch {
+    // User cancelled or the global request interceptor already displayed the error.
+  }
 }
 
 function isInactiveCustomer(customer?: CustomerVO) {

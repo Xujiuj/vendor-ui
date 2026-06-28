@@ -28,6 +28,16 @@ export const getLicenseIssue = (id: string | number): Promise<ApiResponse<Licens
 };
 
 /**
+ * Delete vendor license issue records.
+ */
+export const deleteLicenseIssue = (ids: string | number | Array<string | number>) => {
+  return request({
+    url: `${LICENSE_ISSUE_BASE_URL}/${ids}`,
+    method: 'delete'
+  });
+};
+
+/**
  * Issue a vendor license.
  *
  * The backend resolves trusted customer facts from customerId. Keep the request
