@@ -359,6 +359,17 @@ const resetDataVisibility = () => {
   dataVisibility.items = visibilityCategories.map((item) => ({ ...item, scope: 'tenant' }));
 };
 
+watch(
+  () => dataVisibility.defaultScope,
+  (scope) => {
+    const nextScope = scope || 'tenant';
+    dataVisibility.items.forEach((item) => {
+      item.scope = nextScope;
+    });
+  },
+  { flush: 'sync' }
+);
+
 const resetPackagePolicy = () => {
   packagePolicy.editionLevel = '';
   packagePolicy.directFeatures = [];
