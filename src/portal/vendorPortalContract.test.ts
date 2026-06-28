@@ -74,6 +74,12 @@ describe('vendor dynamic router guard', () => {
             meta: { title: '模板分发' }
           },
           {
+            path: 'report-content',
+            component: 'vendor/reportContent/index',
+            permissions: ['vendor:reportContent:list'],
+            meta: { title: '报表内容' }
+          },
+          {
             path: 'dimension',
             component: 'vendor/dimension/index',
             permissions: ['vendor:dimension:list'],
@@ -170,7 +176,7 @@ describe('vendor dynamic router guard', () => {
     expect(titlesOf(vendorMenu.children)).toEqual(['客户档案', 'License 授权管理', '续费订单']);
     expect(JSON.stringify(vendorMenu)).not.toContain('system/license/index');
     const dataMenu = filtered.find((route) => route.path === '/data-management') as any;
-    expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子开放范围', '模板库', '模板分发', '维表管理', '公告管理']);
+    expect(titlesOf(dataMenu.children)).toEqual(['因子版本', '因子开放范围', '模板库', '模板分发', '报表内容', '维表管理', '公告管理']);
     expect(titlesOf(systemMenu.children)).toEqual(['用户管理', '角色管理', '分配用户', '分配角色', '套餐管理', '部门管理', '岗位管理', '公告配置']);
     expect(titlesOf(systemMenu.children).length).toBeGreaterThan(0);
     expect(titlesOf(monitorMenu.children)).toEqual(['操作日志', '登录日志']);

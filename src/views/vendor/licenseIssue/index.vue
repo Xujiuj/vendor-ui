@@ -321,11 +321,10 @@ function formatCustomerLabel(customer: CustomerVO) {
 
 function formatPackage(record?: { packageId?: string | number; packageName?: string }) {
   if (!record) return '-';
-  if (record.packageName) return record.packageName;
   if (record.packageId !== undefined && record.packageId !== null) {
-    return packageOptions.value.find((item) => item.packageId === record.packageId)?.packageName || String(record.packageId);
+    return packageOptions.value.find((item) => item.packageId === record.packageId)?.packageName || record.packageName || String(record.packageId);
   }
-  return '-';
+  return record.packageName || '-';
 }
 
 function templateLabel(template: ReportTemplateVO) {

@@ -39,6 +39,7 @@ const vendorMenuTitleRules = [
   { title: '因子开放范围', keys: ['vendor:factorScope', 'factor-scope', 'factorScope', 'vendor/factorScope/index'] },
   { title: '模板库', keys: ['vendor:reportTemplate', 'report-template', 'reportTemplate', 'vendor/reportTemplate/index'] },
   { title: '模板分发', keys: ['vendor:templateScope', 'template-scope', 'templateScope', 'vendor/templateScope/index'] },
+  { title: '报表内容', keys: ['vendor:reportContent', 'report-content', 'reportContent', 'vendor/reportContent/index'] },
   { title: '维表管理', keys: ['vendor:dimension', 'dimension', 'vendor/dimension/index'] },
   { title: '公告管理', keys: ['vendor:announcement', 'announcement', 'vendor/announcement/index'] },
   { title: '续费订单', keys: ['vendor:renewalOrder', 'renewal-order', 'renewalOrder', 'vendor/renewalOrder/index'] },
