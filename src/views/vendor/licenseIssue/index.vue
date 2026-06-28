@@ -2,15 +2,15 @@
   <div class="p-2 page-panel vendor-license-issue">
     <section class="page-head">
       <div>
-        <h1>License 授权管理</h1>
-        <p>为客户签发、下载和追踪 License 授权记录。</p>
+        <h1>授权管理</h1>
+        <p>为客户签发、下载和追踪授权记录。</p>
       </div>
     </section>
 
     <div v-show="showSearch" class="search-bar wide">
       <el-form ref="queryFormRef" :model="queryParams" :inline="true" label-width="90px" class="license-search">
-        <el-form-item label="License ID" prop="licenseId">
-          <el-input v-model="queryParams.licenseId" placeholder="请输入 License ID" clearable @keyup.enter="handleQuery" />
+        <el-form-item label="授权编号" prop="licenseId">
+          <el-input v-model="queryParams.licenseId" placeholder="请输入授权编号" clearable @keyup.enter="handleQuery" />
         </el-form-item>
         <el-form-item label="客户" prop="customerId">
           <el-select
@@ -25,8 +25,8 @@
             <el-option v-for="customer in customerOptions" :key="customer.id" :label="formatCustomerLabel(customer)" :value="customer.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="套餐" prop="packageId">
-          <el-select v-model="queryParams.packageId" placeholder="请选择套餐" clearable>
+        <el-form-item label="授权套餐" prop="packageId">
+          <el-select v-model="queryParams.packageId" placeholder="请选择授权套餐" clearable>
             <el-option v-for="item in packageOptions" :key="item.packageId" :label="item.packageName" :value="item.packageId" />
           </el-select>
         </el-form-item>
@@ -52,18 +52,18 @@
     <section class="panel">
       <el-row :gutter="10" class="mb8">
         <el-col :span="1.5">
-          <el-button type="primary" plain icon="Plus" @click="openIssueDrawer">签发 License</el-button>
+          <el-button type="primary" plain icon="Plus" @click="openIssueDrawer">签发授权</el-button>
         </el-col>
       </el-row>
 
       <el-table v-loading="loading" :data="licenseList" border>
-        <el-table-column label="License ID" align="center" prop="licenseId" min-width="160" :show-overflow-tooltip="true" />
+        <el-table-column label="授权编号" align="center" prop="licenseId" min-width="160" :show-overflow-tooltip="true" />
         <el-table-column label="客户" align="center" min-width="190" :show-overflow-tooltip="true">
           <template #default="{ row }">
             {{ customerNameMap.get(row.customerId) || row.customerId || '-' }}
           </template>
         </el-table-column>
-        <el-table-column label="套餐" align="center" min-width="130" :show-overflow-tooltip="true">
+        <el-table-column label="授权套餐" align="center" min-width="130" :show-overflow-tooltip="true">
           <template #default="{ row }">
             {{ formatPackage(row) }}
           </template>
@@ -90,9 +90,9 @@
       <pagination v-show="total > 0" v-model:page="queryParams.pageNum" v-model:limit="queryParams.pageSize" :total="total" @pagination="getList" />
     </section>
 
-    <el-drawer v-model="issueDrawer.visible" title="签发 License" size="640px" append-to-body>
+    <el-drawer v-model="issueDrawer.visible" title="签发授权" size="640px" append-to-body>
       <el-alert
-        title="签发时仅选择客户、有效期和套餐，设备指纹由企业激活回填，功能与模板授权由套餐推导。"
+        title="签发时仅选择客户、有效期和授权套餐，设备指纹由企业激活回填，功能与模板授权由授权套餐推导。"
         type="info"
         show-icon
         :closable="false"
@@ -140,8 +140,8 @@
           </el-row>
         </el-form-item>
 
-        <el-form-item label="套餐" prop="packageId">
-          <el-select v-model="issueForm.packageId" placeholder="请选择套餐" class="w-full" filterable @change="handlePackageChange">
+        <el-form-item label="授权套餐" prop="packageId">
+          <el-select v-model="issueForm.packageId" placeholder="请选择授权套餐" class="w-full" filterable @change="handlePackageChange">
             <el-option
               v-for="item in packageOptions"
               :key="item.packageId"
@@ -156,22 +156,14 @@
           <div class="feature-tags">
             <el-tag v-for="feature in issueForm.features" :key="feature" type="info">{{ feature }}</el-tag>
           </div>
-          <div v-if="!issueForm.features.length" class="form-tip">请选择套餐后自动带出功能。</div>
+          <div v-if="!issueForm.features.length" class="form-tip">请选择授权套餐后自动带出功能。</div>
         </el-form-item>
 
-        <el-form-item label="模板授权" prop="templateEntitlements">
-          <el-select
-            v-model="issueForm.templateEntitlements"
-            placeholder="请选择模板"
-            multiple
-            filterable
-            collapse-tags
-            collapse-tags-tooltip
-            class="w-full"
-          >
-            <el-option v-for="template in templateOptions" :key="template.id" :label="templateLabel(template)" :value="template.templateCode" />
-          </el-select>
-          <div v-if="!templateOptions.length" class="form-tip">模板库暂无可用模板，请先发布模板。</div>
+        <el-form-item label="模板授权">
+          <div class="feature-tags">
+            <el-tag v-for="templateCode in issueForm.templateEntitlements" :key="templateCode" type="info">{{ templateName(templateCode) }}</el-tag>
+          </div>
+          <div v-if="!issueForm.templateEntitlements.length" class="form-tip">请选择授权套餐后自动带出模板授权。</div>
         </el-form-item>
       </el-form>
 
@@ -180,12 +172,12 @@
       <el-card v-if="issuedResult" shadow="never" class="issue-result">
         <template #header>签发结果</template>
         <el-descriptions :column="1" border>
-          <el-descriptions-item label="License ID">{{ issuedResult.licenseId || issuedResult.id }}</el-descriptions-item>
+          <el-descriptions-item label="授权编号">{{ issuedResult.licenseId || issuedResult.id }}</el-descriptions-item>
           <el-descriptions-item label="客户">{{ customerNameMap.get(issuedResult.customerId) || issuedResult.customerId }}</el-descriptions-item>
           <el-descriptions-item label="有效期"
             >{{ formatDate(issuedResult.validFrom) }} 至 {{ formatDate(issuedResult.validTo) }}</el-descriptions-item
           >
-          <el-descriptions-item label="套餐">{{ formatPackage(issuedResult) }}</el-descriptions-item>
+          <el-descriptions-item label="授权套餐">{{ formatPackage(issuedResult) }}</el-descriptions-item>
           <el-descriptions-item label="功能">{{ formatFeatures(issuedResult.featureCodes) }}</el-descriptions-item>
           <el-descriptions-item label="模板授权">{{ formatFeatures(issuedResult.templateEntitlements) }}</el-descriptions-item>
           <el-descriptions-item label="下载文件">{{ issuedResult.download?.fileName || buildLicenseFileName(issuedResult) }}</el-descriptions-item>
@@ -201,11 +193,11 @@
       </template>
     </el-drawer>
 
-    <el-drawer v-model="detailDrawer.visible" title="License 详情" size="560px" append-to-body>
+    <el-drawer v-model="detailDrawer.visible" title="授权详情" size="560px" append-to-body>
       <el-descriptions v-if="detailRecord" :column="1" border>
-        <el-descriptions-item label="License ID">{{ detailRecord.licenseId || detailRecord.id }}</el-descriptions-item>
+        <el-descriptions-item label="授权编号">{{ detailRecord.licenseId || detailRecord.id }}</el-descriptions-item>
         <el-descriptions-item label="客户">{{ customerNameMap.get(detailRecord.customerId) || detailRecord.customerId || '-' }}</el-descriptions-item>
-        <el-descriptions-item label="套餐">{{ formatPackage(detailRecord) }}</el-descriptions-item>
+        <el-descriptions-item label="授权套餐">{{ formatPackage(detailRecord) }}</el-descriptions-item>
         <el-descriptions-item label="功能">{{ formatFeatures(detailRecord.featureCodes) }}</el-descriptions-item>
         <el-descriptions-item label="模板授权">{{ formatFeatures(detailRecord.templateEntitlements) }}</el-descriptions-item>
         <el-descriptions-item label="设备指纹">{{ detailRecord.installId || '-' }}</el-descriptions-item>
@@ -225,8 +217,7 @@ import type {
   LicenseIssueCommand,
   LicenseIssueQuery,
   LicenseIssueResult,
-  LicenseIssueVO,
-  LicenseTemplateEntitlement
+  LicenseIssueVO
 } from '@/api/vendor/licenseIssue/types';
 import { selectTenantPackage } from '@/api/system/tenantPackage';
 import type { TenantPkgVO } from '@/api/system/tenantPackage/types';
@@ -270,8 +261,8 @@ const detailRecord = ref<LicenseIssueVO>();
 const queryFormRef = ref<ElFormInstance>();
 const issueFormRef = ref<ElFormInstance>();
 
-const issueDrawer = reactive<DialogOption>({ visible: false, title: '签发 License' });
-const detailDrawer = reactive<DialogOption>({ visible: false, title: 'License 详情' });
+const issueDrawer = reactive<DialogOption>({ visible: false, title: '签发授权' });
+const detailDrawer = reactive<DialogOption>({ visible: false, title: '授权详情' });
 
 const queryParams = reactive<LicenseIssueQuery>({
   pageNum: 1,
@@ -297,10 +288,9 @@ const issueForm = reactive<IssueForm>(defaultIssueForm());
 
 const issueRules: Record<string, any> = {
   customerId: [{ required: true, message: '请选择供应商客户', trigger: 'change' }],
-  packageId: [{ required: true, message: '请选择套餐', trigger: 'change' }],
+  packageId: [{ required: true, message: '请选择授权套餐', trigger: 'change' }],
   validFrom: [{ required: true, message: '请选择有效期开始日期', trigger: 'change' }],
-  validTo: [{ required: true, message: '请选择有效期结束日期', trigger: 'change' }],
-  templateEntitlements: [{ required: true, type: 'array', min: 1, message: '请至少选择一个模板', trigger: 'change' }]
+  validTo: [{ required: true, message: '请选择有效期结束日期', trigger: 'change' }]
 };
 
 const customerNameMap = computed(() => {
@@ -341,6 +331,11 @@ function templateLabel(template: ReportTemplateVO) {
   return `${template.templateName || template.templateCode || template.id}`;
 }
 
+function templateName(templateCode: string) {
+  const template = templateOptions.value.find((item) => item.templateCode === templateCode || String(item.id) === templateCode);
+  return template ? templateLabel(template) : templateCode;
+}
+
 function formatDate(value?: string) {
   return value ? parseTime(value, '{y}-{m}-{d}') : '-';
 }
@@ -374,12 +369,12 @@ function mapIssueError(error: unknown) {
   const axiosError = error as AxiosError<{ msg?: string; message?: string; code?: string | number }>;
   const raw = [axiosError.response?.data?.msg, axiosError.response?.data?.message, axiosError.message].filter(Boolean).join(' ').toLowerCase();
   if (/(inactive|disabled|disable|customer.*status|客户.*(停用|禁用|未启用|无效)|停用|禁用)/i.test(raw)) {
-    return '客户已停用或未启用，不能签发 License。';
+    return '客户已停用或未启用，不能签发授权。';
   }
   if (/(duplicate|already|exists|重复|已存在|重复签发)/i.test(raw)) {
-    return '该客户和套餐已存在有效 License，请检查后再补发或续期。';
+    return '该客户和授权套餐已存在有效授权，请检查后再补发或续期。';
   }
-  return 'license issue failed';
+  return '授权签发失败';
 }
 
 function buildLicenseFileName(result: LicenseIssueResult) {
@@ -422,7 +417,7 @@ function downloadIssuedLicense(result: LicenseIssueResult) {
   const downloadUrl = result.download?.downloadUrl;
   if (downloadUrl) {
     if (!isSafeDownloadUrl(downloadUrl)) {
-      proxy?.$modal.msgError('License 下载地址不安全，已阻止跳转。');
+      proxy?.$modal.msgError('授权文件下载地址不安全，已阻止跳转。');
       return;
     }
     const anchor = document.createElement('a');
@@ -460,6 +455,10 @@ async function loadTemplates() {
 
 function getPackageFeatures(packageId?: string | number) {
   const item = packageOptions.value.find((entry) => entry.packageId === packageId);
+  return parsePackageFeatures(item);
+}
+
+function parsePackageFeatures(item?: TenantPkgVO) {
   return String(item?.licenseFeatureCodes || '')
     .split(/[,;\s]+/)
     .map((code) => code.trim())
@@ -468,6 +467,10 @@ function getPackageFeatures(packageId?: string | number) {
 
 function getPackageTemplates(packageId?: string | number) {
   const item = packageOptions.value.find((entry) => entry.packageId === packageId);
+  return parsePackageTemplates(item);
+}
+
+function parsePackageTemplates(item?: TenantPkgVO) {
   const raw = String(item?.licenseTemplateEntitlements || '');
   if (!raw.trim()) {
     return [];
@@ -494,21 +497,14 @@ function getPackageTemplates(packageId?: string | number) {
     .filter(Boolean);
 }
 
-function buildTemplateEntitlements(templateCodes: string[]): LicenseTemplateEntitlement[] {
-  return templateCodes.map((code) => {
-    const template = templateOptions.value.find((item) => item.templateCode === code || String(item.id) === code);
-    return {
-      templateCode: template?.templateCode || code,
-      templateVersion: template?.templateVersion,
-      scope: 'download'
-    };
-  });
+function isConfiguredLicensePackage(item: TenantPkgVO) {
+  return item.status !== '1' && parsePackageFeatures(item).length > 0 && parsePackageTemplates(item).length > 0;
 }
 
 async function loadPackages() {
   const res = (await selectTenantPackage()) as unknown as { data?: TenantPkgVO[] } | TenantPkgVO[];
   const rows = Array.isArray(res) ? res : res.data || [];
-  packageOptions.value = rows.filter((item) => item.status !== '1');
+  packageOptions.value = rows.filter((item) => isConfiguredLicensePackage(item));
   if (!issueForm.packageId && packageOptions.value.length > 0) {
     issueForm.packageId = packageOptions.value[0].packageId;
     handlePackageChange(issueForm.packageId);
@@ -577,7 +573,7 @@ function closeIssueDrawer() {
 function handleIssueCustomerChange() {
   issueError.value = '';
   if (isInactiveCustomer(selectedCustomer.value)) {
-    issueError.value = '客户已停用或未启用，不能签发 License。';
+    issueError.value = '客户已停用或未启用，不能签发授权。';
   }
 }
 
@@ -594,10 +590,7 @@ function buildIssueCommand(): LicenseIssueCommand {
     validity: {
       validFrom: issueForm.validFrom,
       validTo: issueForm.validTo
-    },
-    edition: selectedPackage.value?.packageName || issueForm.edition,
-    features: issueForm.features,
-    templateEntitlements: buildTemplateEntitlements(issueForm.templateEntitlements)
+    }
   };
 }
 
@@ -605,7 +598,7 @@ function submitIssue() {
   issueFormRef.value?.validate(async (valid: boolean) => {
     if (!valid) return;
     if (isInactiveCustomer(selectedCustomer.value)) {
-      issueError.value = '客户已停用或未启用，不能签发 License。';
+      issueError.value = '客户已停用或未启用，不能签发授权。';
       return;
     }
 
@@ -614,7 +607,7 @@ function submitIssue() {
     try {
       const res = (await issueLicense(buildIssueCommand())) as unknown as { data?: LicenseIssueResult } & LicenseIssueResult;
       issuedResult.value = res.data || res;
-      proxy?.$modal.msgSuccess('License 签发成功');
+      proxy?.$modal.msgSuccess('授权签发成功');
       await getList();
     } catch (error) {
       issueError.value = mapIssueError(error);

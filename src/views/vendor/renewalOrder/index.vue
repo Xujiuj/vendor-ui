@@ -233,8 +233,8 @@
             class="w-full"
           />
         </el-form-item>
-        <el-form-item label="签发 License" prop="issuedLicenseId">
-          <el-input v-model="callbackForm.issuedLicenseId" placeholder="请输入签发 License" maxlength="128" />
+        <el-form-item label="签发授权" prop="issuedLicenseId">
+          <el-input v-model="callbackForm.issuedLicenseId" placeholder="请输入签发授权编号" maxlength="128" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -248,8 +248,8 @@
         <el-form-item label="订单号">
           <el-input :model-value="manualBindForm.orderNo" disabled />
         </el-form-item>
-        <el-form-item label="签发 License" prop="issuedLicenseId">
-          <el-input v-model="manualBindForm.issuedLicenseId" placeholder="请输入已签发 License" maxlength="128" />
+        <el-form-item label="签发授权" prop="issuedLicenseId">
+          <el-input v-model="manualBindForm.issuedLicenseId" placeholder="请输入已签发授权编号" maxlength="128" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -389,7 +389,7 @@ const callbackRules: FormRules<RenewalCallbackForm> = {
 };
 
 const manualBindRules: FormRules<ManualRenewalBindForm> = {
-  issuedLicenseId: [{ required: true, message: '签发 License 不能为空', trigger: 'blur' }]
+  issuedLicenseId: [{ required: true, message: '签发授权不能为空', trigger: 'blur' }]
 };
 
 const customerLabel = (item: CustomerVO) => `${item.customerName || item.customerCode || item.id}`;

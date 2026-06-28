@@ -87,8 +87,8 @@ export interface LicenseIssueCommand {
   packageId: string | number;
   validity: LicenseIssueValidity;
   edition?: string;
-  features: string[];
-  templateEntitlements: LicenseTemplateEntitlement[];
+  features?: string[];
+  templateEntitlements?: LicenseTemplateEntitlement[];
 }
 
 /**
