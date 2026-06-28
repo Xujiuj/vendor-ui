@@ -80,7 +80,6 @@
             <div class="table-actions">
               <el-button link type="primary" icon="View" @click="openDetail(row)">详情</el-button>
               <el-button
-                v-if="canEditMetadata(row)"
                 v-hasPermi="['vendor:factorVersion:edit']"
                 link
                 type="primary"
@@ -135,7 +134,7 @@
                 恢复
               </el-button>
               <el-button
-                v-if="canEditMetadata(row)"
+                v-if="canDeleteVersion(row)"
                 v-hasPermi="['vendor:factorVersion:remove']"
                 link
                 type="danger"
@@ -317,7 +316,7 @@ const canRetire = (row: FactorVersionVO) => {
   return status === 'PUBLISHED' || status === 'FROZEN' || isFrozen(row.frozenFlag);
 };
 const canRestore = (row: FactorVersionVO) => normalizePublishStatus(row.publishStatus) === 'RETIRED' && !isFrozen(row.frozenFlag);
-const canEditMetadata = (row: FactorVersionVO) => {
+const canDeleteVersion = (row: FactorVersionVO) => {
   const status = normalizePublishStatus(row.publishStatus);
   return status === 'DRAFT' || status === 'RETIRED';
 };
@@ -329,9 +328,6 @@ const handleAdd = () => {
 };
 
 const handleUpdate = async (row: FactorVersionVO) => {
-  if (!canEditMetadata(row)) {
-    return;
-  }
   resetForm();
   try {
     const res = await getFactorVersion(row.id);
