@@ -324,7 +324,19 @@ function formatPackage(record?: { packageId?: string | number; packageName?: str
   if (record.packageId !== undefined && record.packageId !== null) {
     return packageOptions.value.find((item) => item.packageId === record.packageId)?.packageName || String(record.packageId);
   }
-  return record.edition || '-';
+  return formatPackageEdition(record.edition);
+}
+
+function formatPackageEdition(edition?: string) {
+  const normalized = String(edition || '').trim().toLowerCase();
+  const editionMap: Record<string, string> = {
+    standard: '标准版',
+    professional: '专业版',
+    pro: '专业版',
+    enterprise: '集团版',
+    group: '集团版'
+  };
+  return editionMap[normalized] || edition || '-';
 }
 
 function templateLabel(template: ReportTemplateVO) {
