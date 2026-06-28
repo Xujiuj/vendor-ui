@@ -24,11 +24,12 @@ const normalizeIssueResult = (result?: BackendLicenseIssueResult): LicenseIssueR
   return {
     ...issue,
     licenseId,
-    licensePayload: result.licenseContent || issue.licensePayload || result.licensePayload,
+    licenseContent: result.licenseContent || issue.licenseContent || result.licenseContent,
+    licensePayload: issue.licensePayload || result.licensePayload,
     download:
       result.download ||
       issue.download ||
-      (result.licenseContent
+      (result.licenseContent || issue.licenseContent
         ? {
             fileName: String(fileNameBase).endsWith('.lic') ? String(fileNameBase) : `${fileNameBase}.lic`,
             contentType: 'application/json;charset=utf-8'

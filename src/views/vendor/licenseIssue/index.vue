@@ -383,7 +383,7 @@ function buildLicenseFileName(result: LicenseIssueResult) {
 }
 
 function canDownload(record: LicenseIssueResult) {
-  return Boolean(record.licensePayload || record.download?.downloadUrl);
+  return Boolean(record.licenseContent || record.download?.downloadUrl);
 }
 
 function isSafeDownloadUrl(url: string) {
@@ -409,8 +409,8 @@ function downloadText(content: string, fileName: string, contentType?: string) {
 }
 
 function downloadIssuedLicense(result: LicenseIssueResult) {
-  if (result.licensePayload) {
-    downloadText(result.licensePayload, buildLicenseFileName(result), result.download?.contentType);
+  if (result.licenseContent) {
+    downloadText(result.licenseContent, buildLicenseFileName(result), result.download?.contentType);
     return;
   }
 

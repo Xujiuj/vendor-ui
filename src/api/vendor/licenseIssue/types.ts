@@ -127,6 +127,7 @@ export interface LicenseIssueResult {
   templateEntitlements?: string[] | string;
   issueStatus?: string;
   issuedTime?: string;
+  licenseContent?: string;
   licensePayload?: string;
   download?: LicenseIssueDownloadMetadata;
 }
