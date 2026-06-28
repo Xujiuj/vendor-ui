@@ -72,13 +72,9 @@ export default {
   // 导航栏国际化
   navbar: {
     full: '全屏',
-    language: '语言',
     dashboard: '首页',
     document: '项目文档',
     message: '消息',
-    layoutSize: '布局大小',
-    selectTenant: '选择租户',
-    layoutSetting: '布局设置',
     personalCenter: '个人中心',
     logout: '退出登录'
   }

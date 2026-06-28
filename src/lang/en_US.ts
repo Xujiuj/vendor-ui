@@ -72,13 +72,9 @@ export default {
   // 导航栏国际化
   navbar: {
     full: 'Full Screen',
-    language: 'Language',
     dashboard: 'Dashboard',
     document: 'Document',
     message: 'Message',
-    layoutSize: 'Layout Size',
-    selectTenant: 'Select Tenant',
-    layoutSetting: 'Layout Setting',
     personalCenter: 'Personal Center',
     logout: 'Logout'
   }

@@ -5,25 +5,24 @@
     <div :class="{ hasTagsView: needTagsView, sidebarHide: sidebar.hide }" class="main-container">
       <!-- <el-scrollbar>
         <div :class="{ 'fixed-header': fixedHeader }">
-          <navbar ref="navbarRef" @setLayout="setLayout" />
+          <navbar ref="navbarRef" />
           <tags-view v-if="needTagsView" />
         </div>
         <app-main />
         <settings ref="settingRef" />
       </el-scrollbar> -->
       <div :class="{ 'fixed-header': fixedHeader }">
-        <navbar @set-layout="setLayout" />
+        <navbar />
         <tags-view v-if="needTagsView" />
       </div>
       <app-main />
-      <settings ref="settingRef" />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import SideBar from './components/Sidebar/index.vue';
-import { AppMain, Navbar, Settings, TagsView } from './components';
+import { AppMain, Navbar, TagsView } from './components';
 import { useAppStore } from '@/store/modules/app';
 import { useSettingsStore } from '@/store/modules/settings';
 import { NavTypeEnum } from '@/enums/NavTypeEnum';
@@ -70,8 +69,6 @@ watchEffect(() => {
   }
 });
 
-const settingRef = ref<InstanceType<typeof Settings>>();
-
 onMounted(() => {
   initSSE(import.meta.env.VITE_APP_BASE_API + '/resource/sse');
 });
@@ -80,9 +77,6 @@ const handleClickOutside = () => {
   useAppStore().closeSideBar({ withoutAnimation: false });
 };
 
-const setLayout = () => {
-  settingRef.value?.openSetting();
-};
 </script>
 
 <style lang="scss" scoped>
