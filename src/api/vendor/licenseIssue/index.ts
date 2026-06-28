@@ -4,6 +4,39 @@ import type { ApiResponse, ListResponse } from '../shared';
 
 const LICENSE_ISSUE_BASE_URL = '/vendor/license-issue';
 
+type BackendLicenseIssueResult = {
+  issued?: boolean;
+  status?: string;
+  message?: string;
+  licenseContent?: string;
+  licenseIssue?: LicenseIssueVO;
+} & LicenseIssueResult;
+
+const normalizeIssueResult = (result?: BackendLicenseIssueResult): LicenseIssueResult | undefined => {
+  if (!result) {
+    return undefined;
+  }
+
+  const issue = result.licenseIssue || result;
+  const licenseId = issue.licenseId || result.licenseId;
+  const fileNameBase = licenseId || issue.id || result.id || 'license';
+
+  return {
+    ...issue,
+    licenseId,
+    licensePayload: result.licenseContent || issue.licensePayload || result.licensePayload,
+    download:
+      result.download ||
+      issue.download ||
+      (result.licenseContent
+        ? {
+            fileName: String(fileNameBase).endsWith('.lic') ? String(fileNameBase) : `${fileNameBase}.lic`,
+            contentType: 'application/json;charset=utf-8'
+          }
+        : undefined)
+  };
+};
+
 /**
  * 查询供应商授权签发列表
  * @param query
@@ -59,5 +92,8 @@ export const issueLicense = (data: LicenseIssueCommand): Promise<ApiResponse<Lic
     url: `${LICENSE_ISSUE_BASE_URL}/issue`,
     method: 'post',
     data: payload
-  });
+  }).then((response: ApiResponse<BackendLicenseIssueResult>) => ({
+    ...response,
+    data: normalizeIssueResult(response.data)
+  }));
 };
