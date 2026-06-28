@@ -115,19 +115,11 @@ const reminders = ref<VendorOverviewReminder[]>([]);
 const todos = ref<VendorOverviewTodo[]>([]);
 
 const seriesColors = ['#1f8f6a', '#1677ff', '#f59e0b', '#7c3aed', '#ef4444'];
-const legacyEditionNames: Record<string, string> = {
-  standard: '标准版',
-  professional: '专业版',
-  pro: '专业版',
-  enterprise: '集团版',
-  group: '集团版'
-};
 
 const displayValue = (value?: number | string) => (value === undefined || value === null || value === '' ? '--' : value);
 const displayPackageSeriesName = (name?: string) => {
   const normalized = String(name || '').trim();
-  if (!normalized) return '未指定套餐';
-  return legacyEditionNames[normalized.toLowerCase()] || normalized;
+  return normalized || '未指定套餐';
 };
 
 const loadOverview = async () => {

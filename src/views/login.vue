@@ -106,7 +106,6 @@ const supportLinks = {
 };
 
 const LOGIN_STORAGE_KEYS = {
-  tenantId: 'vendorLoginTenantId',
   username: 'vendorLoginUsername',
   rememberMe: 'vendorLoginRememberMe',
   autoLogin: 'vendorLoginAutoLogin'
@@ -138,11 +137,10 @@ watch(
 const getLoginData = () => {
   const rememberMe = localStorage.getItem(LOGIN_STORAGE_KEYS.rememberMe) === 'true';
   const savedUsername = localStorage.getItem(LOGIN_STORAGE_KEYS.username);
-  const savedTenantId = localStorage.getItem(LOGIN_STORAGE_KEYS.tenantId);
 
   loginForm.value = {
     ...loginForm.value,
-    tenantId: savedTenantId || loginForm.value.tenantId,
+    tenantId: '000000',
     username: rememberMe && savedUsername ? savedUsername : loginForm.value.username,
     password: '',
     rememberMe
@@ -154,14 +152,12 @@ const syncLoginPreference = () => {
   localStorage.setItem(LOGIN_STORAGE_KEYS.autoLogin, String(autoLogin.value));
 
   if (!loginForm.value.rememberMe) {
-    localStorage.removeItem(LOGIN_STORAGE_KEYS.tenantId);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.username);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.rememberMe);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.autoLogin);
     return;
   }
 
-  localStorage.setItem(LOGIN_STORAGE_KEYS.tenantId, String(loginForm.value.tenantId || '000000'));
   localStorage.setItem(LOGIN_STORAGE_KEYS.username, String(loginForm.value.username || ''));
   localStorage.setItem(LOGIN_STORAGE_KEYS.rememberMe, 'true');
 };

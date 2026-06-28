@@ -318,25 +318,13 @@ function formatCustomerLabel(customer: CustomerVO) {
   return `${customer.customerCode} - ${customer.customerName}`;
 }
 
-function formatPackage(record?: { packageId?: string | number; packageName?: string; edition?: string }) {
+function formatPackage(record?: { packageId?: string | number; packageName?: string }) {
   if (!record) return '-';
   if (record.packageName) return record.packageName;
   if (record.packageId !== undefined && record.packageId !== null) {
     return packageOptions.value.find((item) => item.packageId === record.packageId)?.packageName || String(record.packageId);
   }
-  return formatPackageEdition(record.edition);
-}
-
-function formatPackageEdition(edition?: string) {
-  const normalized = String(edition || '').trim().toLowerCase();
-  const editionMap: Record<string, string> = {
-    standard: '标准版',
-    professional: '专业版',
-    pro: '专业版',
-    enterprise: '集团版',
-    group: '集团版'
-  };
-  return editionMap[normalized] || edition || '-';
+  return '-';
 }
 
 function templateLabel(template: ReportTemplateVO) {
