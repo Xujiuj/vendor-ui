@@ -39,8 +39,7 @@
         </el-form-item>
 
         <div class="login-options">
-          <el-checkbox v-model="loginForm.rememberMe">记住密码</el-checkbox>
-          <el-checkbox v-model="autoLogin">自动登录</el-checkbox>
+          <el-checkbox v-model="loginForm.rememberMe">记住账号</el-checkbox>
         </div>
 
         <el-button :loading="loading" type="primary" class="btn primary login-submit" @click.prevent="handleLogin">
@@ -97,8 +96,6 @@ const loading = ref(false);
 const captchaEnabled = ref(true);
 const redirect = ref('/');
 const loginRef = ref<ElFormInstance>();
-const autoLogin = ref(false);
-const autoLoginTriggered = ref(false);
 const supportLinks = {
   website: 'https://www.carbondata.com',
   privacy: 'https://www.carbondata.com/privacy',
@@ -107,8 +104,7 @@ const supportLinks = {
 
 const LOGIN_STORAGE_KEYS = {
   username: 'vendorLoginUsername',
-  rememberMe: 'vendorLoginRememberMe',
-  autoLogin: 'vendorLoginAutoLogin'
+  rememberMe: 'vendorLoginRememberMe'
 } as const;
 
 watch(
@@ -117,21 +113,6 @@ watch(
     redirect.value = newRoute.query && newRoute.query.redirect && decodeURIComponent(newRoute.query.redirect);
   },
   { immediate: true }
-);
-
-watch(autoLogin, (enabled) => {
-  if (enabled) {
-    loginForm.value.rememberMe = true;
-  }
-});
-
-watch(
-  () => loginForm.value.rememberMe,
-  (rememberMe) => {
-    if (!rememberMe) {
-      autoLogin.value = false;
-    }
-  }
 );
 
 const getLoginData = () => {
@@ -145,16 +126,12 @@ const getLoginData = () => {
     password: '',
     rememberMe
   } as LoginData;
-  autoLogin.value = rememberMe && localStorage.getItem(LOGIN_STORAGE_KEYS.autoLogin) === 'true';
 };
 
 const syncLoginPreference = () => {
-  localStorage.setItem(LOGIN_STORAGE_KEYS.autoLogin, String(autoLogin.value));
-
   if (!loginForm.value.rememberMe) {
     localStorage.removeItem(LOGIN_STORAGE_KEYS.username);
     localStorage.removeItem(LOGIN_STORAGE_KEYS.rememberMe);
-    localStorage.removeItem(LOGIN_STORAGE_KEYS.autoLogin);
     return;
   }
 
@@ -206,10 +183,6 @@ const getCode = async () => {
   loginForm.value.uuid = '';
   await nextTick();
   loginRef.value?.clearValidate('code');
-  if (autoLogin.value && loginForm.value.username && loginForm.value.password && !autoLoginTriggered.value) {
-    autoLoginTriggered.value = true;
-    handleLogin();
-  }
 };
 
 onMounted(() => {
