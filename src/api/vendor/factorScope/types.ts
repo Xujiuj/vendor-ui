@@ -1,11 +1,8 @@
 export interface FactorScopeQuery extends PageQuery {
   id?: string | number;
   versionId?: string | number;
-  customerId?: string | number;
   packageId?: string | number;
   packageName?: string;
-  edition?: string;
-  licenseId?: string;
   scopeStatus?: string;
   params?: Record<string, any>;
 }
@@ -13,11 +10,8 @@ export interface FactorScopeQuery extends PageQuery {
 export interface FactorScopeVO extends BaseEntity {
   id: string | number;
   versionId: string | number;
-  customerId?: string | number;
   packageId?: string | number;
   packageName?: string;
-  edition?: string;
-  licenseId?: string;
   scopeStatus?: string;
   createTime?: string;
   [key: string]: any;
@@ -26,9 +20,7 @@ export interface FactorScopeVO extends BaseEntity {
 export interface FactorScopeForm {
   id?: string | number;
   versionId?: string | number;
-  customerId?: string | number;
   packageId?: string | number;
   packageName?: string;
-  edition?: string;
   scopeStatus?: string;
 }

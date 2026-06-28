@@ -3,7 +3,7 @@
     <div class="page-head">
       <div>
         <h1>因子开放范围</h1>
-        <p>配置客户可同步的因子版本范围，按客户、套餐、版本和 License 维度控制授权。</p>
+        <p>配置套餐可同步的因子版本范围。</p>
       </div>
     </div>
 
@@ -13,12 +13,6 @@
           <label>因子版本</label>
           <el-select v-model="queryParams.versionId" placeholder="请选择因子版本" clearable filterable>
             <el-option v-for="item in factorVersionOptions" :key="item.id" :label="factorVersionLabel(item)" :value="item.id" />
-          </el-select>
-        </div>
-        <div class="search-item">
-          <label>客户</label>
-          <el-select v-model="queryParams.customerId" placeholder="请选择客户" clearable filterable>
-            <el-option v-for="item in customerOptions" :key="item.id" :label="customerLabel(item)" :value="item.id" />
           </el-select>
         </div>
         <div class="search-item">
@@ -68,11 +62,6 @@
             {{ formatFactorVersion(row.versionId) }}
           </template>
         </el-table-column>
-        <el-table-column label="客户" align="center" prop="customerId" min-width="180" :show-overflow-tooltip="true">
-          <template #default="{ row }">
-            {{ formatCustomer(row.customerId) }}
-          </template>
-        </el-table-column>
         <el-table-column label="开放套餐" align="center" min-width="140" :show-overflow-tooltip="true">
           <template #default="{ row }">
             {{ formatScopePackage(row) }}
@@ -113,13 +102,8 @@
             <el-option v-for="item in factorVersionOptions" :key="item.id" :label="factorVersionLabel(item)" :value="item.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户" prop="customerId">
-          <el-select v-model="form.customerId" placeholder="全部客户" class="w-full" clearable filterable>
-            <el-option v-for="item in customerOptions" :key="item.id" :label="customerLabel(item)" :value="item.id" />
-          </el-select>
-        </el-form-item>
         <el-form-item label="开放套餐" prop="packageId">
-          <el-select v-model="form.packageId" placeholder="全部套餐" class="w-full" clearable filterable>
+          <el-select v-model="form.packageId" placeholder="请选择套餐" class="w-full" filterable>
             <el-option v-for="item in packageOptions" :key="item.packageId" :label="item.packageName" :value="item.packageId" />
           </el-select>
         </el-form-item>
@@ -137,9 +121,8 @@
     </el-drawer>
 
     <el-drawer v-model="detailDrawer.visible" title="因子开放范围详情" size="520px" append-to-body>
-      <el-descriptions v-if="detailRecord" :column="1" border>
-        <el-descriptions-item label="因子版本">{{ formatFactorVersion(detailRecord.versionId) }}</el-descriptions-item>
-        <el-descriptions-item label="客户">{{ formatCustomer(detailRecord.customerId) }}</el-descriptions-item>
+        <el-descriptions v-if="detailRecord" :column="1" border>
+          <el-descriptions-item label="因子版本">{{ formatFactorVersion(detailRecord.versionId) }}</el-descriptions-item>
         <el-descriptions-item label="开放套餐">{{ formatScopePackage(detailRecord) }}</el-descriptions-item>
         <el-descriptions-item label="开放状态">{{ formatScopeStatus(detailRecord.scopeStatus) }}</el-descriptions-item>
         <el-descriptions-item label="创建时间">{{ formatDateTime(detailRecord.createTime) }}</el-descriptions-item>
@@ -154,8 +137,6 @@ import { addFactorScope, deleteFactorScope, getFactorScope, listFactorScope, upd
 import type { FactorScopeForm, FactorScopeQuery, FactorScopeVO } from '@/api/vendor/factorScope/types';
 import { listFactorVersion } from '@/api/vendor/factorVersion';
 import type { FactorVersionVO } from '@/api/vendor/factorVersion/types';
-import { listCustomer } from '@/api/vendor/customer';
-import type { CustomerVO } from '@/api/vendor/customer/types';
 import { selectTenantPackage } from '@/api/system/tenantPackage';
 import type { TenantPkgVO } from '@/api/system/tenantPackage/types';
 import { formatDateTime, formatScopeStatus, readRows, readTotal, scopeStatusTagType } from '../shared';
@@ -168,7 +149,6 @@ const showSearch = ref(true);
 const total = ref(0);
 const scopeList = ref<FactorScopeVO[]>([]);
 const factorVersionOptions = ref<FactorVersionVO[]>([]);
-const customerOptions = ref<CustomerVO[]>([]);
 const packageOptions = ref<TenantPkgVO[]>([]);
 const detailRecord = ref<FactorScopeVO>();
 const ids = ref<Array<string | number>>([]);
@@ -181,9 +161,7 @@ const queryParams = reactive<FactorScopeQuery>({
   pageNum: 1,
   pageSize: 10,
   versionId: undefined,
-  customerId: undefined,
   packageId: undefined,
-  edition: undefined,
   scopeStatus: undefined,
   params: {}
 });
@@ -191,30 +169,21 @@ const queryParams = reactive<FactorScopeQuery>({
 const form = reactive<FactorScopeForm>({
   id: undefined,
   versionId: undefined,
-  customerId: undefined,
   packageId: undefined,
-  edition: undefined,
   scopeStatus: 'enabled'
 });
 
 const rules: FormRules<FactorScopeForm> = {
   versionId: [{ required: true, message: '因子版本不能为空', trigger: 'change' }],
+  packageId: [{ required: true, message: '请选择套餐', trigger: 'change' }],
   scopeStatus: [{ required: true, message: '状态不能为空', trigger: 'change' }]
 };
 
 const factorVersionLabel = (item: FactorVersionVO) => `${item.versionName || item.versionCode || item.id}`;
-const customerLabel = (item: CustomerVO) => `${item.customerName || item.customerCode || item.id}`;
 
 const factorVersionMap = computed(() =>
   factorVersionOptions.value.reduce<Record<string, string>>((map, item) => {
     map[String(item.id)] = factorVersionLabel(item);
-    return map;
-  }, {})
-);
-
-const customerMap = computed(() =>
-  customerOptions.value.reduce<Record<string, string>>((map, item) => {
-    map[String(item.id)] = customerLabel(item);
     return map;
   }, {})
 );
@@ -226,30 +195,21 @@ const formatFactorVersion = (versionId?: string | number) => {
   return factorVersionMap.value[String(versionId)] || String(versionId);
 };
 
-const formatCustomer = (customerId?: string | number) => {
-  if (customerId === undefined || customerId === null || customerId === '') {
-    return '全部客户';
-  }
-  return customerMap.value[String(customerId)] || String(customerId);
-};
-
-const formatScopePackage = (row?: Pick<FactorScopeVO, 'packageId' | 'packageName' | 'edition'>) => {
+const formatScopePackage = (row?: Pick<FactorScopeVO, 'packageId' | 'packageName'>) => {
   if (!row) return '-';
   if (row.packageName) return row.packageName;
   if (row.packageId !== undefined && row.packageId !== null && row.packageId !== '') {
     return packageOptions.value.find((item) => item.packageId === row.packageId)?.packageName || String(row.packageId);
   }
-  return row.edition || '全部套餐';
+  return '-';
 };
 
 const loadOptions = async () => {
-  const [versionRes, customerRes, packageRes] = await Promise.all([
+  const [versionRes, packageRes] = await Promise.all([
     listFactorVersion({ pageNum: 1, pageSize: 100, params: {} }),
-    listCustomer({ pageNum: 1, pageSize: 100, params: {} }),
     selectTenantPackage()
   ]);
   factorVersionOptions.value = readRows<FactorVersionVO>(versionRes);
-  customerOptions.value = readRows<CustomerVO>(customerRes);
   packageOptions.value = readRows<TenantPkgVO>(packageRes).filter((item) => item.status !== '1');
 };
 
@@ -281,9 +241,7 @@ const resetQuery = async () => {
   queryParams.pageNum = 1;
   queryParams.pageSize = 10;
   queryParams.versionId = undefined;
-  queryParams.customerId = undefined;
   queryParams.packageId = undefined;
-  queryParams.edition = undefined;
   queryParams.scopeStatus = undefined;
   await refreshList();
 };
@@ -291,9 +249,7 @@ const resetQuery = async () => {
 const resetForm = () => {
   form.id = undefined;
   form.versionId = undefined;
-  form.customerId = undefined;
   form.packageId = undefined;
-  form.edition = undefined;
   form.scopeStatus = 'enabled';
   formRef.value?.clearValidate();
 };
@@ -316,9 +272,7 @@ const handleUpdate = async (row: FactorScopeVO) => {
   Object.assign(form, {
     id: data.id,
     versionId: data.versionId,
-    customerId: data.customerId,
     packageId: data.packageId,
-    edition: data.edition,
     scopeStatus: data.scopeStatus || 'enabled'
   });
   formDrawer.title = '编辑因子开放范围';
@@ -333,9 +287,7 @@ const submitForm = async () => {
     const payload: FactorScopeForm = {
       id: form.id,
       versionId: form.versionId,
-      customerId: form.customerId,
       packageId: form.packageId,
-      edition: undefined,
       scopeStatus: form.scopeStatus
     };
     if (payload.id) {
