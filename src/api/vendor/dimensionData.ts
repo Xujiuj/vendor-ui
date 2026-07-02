@@ -57,6 +57,7 @@ export interface DimensionDataRecord {
   isCurrent?: boolean | number;
   description?: string;
 
+  versionProvinceCode?: string;
   factorVersion?: string;
   effectiveYear?: number;
   regionName?: string;

@@ -14,7 +14,14 @@
           <div class="toolbar">
             <div class="btns">
               <el-button v-hasPermi="['vendor:dimension:add']" type="primary" plain icon="Plus" @click="handleDataAdd">新增</el-button>
-              <el-button v-hasPermi="['vendor:dimension:remove']" type="danger" plain icon="Delete" :disabled="dataMultiple" @click="handleDataDelete()">
+              <el-button
+                v-hasPermi="['vendor:dimension:remove']"
+                type="danger"
+                plain
+                icon="Delete"
+                :disabled="dataMultiple"
+                @click="handleDataDelete()"
+              >
                 删除
               </el-button>
             </div>
@@ -171,9 +178,7 @@ const dimensionTabs: DimensionTab[] = [
     nameKey: 'divisionName',
     nameLabel: '行政区划名称',
     showParent: true,
-    extraFields: [
-      { key: 'levelType', label: '层级类型', width: 100 }
-    ]
+    extraFields: [{ key: 'levelType', label: '层级类型', width: 100 }]
   },
   {
     code: 'emission-source-category',
@@ -228,12 +233,13 @@ const dimensionTabs: DimensionTab[] = [
   {
     code: 'ef-electricity-factor',
     label: '202 电力因子',
-    codeKey: 'divisionCode',
-    codeLabel: '行政区划代码',
+    codeKey: 'versionProvinceCode',
+    codeLabel: 'PK_因子版本省份代码',
     nameKey: 'divisionName',
     nameLabel: '行政区划名称',
     extraFields: [
       { key: 'factorVersion', label: '因子版本', width: 120 },
+      { key: 'divisionCode', label: '行政区划代码', width: 130 },
       { key: 'regionName', label: '区域名称', width: 120 },
       { key: 'provinceFactor', label: '省级因子', type: 'number', precision: 10, width: 120 },
       { key: 'regionFactor', label: '区域因子', type: 'number', precision: 10, width: 120 },
@@ -249,9 +255,7 @@ const dimensionTabs: DimensionTab[] = [
     codeLabel: '版本号',
     nameKey: 'factorVersion',
     nameLabel: '版本号',
-    extraFields: [
-      { key: 'effectiveYear', label: '生效年份', type: 'number', precision: 0, width: 100 }
-    ]
+    extraFields: [{ key: 'effectiveYear', label: '生效年份', type: 'number', precision: 0, width: 100 }]
   },
   {
     code: 'ef-electricity-scope',
@@ -456,7 +460,9 @@ const submitDataForm = async () => {
 const handleDataDelete = async (row?: DimensionDataRecord) => {
   try {
     const deleteIds = row?.id || dataIds.value;
-    const recordLabel = row ? `${formatDimensionValue(row, currentDim.value.codeKey)} ${formatDimensionValue(row, currentDim.value.nameKey)}`.trim() : '';
+    const recordLabel = row
+      ? `${formatDimensionValue(row, currentDim.value.codeKey)} ${formatDimensionValue(row, currentDim.value.nameKey)}`.trim()
+      : '';
     const message = row ? `确认删除"${recordLabel}"？` : `确认删除选中的 ${dataIds.value.length} 条记录？`;
     await proxy?.$modal.confirm(message);
     await deleteDimensionData(activeTab.value, String(deleteIds));
