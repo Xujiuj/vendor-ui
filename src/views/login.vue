@@ -46,16 +46,11 @@
           <span v-if="!loading">登录</span>
           <span v-else>校验中...</span>
         </el-button>
-
-        <div class="login-support">
-          <a :href="supportLinks.website" target="_blank" rel="noreferrer">官网</a>
-          <span>技术支持：400-000-0000</span>
-        </div>
       </el-form>
     </div>
 
     <div class="login-footer">
-      <p>技术支持：400-000-0000 &nbsp;|&nbsp; support@carbondata.com</p>
+      <p>技术支持：15099663016 &nbsp;|&nbsp; service@fengxingdata.com</p>
       <p>
         <a :href="supportLinks.website" target="_blank" rel="noreferrer">官方网站</a> ·
         <a :href="supportLinks.privacy" target="_blank" rel="noreferrer">隐私政策</a> ·
@@ -211,9 +206,7 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   padding: 48px;
-  background:
-    linear-gradient(90deg, rgba(16, 40, 32, 0.74), rgba(24, 52, 47, 0.42) 48%, rgba(255, 255, 255, 0.08)),
-    url('../assets/images/login-carbon-bg.png') center / cover no-repeat;
+  background: url('../assets/images/login-gradient-bg.png') center / cover no-repeat;
 }
 
 html.dark .auth-page {
@@ -237,7 +230,7 @@ html.dark .auth-page {
   z-index: 1;
   display: inline-flex;
   align-items: center;
-  color: #fff;
+  color: #1E7F4C;
   pointer-events: auto;
 }
 
@@ -246,14 +239,19 @@ html.dark .auth-page {
   gap: 10px;
   font-size: 15px;
   font-weight: 700;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  padding: 8px 12px;
+  border: 1px solid rgba(30, 127, 76, 0.16);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.72);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  backdrop-filter: blur(10px);
 }
 
 .logo-mark {
   width: 28px;
   height: 28px;
   border-radius: 6px;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 44%), linear-gradient(135deg, #22c55e, #1677ff);
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 44%), linear-gradient(135deg, #43A96E, #1E7F4C);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 }
 
@@ -262,9 +260,9 @@ html.dark .auth-page {
   height: 32px;
   gap: 6px;
   padding: 0 14px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  border: 1px solid rgba(30, 127, 76, 0.2);
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.62);
   font-size: 13px;
   font-weight: 700;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
@@ -350,7 +348,7 @@ html.dark .auth-page {
 .login-card :deep(.el-input__wrapper.is-focus) {
   box-shadow:
     0 0 0 1px var(--carbon-primary) inset,
-    0 0 0 3px rgba(22, 119, 255, 0.12);
+    0 0 0 3px rgba(30, 127, 76, 0.14);
 }
 
 .captcha-field {
@@ -364,8 +362,8 @@ html.dark .auth-page {
   border: 1px solid var(--login-captcha-border);
   border-radius: 6px;
   background:
-    linear-gradient(135deg, rgba(31, 143, 106, 0.14), rgba(22, 119, 255, 0.1)),
-    repeating-linear-gradient(-35deg, transparent 0 8px, rgba(31, 143, 106, 0.1) 8px 10px), var(--login-captcha-bg);
+    linear-gradient(135deg, rgba(30, 127, 76, 0.14), rgba(67, 169, 110, 0.1)),
+    repeating-linear-gradient(-35deg, transparent 0 8px, rgba(30, 127, 76, 0.1) 8px 10px), var(--login-captcha-bg);
   color: var(--login-captcha-text);
   font-weight: 800;
   letter-spacing: 2px;
@@ -401,21 +399,6 @@ html.dark .auth-page {
   margin-top: 16px;
   border-radius: 6px;
   font-weight: 700;
-}
-
-.login-support {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px 12px;
-  margin-top: 18px;
-  color: var(--carbon-muted);
-  font-size: 12px;
-}
-
-.login-support a {
-  color: var(--carbon-primary);
-  font-weight: 600;
 }
 
 .login-footer {
@@ -456,12 +439,6 @@ html.dark .auth-page {
   .portal-tag {
     right: 24px;
     top: 24px;
-  }
-
-  .login-support {
-    flex-direction: column;
-    align-items: center;
-    gap: 6px;
   }
 
   .login-footer {

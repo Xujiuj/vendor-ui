@@ -13,8 +13,8 @@ type PortalRoute = RouteRecordRaw & {
 };
 
 export const vendorPrototypeColorTokens = {
-  primary: '#167656',
-  primaryDark: '#0f5f45',
+  primary: '#1E7F4C',
+  primaryDark: '#145F39',
   success: '#18a058',
   ink: '#1f2937',
   text: '#4b5563',
@@ -24,7 +24,7 @@ export const vendorPrototypeColorTokens = {
   side: '#18342f',
   sideDeep: '#102820',
   sideActive: '#0e211d',
-  brand: '#167656'
+  brand: '#1E7F4C'
 } as const;
 
 export const vendorAllowedPermissionPrefixes = ['vendor:', 'system:'];

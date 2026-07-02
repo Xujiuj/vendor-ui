@@ -114,7 +114,7 @@ const monthlyAuthorizations = ref<MonthlyAuthorization[]>([]);
 const reminders = ref<VendorOverviewReminder[]>([]);
 const todos = ref<VendorOverviewTodo[]>([]);
 
-const seriesColors = ['#1f8f6a', '#1677ff', '#f59e0b', '#7c3aed', '#ef4444'];
+const seriesColors = ['#1E7F4C', '#1677ff', '#f59e0b', '#7c3aed', '#ef4444'];
 
 const displayValue = (value?: number | string) => (value === undefined || value === null || value === '' ? '--' : value);
 const displayPackageSeriesName = (name?: string) => {
@@ -324,7 +324,7 @@ onMounted(() => {
   height: 7px;
   border-radius: 50%;
   background: var(--carbon-primary);
-  box-shadow: 0 0 0 3px rgba(22, 119, 255, 0.14);
+  box-shadow: 0 0 0 3px rgba(30, 127, 76, 0.14);
 }
 
 .reminder-item strong {
@@ -392,7 +392,7 @@ onMounted(() => {
   justify-content: center;
   height: 24px;
   padding: 0 8px;
-  border: 1px solid rgba(31, 143, 106, 0.24);
+  border: 1px solid rgba(30, 127, 76, 0.24);
   border-radius: 6px;
   background: var(--carbon-green-soft);
   color: var(--carbon-brand);
